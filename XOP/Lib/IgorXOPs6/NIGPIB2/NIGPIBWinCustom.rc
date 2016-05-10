@@ -1,0 +1,114 @@
+/*	NIGPIBWinCustom.rc -- resources for NIGPIB2 on Windows
+
+	This file is compiled by the resource compiler and creates XOP-specific
+	resources that IGOR looks for in an XOP module.
+*/
+
+#include "XOPResources.h"			// Defines XOP-specific symbols.
+
+// Custom error messages.
+1100 STR#
+BEGIN
+	// These errors are NI-defined.
+	"NI-488: Board or device name not recognized (EDVR).\0",							// 1
+	"NI-488: Function requires NI-488 driver to be controller-in-charge (ECIC).\0",		// 2
+	"NI-488: No listener on write function (ENOL).\0",									// 3
+	"NI-488: NI-488 driver not addressed correctly (EADR).\0",							// 4
+	"NI-488: Invalid argument to function call (EARG).\0",								// 5
+	"NI-488: NI-488 driver not system controller as required (ESAC).\0",				// 6
+	"NI-488: I/O operation timed out (EABO).\0",										// 7
+	"NI-488: Non-existent NI-488 driver board (ENEB).\0",								// 8
+	"NI-488: DMA hardware error detected (EDMA).\0",									// 9
+	"NI-488: Unknown error (number 9).\0",												// 10
+	"NI-488: I/O started before previous operation completed (EOIP).\0",				// 11
+	"NI-488: No capability for operation (ECAP).\0",									// 12
+	"NI-488: File system error (EFSO).\0",												// 13
+	"NI-488: Unknown error (number 13).\0",												// 14
+	"NI-488: Timeout while sending command bytes (EBUS).\0",							// 15
+	"NI-488: Serial poll status byte lost (ESTB).\0",									// 16
+	"NI-488: SRQ stuck in ON position (ESRQ).\0",										// 17
+	"NI-488: Address status change during I/O command (EASC).\0",						// 18
+	"NI-488: DCAS occurred during I/O command (EDC).\0",								// 19
+	"NI-488: Unknown error (number 19).\0",												// 20
+	"NI-488: Buffer full (ETAB).\0",													// 21
+	"NI-488: Board or device is locked (ELCK).\0",										// 22
+	"NI-488: The ibnotify callback failed to rearm (EARM).\0",							// 23
+	"NI-488: The input handle is invalid (EHDL).\0",									// 24
+	"NI-488: Unknown error (number 24).\0",												// 25
+	"NI-488: Unknown error (number 25).\0",												// 26
+	"NI-488: Wait already in progress on input ud (EWIP).\0",							// 27
+	"NI-488: The event notification was cancelled due to reset of interface (ERST).\0",	// 28
+	"NI-488: Unknown error (number 28).\0",												// 29
+	"NI-488: Unknown error (number 29).\0",												// 30
+	"NI-488: Unknown error (number 30).\0",												// 31
+
+	// These errors are NIGPIB2-defined.
+	"NIGPIB2 requires Igor version 6.20 or later.\0",									// 32
+	"You must specify device with 'GPIB2 device' operation.\0",							// 33
+	"Specified device does not exist.\0",												// 34
+	"You must specify board with 'GPIB2 board' operation.\0",							// 35
+	"Specified board does not exist.\0",												// 36
+	"Bad binary data type. Codes are the same as those used for the WaveType function.\0",	// 37
+	"Can't do GPIBBinaryWaveRead or GPIBBinaryWaveWrite on a text wave. Use GPIBWaveRead or GPIBWaveWrite.\0",	// 38
+	"Expected the name of a real, numeric wave containing a list of NI488.2 addresses.\0",	// 39
+	"Expected the name of a real, numeric wave to receive a list of NI488.2 results.\0",	// 40
+	"The address list is too long (exceeds 100 values).\0",								// 41
+	"The limit value for FindLstn must be 1 to 100.\0",									// 42
+	"The wave does not have enough data points.\0",										// 43
+	"Unknown NI-488 driver error.\0",													// 44
+	"The numeric format must end with a valid numeric conversion character.\0",			// 45
+
+	"\0"							// NOTE: NULL required to terminate the resource.
+END
+
+1101 STR#							// Misc strings for XOP.
+BEGIN
+	"-1\0",							// -1 means we don't want to add a menu item.
+	"No Menu Item\0",				// Igor ignores item 2 because item 1 is -1.
+	"NIGPIB2 Help.ihf\0",
+	0,								// NOTE: 0 required to terminate the resource.
+END
+
+1100 XOPI							// XOPI - Describes general XOP properties to IGOR. 
+BEGIN
+	XOP_VERSION,					// Version number of host XOP system.
+	DEV_SYS_CODE,					// Code for development system used to make XOP
+	0,								// Obsolete - set to zero
+	0,								// Obsolete - set to zero
+	XOP_TOOLKIT_VERSION				// 500 means 5.00
+END
+
+1100 XOPC							// Describes operations that the XOP adds to IGOR.
+BEGIN
+	"NI4882\0",						// External operation to access NI488 board.
+	XOPOp | ioOp | compilableOp,
+
+	"GPIB2\0",						// External operations to communicate with NIGPIB2.
+	XOPOp | ioOp | compilableOp,
+
+	"GPIBRead2\0",
+	XOPOp | ioOp | compilableOp,
+
+	"GPIBWrite2\0",
+	XOPOp | ioOp | compilableOp,
+
+	"GPIBReadWave2\0",
+	XOPOp | ioOp | compilableOp,
+
+	"GPIBWriteWave2\0",
+	XOPOp | ioOp | compilableOp,
+
+	"GPIBReadBinary2\0",
+	XOPOp | ioOp | compilableOp,
+
+	"GPIBWriteBinary2\0",
+	XOPOp | ioOp | compilableOp,
+
+	"GPIBReadBinaryWave2\0",
+	XOPOp | ioOp | compilableOp,
+
+	"GPIBWriteBinaryWave2\0",
+	XOPOp | ioOp | compilableOp,
+
+	"\0"							// NOTE: NULL required to terminate the resource.
+END

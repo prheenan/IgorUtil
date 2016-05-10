@@ -1,0 +1,52 @@
+/*	XOP-specific resources for XFUNC3 on Windows
+
+	This file is compiled by the resource compiler and creates XOP-specific
+	resources that IGOR looks for in an XOP module.
+*/
+
+#include "XOPResources.h"			// Defines XOP-specific symbols.
+
+1100 STR#					// Custom error messages.
+BEGIN
+	"XFUNC3 requires Igor Pro 6.20 or later.\0",
+	"XFUNC3 XOP was called to execute an unknown function.\0",
+	"Input string is non-existent.\0",
+
+	// You can add error messages here.
+	
+	0,								// NOTE: 0 required to terminate the resource.
+END
+
+/* no menu item */
+
+1100 XOPI							// XOPI - Describes general XOP properties to IGOR. 
+BEGIN
+	XOP_VERSION,					// Version number of host XOP system.
+	DEV_SYS_CODE,					// Code for development system used to make XOP.
+	0,								// Obsolete - set to zero.
+	0,								// Obsolete - set to zero.
+	XOP_TOOLKIT_VERSION				// XOP Toolkit version.
+END
+
+1100 XOPF							// Describes functions added by XOP to IGOR.
+BEGIN
+	// str1 = xstrcat0(str2, str3)	// This uses the direct call method.
+	"xstrcat0\0",					// Function name.
+	F_STR | F_EXTERNAL,				// Function category,
+		HSTRING_TYPE,				// Return value type str1 (string handle).		
+		HSTRING_TYPE,				// First parameter: str2 (string handle).
+		HSTRING_TYPE,				// Second parameter: str3 (string handle).
+		0,							// NOTE: 0 required to terminate list of parameter types.
+
+	// str1 = xstrcat1(str2, str3)	// This uses the message call method.
+	"xstrcat1\0",					// Function name.
+	F_STR | F_EXTERNAL,				// Function category,
+		HSTRING_TYPE,				// Return value type str1 (string handle).		
+		HSTRING_TYPE,				// First parameter: str2 (string handle).
+		HSTRING_TYPE,				// Second parameter: str3 (string handle).
+		0,							// NOTE: 0 required to terminate list of parameter types.
+	
+	// More function descriptions can appear here.
+	
+	0,								// NOTE: 0 required to terminate the resource.
+END

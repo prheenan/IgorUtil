@@ -1,0 +1,316 @@
+/*	VDTWinCustom.rc -- resources for VDT2 on Windows
+
+	This file is compiled by the resource compiler and creates XOP-specific
+	resources that IGOR looks for in an XOP module.
+*/
+
+#include "XOPResources.h"			// Defines XOP-specific symbols.
+
+/* Custom error messages */
+1100 STR#
+BEGIN
+	"VDT2 unable to open window\0",
+	"Invalid baud rate\0",
+	"Data bits must be 7 or 8\0",
+	"Stop bits must be 1 or 2\0",
+	"Parity is 0 for none, 1 for odd, 2 for even\0",
+	"Handshake is 0 for none, 1 for CTS, 2 for XON/XOFF\0",
+	"Echo is 0 for off, 1 for on\0",
+	"Port is 0 for modem, 1 for printer\0",
+	"Buffer size must be at least 32 bytes\0",
+	"The port is busy\0",
+	"The port could not be initialized\0",
+	"There is not enough memory for the input buffer\0",
+	"No port is selected\0",
+	"Another VDT2 operation is in progress\0",
+	"The numeric format must end with a valid numeric conversion character.\0",
+	"Not used.\0",
+	"Not used.\0",
+	"This version of VDT2 requires Igor version 6.20 or later\0",
+	"Can’t do VDTBinaryWaveRead2 or VDTBinaryWaveWrite2 on a text wave. Use VDTWaveRead2 or VDTWaveWrite2.\0",
+	"The channel number must be 0 (for the input port) or 1 (for the output port).\0",
+	"The status code must be between 0 and 6.\0",
+	"Break detected.\0",
+	"No parallel device is selected.\0",
+	"A framing error occurred (check baud rate, parity, stop bits).\0",
+	"An I/O error occurred.\0",
+	"Mode error.\0",
+	"Parallel device is out of paper.\0",
+	"Overrun error - too many characters received or sent to fit in buffer.\0",
+	"Parallel port timeout.\0",
+	"Input overrun error - too many characters received to fit in input buffer.\0",
+	"A parity error occurred (check baud rate, parity, stop bits).\0",
+	"Input overrun error - too many characters sent to fit in output buffer.\0",
+	"An communications error of unknown nature occurred.\0",
+	"Unknown port name.\0",
+	"No port is selected for command line operations. Commands will not work until you select a port.\0",
+	"No port is selected for terminal operations. Terminal operations will not work until you select a port.\0",
+	"Expected the name of an installed port (such as Printer, Modem, COM1, COM2).\0",
+	"Expected the name of an installed port (such as Printer, Modem, COM1, COM2) or 'None'.\0",
+	"The specified port is not available on this machine.\0",
+	"Expect 0 (CR), 1 (LF), or 2 (CRLF) for terminalEOL.\0",
+	"The port can't be opened. This machine may not have the specified port or may not be configured to use the port.\0",
+	"The port appears to be in use by another program.\0",
+	"This baud rate is not supported on Windows.\0",
+	"A UNIX-related error occurred. See the history for diagnostics.\0",
+	"A system-related error occurred. See the history for diagnostics.\0",
+	"Bad binary data type. Codes are the same as those used for the WaveType function.\0",
+	"Serial reads are limited to 4 billion bytes at a time.\0",
+	"Serial writes are limited to 4 billion bytes at a time.\0",
+
+	"\0"							// NOTE: NULL required to terminate the resource.
+END
+
+1101 STR#							// Misc strings that Igor looks for.
+BEGIN
+	"-1\0",							// -1 means we don't want to add a menu item via STR# 1101. We add it via the XMI1 reource.
+	"---\0",						// IGOR ignores item 2 because item 1 is -1.
+	"VDT2 Help.ihf\0",				// Name of XOP's help file.
+
+	"\0"							// NOTE: NULL required to terminate the resource.
+END
+
+1102 STR#							// Misc strings private to VDT2.
+BEGIN
+	"Send VDT2 Text\0",
+	"Send Selected Text\0",			// Alternate to "Send VDT2 Text" menu item.
+	"Stop Sending Text\0",			// Alternate to "Send VDT2 Text" menu item.
+	"Send File...\0",
+	"Stop Sending File\0",			// Alternate to "Send File..." menu item.
+	"Receive File...\0",
+	"Stop Receiving File\0",		// Alternate to "Receive File..." menu item.
+	"Error opening file\0",
+
+	"\0"							// NOTE: NULL required to terminate the resource.
+END
+
+1100 XOPI							// XOPI - Describes general XOP properties to IGOR. 
+BEGIN
+	XOP_VERSION,					// Version number of host XOP system.
+	DEV_SYS_CODE,					// Code for development system used to make XOP.
+	0,								// Obsolete - set to zero.
+	0,								// Obsolete - set to zero.
+	XOP_TOOLKIT_VERSION				// XOP Toolkit version.
+END
+
+1100 XOPC							// Describes operations that the XOP adds to IGOR.
+BEGIN
+	"VDT2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTRead2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTWrite2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTReadWave2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTWriteWave2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTReadBinary2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTWriteBinary2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTReadBinaryWave2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTWriteBinaryWave2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTReadHex2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTWriteHex2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTReadHexWave2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTWriteHexWave2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTGetStatus2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTOpenPort2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTClosePort2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTTerminalPort2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTOperationsPort2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"VDTGetPortList2\0",
+	utilOp | XOPOp | compilableOp,
+
+	"\0"							// NOTE: NULL required to terminate the resource.
+END
+
+1100 XMI1							// Describes simple menu items added by XOP to built-in IGOR menus.
+BEGIN
+	8,								// Menu ID of built-in IGOR menu (Misc menu).
+	"VDT2\0",						// Text for menu item to be added.
+	100,							// Resource ID of 'MENU' resource in XOP for submenu to be attached to menu item or 0 for no submenu.
+	0,								// Menu item flags.
+	
+	// More sets of ID/text/ID/flags can appear here.
+
+	0,								// NOTE: 0 required to terminate the resource.
+END
+
+1100 XSM1							// Describes submenus added by XOP.
+BEGIN
+	101,							// Add submenu with resource ID 101 (Terminal Port submenu).
+	100,							// To menu with resource ID 100 (main VDT2 submenu).
+	5,								// To item 5 of menu.
+
+	102,							// Add submenu with resource ID 102 (Operations Port submenu).
+	100,							// To menu with resource ID 100.
+	12,								// To item 12 of menu.
+	
+	// More sets of ID/ID/itemNumber can appear here.
+
+	0,								// NOTE: 0 required to terminate the resource.
+END
+
+1 STR# 			// Status line help for first item in XMI1 resource.
+BEGIN
+	// This string is displayed when the menu item is enabled.
+	"VDT2 == 'Very Dumb Terminal'. Does serial port I/O and dumb terminal emulation.\0",
+	
+	// This string is displayed when the menu item is disabled.
+	"VDT2 == 'Very Dumb Terminal'. Does serial port I/O and dumb terminal emulation.\0",
+	
+	"\0"		// Marks end of resource.
+END
+
+IDR_MENU_VDT HMNU DISCARDABLE	// Status line help for menu.
+BEGIN
+	15,						// Number of items in the menu, including the menu title.
+	0,						// MENUHELP group. Always zero.
+
+	// Default help string resource number.
+	0,0,0L,					// There is no default help string for this menu.
+
+	// Pointers to MENUHELP resources for each item in the menu.
+	1,1,0L,					// Help for menu title is in MENUHELP resource 1.
+	1,2,0L,					// Help for menu item 1 is in MENUHELP resource 2.
+	1,3,0L,					// Help for menu item 2 is in MENUHELP resource 3.
+	1,4,0L,					// Help for menu item 3 is in MENUHELP resource 4.
+	1,5,0L,					// Help for menu item 4 is in MENUHELP resource 5.
+	1,6,0L,					// Help for menu item 5 is in MENUHELP resource 6.
+	1,7,0L,					// Help for menu item 6 is in MENUHELP resource 7.
+	1,8,0L,					// Help for menu item 7 is in MENUHELP resource 8.
+	1,9,0L,					// Help for menu item 8 is in MENUHELP resource 9.
+	1,10,0L,				// Help for menu item 9 is in MENUHELP resource 10.
+	1,11,0L,				// Help for menu item 10 is in MENUHELP resource 11.
+	1,12,0L,				// Help for menu item 11 is in MENUHELP resource 12.
+	1,13,0L,				// Help for menu item 12 is in MENUHELP resource 13.
+	1,14,0L,				// Help for menu item 13 is in MENUHELP resource 14.
+	1,15,0L,				// Help for menu item 14 is in MENUHELP resource 15.
+END
+
+1 MENUHELP DISCARDABLE		// Status line string for menu title.
+BEGIN
+	0L,						// No WinHelp item.
+	1L,						// This resource contains 1 string.
+	"VDT2 == 'Very Dumb Terminal'. Does serial port I/O and dumb terminal emulation.\0",
+END
+
+2 MENUHELP DISCARDABLE		// Status line string for menu item 1, "Open VDT2 Window".
+BEGIN
+	0L,						// No WinHelp item.
+	1L,						// This resource contains 1 string.
+	"Starts VDT2 if it is not running. Then opens VDT2 window. VDT2 does serial port I/O and dumb terminal emulation.\0",
+END
+
+3 MENUHELP DISCARDABLE		// Status line string for menu item 2, divider.
+BEGIN
+	0L,						// No WinHelp item.
+	1L,						// This resource contains 1 string.
+	"\0",
+END
+
+4 MENUHELP DISCARDABLE		// Status line string for menu item 3, "VDT2 Settings".
+BEGIN
+	0L,						// No WinHelp item.
+	1L,						// This resource contains 1 string.
+	"Displays a dialog in which you can select which port to use and set up the communications parameters for the port.\0",
+END
+
+5 MENUHELP DISCARDABLE		// Status line string for menu item 4, divider.
+BEGIN
+	0L,						// No WinHelp item.
+	1L,						// This resource contains 1 string.
+	"\0",
+END
+
+6 MENUHELP DISCARDABLE		// Status line string for menu item 5, "Terminal Port".
+BEGIN
+	0L,						// No WinHelp item.
+	1L,						// This resource contains 1 string.
+	"Determines the port used for dumb-terminal operations.\0",
+END
+
+7 MENUHELP DISCARDABLE		// Status line string for menu item 6, "Save File...".
+BEGIN
+	0L,						// No WinHelp item.
+	2L,						// This resource contains 2 strings.
+	"Saves the text in the VDT2 window in a file that you select.\0",
+	"Not available because the VDT2 window is not active or the terminal port is on line.\0",
+END
+
+8 MENUHELP DISCARDABLE		// Status line string for menu item 7, "Insert File...".
+BEGIN
+	0L,						// No WinHelp item.
+	2L,						// This resource contains 2 strings.
+	"Inserts data from a plain text file into the VDT2 window.\0",
+	"Not available because the VDT2 window is not active or the terminal port is on line.\0",
+END
+
+9 MENUHELP DISCARDABLE		// Status line string for menu item 8, "Send File...".
+BEGIN
+	0L,						// No WinHelp item.
+	2L,						// This resource contains 2 strings.
+	"Sends the contents of a plain text file that you select to the terminal port.\0",
+	"Not available because VDT2 is not running or no terminal port is selected or another operation is in progress.\0",
+END
+
+10 MENUHELP DISCARDABLE		// Status line string for menu item 9, "Receive File...".
+BEGIN
+	0L,						// No WinHelp item.
+	2L,						// This resource contains 2 strings.
+	"Puts characters received by the terminal port in a file that you select. Select again to stop.\0",
+	"Not available because VDT2 is not running or no terminal port is selected or another operation is in progress.\0",
+END
+
+11 MENUHELP DISCARDABLE		// Status line string for menu item 10, "Send Selected Text".
+BEGIN
+	0L,						// No WinHelp item.
+	2L,						// This resource contains 2 strings.
+	"Sends the selected text in the VDT2 window to the terminal port. If no selection, sends all text.\0",
+	"Not available because VDT2 is not running or no terminal port is selected or another operation is in progress.\0",
+END
+
+12 MENUHELP DISCARDABLE		// Status line string for menu item 11, divider.
+BEGIN
+	0L,						// No WinHelp item.
+	1L,						// This resource contains 1 string.
+	"\0",
+END
+
+13 MENUHELP DISCARDABLE		// Status line string for menu item 12, "Operations Port".
+BEGIN
+	0L,						// No WinHelp item.
+	1L,						// This resource contains 1 string.
+	"Determines the port used for command line operations like VDTRead2, VDTWrite2.\0",
+END

@@ -1,0 +1,182 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "windows.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,70,0,1
+ PRODUCTVERSION 6,2,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "This is IgorPro extension runs with Igor Pro 6.20 or later.\0"
+            VALUE "CompanyName", "WaveMetrics\0"
+            VALUE "FileDescription", "GBLoadWave\0"
+            VALUE "FileVersion", "1, 70, 0, 1\0"
+            VALUE "InternalName", "GBLoadWave\0"
+            VALUE "LegalCopyright", "Copyright 1994-2013\0"
+            VALUE "OriginalFilename", "GBLoadWave.xop\0"
+            VALUE "ProductName", "IGOR Pro GBLoadWave\0"
+            VALUE "ProductVersion", "6, 2, 0, 0\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+1260 DIALOG DISCARDABLE  0, 0, 320, 199
+STYLE WS_POPUP | WS_CAPTION
+CAPTION "Load General Binary Data"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "Do It",1,9,184,40,11
+    PUSHBUTTON      "Cancel",2,264,184,45,11
+    PUSHBUTTON      "To Cmd Line",3,55,184,61,11
+    PUSHBUTTON      "To Clip",4,124,184,48,11
+    EDITTEXT        5,9,164,303,13,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | ES_WANTRETURN | WS_VSCROLL | NOT WS_TABSTOP
+    PUSHBUTTON      "Help",6,222,184,34,11
+    GROUPBOX        "Input File",7,9,4,301,100
+    LTEXT           "Data Type:",8,20,16,35,8
+    COMBOBOX        9,59,14,88,100,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Format:",10,182,17,24,8
+    COMBOBOX        11,209,15,45,100,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Path:",12,20,86,17,8
+    COMBOBOX        13,41,84,81,100,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "File...",14,129,84,36,12
+    LTEXT           "Static",15,169,86,130,8			// File name appears here.
+    // Item 16 is underline on Mac, not used on Windows.
+    LTEXT           "Bytes to skip at start of file",17,22,34,83,8
+    EDITTEXT        18,109,32,38,13,ES_AUTOHSCROLL
+    LTEXT           "Number of arrays in file",19,32,50,74,11
+    EDITTEXT        20,109,48,38,13,ES_AUTOHSCROLL
+    LTEXT           "Number of points in array",21,26,66,80,11
+    EDITTEXT        22,109,64,38,13,ES_AUTOHSCROLL
+    LTEXT           "Byte order:",23,172,36,35,8
+    COMBOBOX        24,209,35,65,64,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CHECKBOX        "Points in file are interleaved",25,173,65,106,10
+
+    GROUPBOX        "Output Waves",26,9,110,301,45
+    CHECKBOX        "Overwrite existing waves",27,26,139,130,13
+    LTEXT           "Base name",28,183,124,37,8
+    EDITTEXT        29,222,122,55,13,ES_AUTOHSCROLL
+    CHECKBOX        "Scaling...",30,183,141,49,10
+    LTEXT           "Data Type:",31,20,124,36,8
+    COMBOBOX        32,57,123,90,100,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+END
+
+1261 DIALOG DISCARDABLE  0, 0, 182, 87
+STYLE WS_POPUP | WS_CAPTION
+CAPTION "Output Data Scaling"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",1,8,67,34,14
+    PUSHBUTTON      "Cancel",2,135,67,37,14
+    LTEXT           "Output data = (input data + offset) * multiplier",3,17, 8,147,8
+    LTEXT           "offset",4,37,25,21,8
+    EDITTEXT        5,61,23,49,13,ES_AUTOHSCROLL
+    LTEXT           "multiplier",6,28,45,28,8
+    EDITTEXT        7,61,44,49,13,ES_AUTOHSCROLL
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""winresrc.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""GBLoadWaveWinCustom.rc""\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    1260, DIALOG
+    BEGIN
+        RIGHTMARGIN, 315
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#include "GBLoadWaveWinCustom.rc"
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

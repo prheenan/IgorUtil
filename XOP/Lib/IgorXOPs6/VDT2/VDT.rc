@@ -1,0 +1,228 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "windows.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,1,4,0
+ PRODUCTVERSION 6,2,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "VDT2 is an Igor Pro extension. Requires Igor Pro 6.20 or later.\0"
+            VALUE "CompanyName", "WaveMetrics\0"
+            VALUE "FileDescription", "VDT2 is an Igor Pro extension.\0"
+            VALUE "FileVersion", "1, 14, 0, 0\0"
+            VALUE "InternalName", "VDT2\0"
+            VALUE "LegalCopyright", "Copyright 2002-2013\0"
+            VALUE "OriginalFilename", "VDT2.xop\0"
+            VALUE "ProductName", "WaveMetrics VDT2\0"
+            VALUE "ProductVersion", "6, 2, 0, 0\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDR_DIALOG_VDT_SETTINGS DIALOG DISCARDABLE  50, 25, 332, 188
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "VDT2 Settings"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",1,232,171,41,13
+    PUSHBUTTON      "Cancel",2,279,171,39,13
+    RTEXT           "Port:",3,19,8,17,9
+    COMBOBOX        4,39,6,80,172,CBS_DROPDOWNLIST | CBS_HASSTRINGS | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "This port is currently open",5,128,8,84,9
+    LTEXT           "This port is currently closed",6,128,8,88,9
+    CHECKBOX        "Open this port",7,39,23,58,11
+    CHECKBOX        "Close this port",8,39,23,78,11
+    LTEXT           "(Port will be opened when you click OK.)",9,128,24,129,
+                    10
+    LTEXT           "(Port will be closed when you click OK.)",10,128,24,130,
+                    10
+    CHECKBOX        "Use this port for terminal operations",11,39,36,124,11
+    CHECKBOX        "Use this port for command line operations",12,39,48,143,
+                    11
+    RTEXT           "Baud Rate:",13,39,69,37,8
+    COMBOBOX        14,79,68,58,150,CBS_DROPDOWNLIST | CBS_HASSTRINGS | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Input Handshaking:",15,180,69,63,8
+    COMBOBOX        16,246,68,58,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Data Length:",17,34,87,42,8
+    COMBOBOX        18,79,86,58,93,CBS_DROPDOWNLIST | CBS_HASSTRINGS | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Output Handshaking:",19,175,87,68,8
+    COMBOBOX        20,246,86,58,75,CBS_DROPDOWNLIST | CBS_HASSTRINGS | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Stop Bits:",21,45,105,31,8
+    COMBOBOX        22,79,104,58,77,CBS_DROPDOWNLIST | CBS_HASSTRINGS | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Input Buffer Size:",23,188,106,55,8
+    EDITTEXT        24,246,105,42,12,ES_AUTOHSCROLL
+    RTEXT           "Parity:",25,56,122,20,8
+    COMBOBOX        26,79,121,58,60,CBS_DROPDOWNLIST | CBS_HASSTRINGS | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Local Echo:",27,38,147,39,8
+    COMBOBOX        28,80,146,58,43,CBS_DROPDOWNLIST | CBS_HASSTRINGS | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Terminal EOL:",29,152,147,47,8
+    COMBOBOX        30,202,146,58,43,CBS_DROPDOWNLIST | CBS_HASSTRINGS | 
+                    WS_VSCROLL | WS_TABSTOP
+    CHECKBOX        "Save setup with experiment",31,16,172,101,13
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""winresrc.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""VDTWinCustom.rc""\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU_VDT MENU DISCARDABLE 
+BEGIN
+    POPUP "VDT2"
+    BEGIN
+        MENUITEM "Open VDT2 Window",            ID_VDT_OPENVDTWINDOW
+        MENUITEM SEPARATOR
+        MENUITEM "VDT2 Settings...",            ID_VDT_VDTSETTINGS
+        MENUITEM SEPARATOR
+        MENUITEM "Terminal Port",               ID_VDT_TERMINALPORT
+        MENUITEM "Save File...",                ID_VDT_SAVEFILE, GRAYED
+        MENUITEM "Insert File...",              ID_VDT_INSERTFILE, GRAYED
+        MENUITEM "Send File...",                ID_VDT_SENDFILE, GRAYED
+        MENUITEM "Receive File...",             ID_VDT_RECEIVEFILE, GRAYED
+        MENUITEM "Send Selected Text",          ID_VDT_SENDSELECTEDTEXT
+        , GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Operations Port",             ID_VDT_OPERATIONSPORT
+        MENUITEM SEPARATOR
+        MENUITEM "VDT2 Help",            		ID_VDT_HELP
+    END
+END
+
+IDR_MENU_TERMINAL_PORT MENU DISCARDABLE 
+BEGIN
+    POPUP "Terminal Port"
+    BEGIN
+        MENUITEM "COM1",                        ID_TERMINALPORT_COM1
+        MENUITEM "COM2",                        ID_TERMINALPORT_COM2
+        MENUITEM "COM3",                        ID_TERMINALPORT_COM3
+        MENUITEM "COM4",                        ID_TERMINALPORT_COM4
+        MENUITEM "COM5",                        ID_TERMINALPORT_COM5
+        MENUITEM "COM6",                        ID_TERMINALPORT_COM6
+        MENUITEM "COM7",                        ID_TERMINALPORT_COM7
+        MENUITEM "COM8",                        ID_TERMINALPORT_COM8
+    //  MENUITEM "LPT1",                        ID_TERMINALPORT_LPT1
+    //  MENUITEM "LPT2",                        ID_TERMINALPORT_LPT2
+        MENUITEM SEPARATOR
+        MENUITEM "Off Line",                    ID_TERMINALPORT_OFFLINE
+        , CHECKED
+    END
+END
+
+IDR_MENU_OPERATIONS_PORT MENU DISCARDABLE 
+BEGIN
+    POPUP "Operations Port"
+    BEGIN
+        MENUITEM "COM1",                        ID_OPERATIONSPORT_COM1
+        MENUITEM "COM2",                        ID_OPERATIONSPORT_COM2
+        MENUITEM "COM3",                        ID_OPERATIONSPORT_COM3
+        MENUITEM "COM4",                        ID_OPERATIONSPORT_COM4
+        MENUITEM "COM5",                        ID_OPERATIONSPORT_COM5
+        MENUITEM "COM6",                        ID_OPERATIONSPORT_COM6
+        MENUITEM "COM7",                        ID_OPERATIONSPORT_COM7
+        MENUITEM "COM8",                        ID_OPERATIONSPORT_COM8
+    //  MENUITEM "LPT1",                        ID_OPERATIONSPORT_LPT1
+    //  MENUITEM "LPT2",                        ID_OPERATIONSPORT_LPT2
+        MENUITEM SEPARATOR
+        MENUITEM "Off Line",                    ID_OPERATIONSPORT_OFFLINE
+        , CHECKED
+    END
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#include "VDTWinCustom.rc"
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

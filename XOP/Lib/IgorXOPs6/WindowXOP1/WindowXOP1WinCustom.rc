@@ -1,0 +1,49 @@
+/*	XOP-specific resources for WindowXOP1 on Windows
+
+	This file is compiled by the resource compiler and creates XOP-specific
+	resources that IGOR looks for in an XOP module.
+*/
+
+#include "XOPResources.h"			// Defines XOP-specific symbols.
+
+/* Custom error messages */
+1100 STR#
+BEGIN
+	"WindowXOP1 requires Igor Pro 6.20 or later.\0",		// OLD_IGOR
+
+	"\0"							// NOTE: NULL required to terminate the resource.
+END
+
+1100 XOPI							// XOPI - Describes general XOP properties to IGOR. 
+BEGIN
+	XOP_VERSION,					// Version number of host XOP system.
+	DEV_SYS_CODE,					// Code for development system used to make XOP.
+	0,								// Obsolete - set to zero.
+	0,								// Obsolete - set to zero.
+	XOP_TOOLKIT_VERSION				// XOP Toolkit version.
+END
+
+/*	XOP has no command line operations */
+
+1100 XMI1							// Describes simple menu items added by XOP to built-in IGOR menus.
+BEGIN
+	8,								// Add item to menu with ID=8 (Misc menu).
+	"WindowXOP1\0",					// This is text for added menu item.
+	0,								// This item has no submenu.
+	0,								// Flags field.
+
+	// More sets of ID/text/ID/flags can appear here.
+
+	0,								// NOTE: 0 required to terminate the resource.
+END
+
+1 STR# 			// Status line help for first item in XMI1 resource.
+BEGIN
+	// This string is displayed when the menu item is enabled.
+	"WindowXOP1 is a sample XOP that illustrates adding a simple window to Igor.\0",
+	
+	// This string is displayed when the menu item is disabled.
+	"WindowXOP1 is a sample XOP that illustrates adding a simple window to Igor.\0",
+	
+	"\0"		// Marks end of resource.
+END

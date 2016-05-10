@@ -1,0 +1,62 @@
+/*	SimpleLoadWave.rc -- resources for SimpleLoadWave on Windows
+
+	This file is compiled by the resource compiler and creates XOP-specific
+	resources that IGOR looks for in an XOP module.
+*/
+
+#include "XOPResources.h"			// Defines XOP-specific symbols.
+
+/* Custom error messages */
+1100 STR#
+BEGIN
+	"This is not a tab-delimited TEXT file.\0",						// IMPROPER_FILE_TYPE
+	"Could not find at least one row of wave data in the file.\0",	// NO_DATA
+	"Expected name of tab-delimited TEXT file.\0",					// EXPECTED_TD_FILE
+	"Expected base name for new waves.\0",							// EXPECTED_BASENAME
+	"SimpleLoadWave requires Igor Pro 6.20 or later.\0",			// OLD_IGOR
+
+	// More error messages can appear here.
+	
+	"\0"							// NOTE: NULL required to terminate the resource.
+END
+
+/* Menu specification for XOP */
+1100 XMI1							// Describes simple menu items added by XOP to built-in IGOR menus.
+BEGIN
+	50,									// IGOR menu ID (Data:Load Data submenu).
+	"Load Simple Delimited File...\0",	// Text of item to add to IGOR menu.
+	0,									// Resource ID of 'MENU' resource in XOP for submenu to be attached to menu item or 0 for no submenu.
+	0,								// Menu item flags.
+	
+	// More sets of ID/text/ID/flags can appear here.
+
+	0,								// NOTE: 0 required to terminate the resource.
+END
+
+1 STR# 				// Status line help for first item in XMI1 resource.
+BEGIN
+	// The first string is displayed when the menu item is enabled.
+	"Loads data from simple delimited text files into Igor waves.\0",
+	
+	// The second string is displayed when the menu item is disabled.
+	"Loads data from simple delimited text files into Igor waves.\0",
+
+	"\0"							// NOTE: Null required to terminate the resource.
+END
+
+1100 XOPI							// XOPI - Describes general XOP properties to IGOR. 
+BEGIN
+	XOP_VERSION,					// Version number of host XOP system.
+	DEV_SYS_CODE,					// Code for development system used to make XOP.
+	0,								// Obsolete - set to zero.
+	0,								// Obsolete - set to zero.
+	XOP_TOOLKIT_VERSION				// XOP Toolkit version.
+END
+
+1100 XOPC							// Describes operations that the XOP adds to IGOR.
+BEGIN
+	"SimpleLoadWave\0",
+	utilOp | XOPOp | compilableOp,
+
+	"\0"							// NOTE: NULL required to terminate the resource.
+END
