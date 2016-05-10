@@ -10,15 +10,18 @@
 static void
 DoWave(waveHndl waveH)
 {
-	float *fDataPtr;	// Pointer to single-precision floating point wave data.
-	double *dDataPtr;	// Pointer to double-precision floating point wave data.
+        // Pointer to single-precision floating point wave data.
+	float *fDataPtr;
+	// Pointer to double-precision floating point wave data.
+	double *dDataPtr;	
 	CountInt numPoints;
 	IndexInt point;
-	
-	numPoints = WavePoints(waveH);					// Number of points in wave.
+	// Number of points in wave.
+	numPoints = WavePoints(waveH);					
 	switch (WaveType(waveH)) {
 		case NT_FP32:
-			fDataPtr = (float*)WaveData(waveH);		// DEREFERENCE - we must not cause heap to scramble.
+    		        // DEREFERENCE - we must not cause heap to scramble.
+			fDataPtr = (float*)WaveData(waveH);		
 			for (point = 0; point < numPoints; point++) {
 				*fDataPtr += 1.0;
 				fDataPtr += 1;
@@ -26,7 +29,8 @@ DoWave(waveHndl waveH)
 			break;
 
 		case NT_FP64:
-			dDataPtr = (double*)WaveData(waveH);		// DEREFERENCE - we must not cause heap to scramble.
+		        // DEREFERENCE - we must not cause heap to scramble.
+			dDataPtr = (double*)WaveData(waveH);		
 			for (point = 0; point < numPoints; point++) {
 				*dDataPtr += 1.0;
 				dDataPtr += 1;
@@ -44,12 +48,16 @@ static int
 XOP1(waveHndl waveH)			// Handle to data structure describing wave.
 {
 	switch (WaveType(waveH)) {
-		case NT_FP32:				// Single precision floating point.
-		case NT_FP64:				// Double precision floating point.
+		case NT_FP32:
+		  // Single precision floating point.
+		case NT_FP64:
+		  // Double precision floating point.
 			break;
-		case TEXT_WAVE_TYPE:			// Don't handle text waves.
+		case TEXT_WAVE_TYPE:
+		  // Don't handle text waves.
 			return NO_TEXT_OP;
-		default:				// Don't handle complex or integer for now.
+		default:
+		  // Don't handle complex or integer for now.
 			return NT_FNOT_AVAIL;
 	}
 	
@@ -57,8 +65,11 @@ XOP1(waveHndl waveH)			// Handle to data structure describing wave.
 	return 0;
 }
 
-#pragma pack(2)			// All structures passed to Igor are two-byte aligned.
-struct XOP1RuntimeParams {	// We receive this structure from Igor when our operation is invoked.
+// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)
+
+struct XOP1RuntimeParams {
+  // We receive this structure from Igor when our operation is invoked.
 	// Flag parameters (none).
 	
 	// Main params.
@@ -69,8 +80,10 @@ struct XOP1RuntimeParams {	// We receive this structure from Igor when our opera
 	int main1ParamsSet[1];
 
 	// These are postamble fields that Igor sets.
-	int calledFromFunction;		// 1 if called from a user function, 0 otherwise.
-	int calledFromMacro;		// 1 if called from a macro, 0 otherwise.
+	int calledFromFunction;
+  // 1 if called from a user function, 0 otherwise.
+	int calledFromMacro;
+  // 1 if called from a macro, 0 otherwise.
 };
 typedef struct XOP1RuntimeParams XOP1RuntimeParams;
 typedef struct XOP1RuntimeParams* XOP1RuntimeParamsPtr;
@@ -86,36 +99,44 @@ typedef struct XOP1RuntimeParams* XOP1RuntimeParamsPtr;
 extern "C" int
 ExecuteXOP1(XOP1RuntimeParamsPtr p)
 {
-	waveHndl waveH;				// Handle to wave's data structure.
+  // Handle to wave's data structure.
+	waveHndl waveH;				
 	int result;
 	
 	// Get parameters.
 	if (p->main1ParamsSet[0] == 0)
-		return NOWAV;			// Wave parameter was not specified.
+	  // Wave parameter was not specified.
+		return NOWAV;			
 	waveH = p->waveH;
 	if (waveH == NULL)
-		return NOWAV;			// User specified a non-existent wave.
+	  // User specified a non-existent wave.
+		return NOWAV;			
 
 	// Do the operation.
 	result = XOP1(waveH);
 	if (result == 0)
-		WaveHandleModified(waveH);	// Tell Igor to update wave in graphs/tables.
+	  // Tell Igor to update wave in graphs/tables.
+		WaveHandleModified(waveH);	
 
 	return result;
 }
 
 static int
-RegisterXOP1(void)		// Called at startup to register this operation with Igor.
+// Called at startup to register this operation with Igor.
+RegisterXOP1(void)		
 {
 	const char* cmdTemplate;
 	const char* runtimeNumVarList;
 	const char* runtimeStrVarList;
 
-	// NOTE: If you change this template, you must change the XOP1RuntimeParams structure as well.
+	// NOTE: If you change this template, you must change the
+	// XOP1RuntimeParams structure as well.
 	cmdTemplate = "XOP1 wave";
 	runtimeNumVarList = "";
 	runtimeStrVarList = "";
-	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(XOP1RuntimeParams), (void*)ExecuteXOP1, 0);
+	return RegisterOperation(cmdTemplate, runtimeNumVarList,
+				 runtimeStrVarList, sizeof(XOP1RuntimeParams),
+				 (void*)ExecuteXOP1, 0);
 }
 
 static int
@@ -152,19 +173,24 @@ XOPEntry(void)
 
 	This is the initial entry point through which the Igor calls XOP.
 	
-	XOPMain does any necessary initialization and then sets the XOPEntry field of the
-	ioRecHandle to the address to be called for future messages.
+	XOPMain does any necessary initialization and then sets the XOPEntry 
+	field of the ioRecHandle to the address to be called for future messages
 */
 HOST_IMPORT int
 XOPMain(IORecHandle ioRecHandle)
 {
 	int result;
+
+	// Do standard XOP initialization.
+	XOPInit(ioRecHandle);
+	// Set entry point for future calls.
+	SetXOPEntry(XOPEntry);			
 	
-	XOPInit(ioRecHandle);			// Do standard XOP initialization.
-	SetXOPEntry(XOPEntry);			// Set entry point for future calls.
-	
-	if (igorVersion < 620) {		// Requires Igor Pro 6.20 or later.
-		SetXOPResult(OLD_IGOR);		// OLD_IGOR is defined in XOP1.h and there are corresponding error strings in XOP1.r and XOP1WinCustom.rc.
+	if (igorVersion < 620) {
+	  // Requires Igor Pro 6.20 or later.
+	  // OLD_IGOR is defined in XOP1.h and there are corresponding error
+	  // strings in XOP1.r and XOP1WinCustom.rc.
+		SetXOPResult(OLD_IGOR);		
 		return EXIT_FAILURE;
 	}
 
@@ -177,5 +203,4 @@ XOPMain(IORecHandle ioRecHandle)
 	return EXIT_SUCCESS;
 }
 
-    Home Products User Resources Support Order News Search 
 
