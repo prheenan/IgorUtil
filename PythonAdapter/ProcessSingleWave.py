@@ -219,6 +219,14 @@ class WaveObj:
     def SetName(self,NewName):
         self.Note["Name"]= NewName
         self.name = NewName
+    def ImagePixelSize(self):
+        """
+        Returns the pixel size (in meters; side of a pixel) for this,
+        *assuming* the wave is an image. XXX assume square images
+        """
+        size_in_meters = self.Note["ScanSize"]
+        num_scan_points = self.Note["ScanPoints"]
+        return size_in_meters/num_scan_points
     def Name(self):
         return self.Note["Name"]
     def SpringConstant(self):
@@ -370,6 +378,14 @@ def NotesEqual(note1,note2):
     return len(mDict.values()) == 0
 
 def GetWaveName(mWave):
+    """
+    Given a WaveRecord, returns the wave name
+
+    Args:
+        MWave: See ValidName
+    Returns:
+        String of wave name
+    """
     WaveStruct =  GetWaveStruct(mWave)
     header = GetHeader(WaveStruct)
     name = GetWaveNameFromHeader(header)
