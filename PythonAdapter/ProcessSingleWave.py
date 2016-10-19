@@ -67,8 +67,8 @@ def SafeConvertValue(NoteStr):
         NoteStr: note value (e.g. '1.2176' or some such)
 
     Returns:
-        A dictionary of (name,value) tuples of the single wave.
-    """    
+        the safely converted values
+    """
     try:
         return float(NoteStr)
     except ValueError:
@@ -100,12 +100,21 @@ def GetNote(wavestruct):
     ProcessLine = lambda x: tuple([SafeConvertValue(y.strip()) for y in
                                    x.rstrip().split(NOTE_DELIM,maxSplit)])
     # turn the tuples into a dictionary
-    tuples = [ProcessLine(line) for line in mNote]
+    tuples = []
+    for line in mNote:
+        tup = ProcessLine(line)
+        # need a <key,value> pair. probably not the most efficient way of doing
+        # things..
+        if len(tup) == 1:
+            tup = tuple([tup[0],""])
+        tuples.append(tup)
+    # make sure all the values have length at least one
     # XXX may want to check for NOTE_DELIM on each string
     if (len(tuples) == 0):
         return dict()
     # POST: actually have some tuples
-    return dict(tuples)
+    ToRet =  dict(tuples)
+    return ToRet
 
 
 def GetHeader(WaveStruct):
@@ -161,7 +170,12 @@ class WaveObj:
             # get the associated data, reshape it to numRows x 1
             dat = WaveStruct['wData']
             numPoints = dat.size
-            self.DataY = dat.reshape(numPoints)
+            if (len(dat.shape) == 1):
+                # for 1-D waves, reshape so Nx1
+                self.DataY = dat.reshape(numPoints,-1)
+            else:
+                # for higher-D waves, just copy it
+                self.DataY = dat.copy()
             self.name = GetWaveNameFromHeader(header)
             # save all the other informaton...
             self.Note["UnitsY"] = unitsY
@@ -354,6 +368,12 @@ def NotesEqual(note1,note2):
     # etc.
     mDict = GetNoteMismatch(note1,note2)
     return len(mDict.values()) == 0
+
+def GetWaveName(mWave):
+    WaveStruct =  GetWaveStruct(mWave)
+    header = GetHeader(WaveStruct)
+    name = GetWaveNameFromHeader(header)
+    return name
     
 def ValidName(mWave):
     """  
@@ -365,9 +385,7 @@ def ValidName(mWave):
     Returns:
         if the wave has a 'correct' name
     """
-    WaveStruct =  GetWaveStruct(mWave)
-    header = GetHeader(WaveStruct)
-    name = GetWaveNameFromHeader(header)
+    name = GetWaveName(mWave)
     # loop through each extension, return true on a match
     for ext in DATA_EXT:
         if name.lower().endswith(ext.lower()):

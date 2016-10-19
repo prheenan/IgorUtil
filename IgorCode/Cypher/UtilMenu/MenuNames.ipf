@@ -4,6 +4,10 @@
 #pragma ModuleName = ModMenuNames
 
 
+Static Structure MenuObject
+
+End Structure
+
 // Below are functions returning important control names
 Static Function /S MasterScanSize()
 	return "ScanSizeSetVar_0"

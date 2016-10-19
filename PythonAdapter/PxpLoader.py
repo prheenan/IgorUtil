@@ -33,13 +33,44 @@ def LoadPxpFilesFromDirectory(directory):
         d.extend(LoadAllWavesFromPxp(f))
     return d
 
-def LoadAllWavesFromPxp(filepath):
+def IsValidFec(Record):
+    """
+    Args:
+        Wave: igor WaveRecord type
+    Returns:
+        True if the waves is consistent with a FEC
+    """
+    return ProcessSingleWave.ValidName(Record.wave)
+
+def IsValidImage(Record):
+    """
+    Returns true if this wave appears to be a valid image
+
+    Args:
+        See IsValidFEC
+    """
+    Wave = Record.wave
+    # check if the name matches
+    Name = ProcessSingleWave.GetWaveName(Wave)
+    Numbers = 4
+    pattern = re.compile("^[0-9]{4}$")
+    if (not pattern.match(Name[-Numbers:])):
+        return False
+    # now we need to check the dimensionality of the wave
+    WaveStruct =  ProcessSingleWave.GetWaveStruct(Wave)
+    header = ProcessSingleWave.GetHeader(WaveStruct)
+    dat = WaveStruct['wData']
+    ToRet = len(dat.shape) == 3
+    return ToRet
+
+def LoadAllWavesFromPxp(filepath,ValidFunc=IsValidFec):
     """
     Given a file path to an igor pxp file, loads all waves associated with it
 
     Args:
         filepath: path to igor pxp file
-    
+        ValidFunc: takes in a record, returns true if we wants it. defaults to
+        all FEC-valid ones
     Returns:
         list of WaveObj (see ParseSingleWave), containing data and metadata
     """
@@ -49,17 +80,12 @@ def LoadAllWavesFromPxp(filepath):
     for i,record in enumerate(records):
         # if this is a wave with a proper name, go for it
         if isinstance(record, WaveRecord):
-            mWave =record.wave
             # determine if the wave is something we care about
-            if (not ProcessSingleWave.ValidName(mWave)):
+            if (not ValidFunc(record)):
                 continue
             # POST: have a valid name
-            try:
-                WaveObj = ProcessSingleWave.WaveObj(record=mWave,
-                                                    SourceFile=filepath)
-            except ValueError as e:
-                # strange tuple error?
-                continue
+            WaveObj = ProcessSingleWave.WaveObj(record=record.wave,
+                                                SourceFile=filepath)
             mWaves.append(WaveObj)
     return mWaves
 
