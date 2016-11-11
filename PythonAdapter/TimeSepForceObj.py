@@ -97,9 +97,15 @@ class TimeSepForceObj:
     @property
     def Force(self):
         """
-        Returns the (high resolution) separation
+        Returns the (low resolution) force
         """
         return self.LowResData.force
+    @property
+    def ZSnsr(self):
+        """
+        Returns the (low resolution) zsnsr
+        """
+        return self.LowResData.Zsnsr
     @property
     def SpringConstant(self):
         return self.LowResData.meta.SpringConstant

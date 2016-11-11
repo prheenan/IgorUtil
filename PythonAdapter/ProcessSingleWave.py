@@ -95,10 +95,13 @@ def GetNote(wavestruct):
     # we only want the first split; anything else is data (e.g. Time might
     # be like 3:10:50PM, dont want to split terribly)
     maxSplit=1
+    # first remove robs formatting (replace ; by nothing, = by :)
     # strip out all the whitespace, split by colons, split all whitespace in
     # each name/value,then convert (ie: maybe a float)
+    Sanit = lambda x: x.replace(";","").replace("=",":").rstrip().\
+            split(NOTE_DELIM,maxSplit)
     ProcessLine = lambda x: tuple([SafeConvertValue(y.strip()) for y in
-                                   x.rstrip().split(NOTE_DELIM,maxSplit)])
+                                   Sanit(x)])
     # turn the tuples into a dictionary
     tuples = []
     for line in mNote:
@@ -172,7 +175,7 @@ class WaveObj:
             numPoints = dat.size
             if (len(dat.shape) == 1):
                 # for 1-D waves, reshape so Nx1
-                self.DataY = dat.reshape(numPoints,-1)
+                self.DataY = dat.reshape(numPoints)
             else:
                 # for higher-D waves, just copy it
                 self.DataY = dat.copy()
@@ -224,17 +227,33 @@ class WaveObj:
         Returns the pixel size (in meters; side of a pixel) for this,
         *assuming* the wave is an image. XXX assume square images
         """
-        size_in_meters = self.Note["ScanSize"]
+        ScanString = self.Note["ScanSize"]
+        try:
+            size_in_meters = float(ScanString)
+        except ValueError:
+            # can have prolblems parsing string...
+            size_in_meters = float(ScanString.split("@")[0])
         num_scan_points = self.Note["ScanPoints"]
-        return size_in_meters/num_scan_points
+        return float(size_in_meters)/float(num_scan_points)
     def Name(self):
         return self.Note["Name"]
     def SpringConstant(self):
-        return self.Note["SpringConstant"]
+        try:
+            return self.Note["SpringConstant"]
+        except KeyError:
+            return self.Note["K"]
     def Invols(self):
-        return self.Note["InvOLS"]
+        try:
+            return self.Note["InvOLS"]
+        except KeyError:
+            # Rob
+            return self.Note["Invols"]
     def DeltaX(self):
-        return 1./self.Note["NumPtsPerSec"]
+        try:
+            return 1./self.Note["NumPtsPerSec"]
+        except KeyError:
+            # Rob
+            return 1./self.Note["SamplingRate"]
     def GetXArray(self):
         """
         Returns the x array, based on deltaX and the length

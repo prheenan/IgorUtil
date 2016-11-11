@@ -662,6 +662,14 @@ Static Function AddColor(def,ToAdd,index)
 End Function
 
 Static Function /S GetUniFigName(name)
+	// Given a name for a figure, gets a unique version of it 
+	//
+	// Args:
+	//		name: base name
+	//		
+	// Returns:
+	//		unique name for the figure
+	//
 	String name
 	// 0 is starting index
 	return UniqueName(name,DEF_UNINAME_GRAPH,0)
@@ -669,6 +677,16 @@ End Function
 
 // Returns a new display window, returns the unique name
 Static Function /S Figure([name,heightIn,widthIn,hide])
+	// Makes a new figure, returns its handle
+	//
+	// Args:
+	//		name: name of the figure (defaults to unique default)
+	//		heightIn: the height in inches
+	//		widthIn: the width in inches
+	//		hide: if true, hides the graph (default)
+	// Returns:
+	//		name/handle to the figure
+	//
 	// XXX give figure struct?
 	String name
 	Variable heightIn,widthIn,hide
@@ -687,16 +705,26 @@ Static Function /S Figure([name,heightIn,widthIn,hide])
 	return name
 End Function
 
-Static Function Title(TitleStr,[xOffset,yOffset,graphName,Location,fontSize,frameOpt])
+Static Function Title(TitleStr,[xOffset,yOffset,graphName,Location,fontSize])
+	// Makes a tite; overwrites the existing text box, if one exists
+	//
+	// Args:
+	//		TitleStr: what the tite should say
+	//		xoffset: for the title, in units textbox understands
+	//	 	yOffset: for the title, in units textbox understands
+	//		graphName: which graph to put the title on 
+	//		fontSIze: size of the font
+	// Returns:
+	//		Nothing
+	//
 	String TitleStr,graphName,Location
-	Variable fontSize,frameOpt,xOffset,yOffset
+	Variable fontSize,xOffset,yOffset
 	xOffset= ParamIsDefault(xOffset) ? 0 : xOffset
 	yOffset= ParamIsDefault(yOffset) ? 0 : yOffset
 	fontSize = ParamIsDefault(fontSize) ? DEF_FONT_TITLE : fontSize
-	//frameOpt = ParamIsDefault(frameOpt) ? DEF_TBOX_FRAME : frameOpt
-	//if (ParamIsDefault(graphName))
-	//	graphName = gcf()
-	//EndIf
+	if (ParamIsDefault(graphName))
+		graphName = gcf()
+	EndIf
 	// Add the font size to the title string
 	sprintf titleStr,"\\Z%d%s",fontSize,TitleStr
 	// Textbox: V-711, pp 711 of igormanual
@@ -705,7 +733,7 @@ Static Function Title(TitleStr,[xOffset,yOffset,graphName,Location,fontSize,fram
 	// C: Overwrite existing
 	// N: name
 	// A: location (MT: middle top)
-	TextBox /Y=(yoffset)/E=2/B=1/C/N=text1/F=0/A=MT(titleStr)
+	TextBox /X=(xOffset)/Y=(yoffset)/E=2/B=1/C/N=text1/F=0/A=MT(titleStr)
 End Function
 
 Static Function BeautifyAxisLabels(WindowName,WhichAxis,[FontSize])
@@ -1262,7 +1290,9 @@ Static Function /S Mu()
 End Function
 
 Static Function ClearAllGraphs()
-	// Get every window
+	// Closes every open graph window we can find
+	// Args: None
+	// Returns: None
 	String mSep = ModDefine#DefListSep()
 	String mList = WinList("*",mSep,WINLIST_GRAPHS)
 	Variable nWIn = ItemsInList(mList,mSep)
@@ -1274,6 +1304,45 @@ Static Function ClearAllGraphs()
 		KillWindow $(tmpWindow)
 	EndFor
 End Function
+
+Static Function clf()	
+	//	 Just clears all the graphs we can find; syntactic sugar
+	ClearAllGraphs()
+End Function
+
+Static Function TightAxes([fig,points])
+	// Reduces the margins to the same value for the given figure. Probably want to do this *after* other formatting
+	//
+	// Args:
+	//		ax: what axis to use
+	// Returns:
+	//	 	Nothing
+	String fig
+	Variable points
+	if (ParamIsDefault(fig))
+		fig = gcf()
+	EndIf
+	if (ParamIsDefault(points))
+		points=2
+	EndIf
+	ModifyGraph /W=$(fig) margin(left)=points,margin(bottom)=points,margin(top)=points,margin(right)=points
+End Function
+
+Static Function AxisOff([ax])
+	// Turns off the x and y axis (ie: ticks and such)
+	//
+	// Args:
+	//		ax: what axis to use
+	// Returns:
+	//	 	Nothing
+	String ax 
+	if (ParamIsDefault(ax))
+		ax = gcf()
+	EndIf
+	ModifyGraph /W=$(ax) mirror(bottom)=0,nticks(bottom)=0,sep(bottom)=1, axThick(bottom)=0
+	ModifyGraph  /W=$(ax) mirror(left)=0,nticks(left)=0,sep(left)=1,axThick(left)=0
+End Function
+	
 
 Static Function SubplotLoc(nRows,nCols,number,leftWin,topWin,rightWin,bottomWin,left,top,right,bottom)
 	Variable nRows,nCols,number,leftWin,topWin,rightWin,bottomWin
