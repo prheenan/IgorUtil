@@ -65,22 +65,23 @@ Static Function Main()
 	Variable yOffsetPct = 60
 	Variable xOffset = -2.1
 	Variable XOffPct = -5
-	ScaleBar("XFEC",xOffset+59.9,xOffset+62,yOffset+20,yOffset+20,"2nm",XOffPct+-28,YOffsetPct+30,0)
-	ScaleBar("YFEC",xOffset+60,xOffset+60,yOffset+20,yOffset+25,"5pN",XOffPct+-40,YOffsetPct+5,90)
+	ScaleBar("XFEC",xOffset+59.9,xOffset+62,yOffset+22,yOffset+22,"2nm",XOffPct+-28,YOffsetPct+23,0)
+	ScaleBar("YFEC",xOffset+60,xOffset+60,yOffset+22,yOffset+24,"2pN",XOffPct+-40,YOffsetPct+5,90)
 	ModPlotUtil#AxisOff()
 	ModPlotUtil#TightAxes(points_left=30,points_bottom=15)
 	// Add arrows. First, the outgoing
 	Variable  ArrowSharp=0.0,Arrow=1,ArrowLen=10,linethick=3,arrowfat=1
 	SetDrawEnv arrow=Arrow,arrowlen=ArrowLen,linethick=linethick,arrowfat=arrowfat,save
 	SetDrawEnv arrowsharp= ArrowSharp,linefgc=(65535,37029,37029), save
-	DrawLine 0.1,0.2,0.3,0.0
+	DrawLine 0.1,0.25,0.3,0.05
 	// Next , the incoming 
 	SetDrawEnv arrow=Arrow,arrowlen=ArrowLen,linethick=linethick,arrowfat=arrowfat,save
 	SetDrawEnv arrowsharp= ArrowSharp,linefgc=(49151,53155,65535), save
-	DrawLine 0.8,0.15,0.6,0.3
+	DrawLine 0.8,0.15,0.6,0.35
 	Variable Rotation=0,fontsize=20,factor_caption=2
 	// Make a slightly bigger caption...
-	pTextBox(Rotation,-45,5,fontsize*factor_caption,"A")
+	Variable CaptionX = -45,CaptionY=-2
+	pTextBox(Rotation,CaptionX,CaptionY,fontsize*factor_caption,"A")
 	String EnergyPlot=ModPlotUtil#Subplot(1,2,2)
 	ModPlotUtil#Plot(LandscapeY,mX=LandscapeX,color="g",alpha=0.3)
 	ModPlotUtil#YLim(0,5,graphname=EnergyPlot)
@@ -93,10 +94,10 @@ Static Function Main()
 	ModPlotUtil#AxisOff()
 	ModPlotUtil#TightAxes(points_left=40,points_bottom=35)
 	// put in the arrows
-	pTextBox(Rotation,-25,20,fontsize,"Folded")
-	pTextBox(Rotation,34,20,fontsize,"Unfolded")
-	pTextBox(Rotation,-45,5,fontsize*factor_caption,"B")
-	ModPlotUtil#SaveFig(savename=(InDir + "Copy"),saveAsPxp=1,closeFig=0,figname=fig)
-	ModPlotUtil#SaveFig(savename=(InDir + "Copy"),saveAsPxp=0,closeFig=0,figname=fig)
+	pTextBox(Rotation,-20,20,fontsize,"Folded")
+	pTextBox(Rotation,30,20,fontsize,"Unfolded")
+	pTextBox(Rotation,CaptionX,CaptionY,fontsize*factor_caption,"B")
+	ModPlotUtil#SaveFig(savename=(InDir + "RNA_IWT"),saveAsPxp=1,closeFig=0,figname=fig)
+	ModPlotUtil#SaveFig(savename=(InDir + "RNA_IWT"),saveAsPxp=0,closeFig=0,figname=fig)
 
 End Function
