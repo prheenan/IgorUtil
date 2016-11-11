@@ -36,8 +36,8 @@ Static Function Main()
 	ModIoUtil#LoadFile(InDir + "Fold.txt")
 	ModIoUtil#LoadFile(InDir + "UnFold.txt")
 	ModIoUtil#LoadFile(InDir + "Landscape.txt")
-	Wave Folded= $("wave0")
-	Wave Unfolded= $("wave1")
+	Wave Folded= $("wave1")
+	Wave Unfolded= $("wave0")
 	Wave Landscape = $("wave2")
 	// Get all the components...ugh
 	Make /O/N=(DimSize(Folded,0)) FoldedX,FoldedY 
@@ -54,15 +54,22 @@ Static Function Main()
 	ModPlotUtil#Subplot(1,2,1)
 	ModPlotUtil#Plot(FoldedY,mX=FoldedX,color="r",soften=1,alpha=0.3)
 	ModPlotUtil#Plot(UnfoldedY,mX=UnfoldedX,color="b",soften=1,alpha=0.3)
-	ScaleBar("XFEC",61,63,25,25,"2nm",-28,0,0)
+	Make /O/T labels = {"Unfolding","Refolding"}
+	ScaleBar("XFEC",61,63,25,25,"2nm",-28,5,0)
 	ScaleBar("YFEC",60,60,20,25,"5pN",-46,20,90)
 	ModPlotUtil#AxisOff()
-	ModPlotUtil#TightAxes()
+	ModPlotUtil#TightAxes(points_top=20)
+	ModPlotUtil#pLegend(labels=labels,location=ANCHOR_TOP_MIDDLE,x_offset=15,y_offset=-7)
 	String EnergyPlot=ModPlotUtil#Subplot(1,2,2)
 	ModPlotUtil#Plot(LandscapeY,mX=LandscapeX,color="g",alpha=0.3)
 	ModPlotUtil#YLim(0,5,graphname=EnergyPlot)
-	ScaleBar("XEnergy",59,61,3.2,3.2,"2nm",-27,3,0)
-	ScaleBar("YEnergy",58,58,2.2,3.2,"1kT",-46,20,90)
+	Variable XOffset = 6.5
+	Variable XOffPct = 50
+	ScaleBar("XEnergy",XOffset+59,XOffset+61,3.2,3.2,"2nm",XOffPct+-27,3,0)
+	ScaleBar("YEnergy",XOffset+58,XOffset+58,2.2,3.2,"1kT",XOffPct+-46,20,90)
 	ModPlotUtil#AxisOff()
 	ModPlotUtil#TightAxes()
+	ModPlotUtil#SaveFig(savename=("Copy"),saveAsPxp=1,closeFig=0,figname=fig)
+	ModPlotUtil#SaveFig(savename=("Copy"),saveAsPxp=0,closeFig=0,figname=fig)
+
 End Function

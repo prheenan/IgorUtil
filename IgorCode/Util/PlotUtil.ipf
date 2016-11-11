@@ -777,14 +777,28 @@ Static Function GenLabel(LabelStr,WindowName,FontName,WhichAxis,FontSize)
 	BeautifyAxisLabels(WindowName,WhichAxis,FontSize=FontSize)
 End Function
 
-// Puts labels for the traces (assumed in same order as plotted) onto graphname
-// at location (anchor code). 'labels' is a wave, or labelStr is a string. (*default is csv*)
-Static Function pLegend([graphName,labels,location,labelStr,fontName,fontSize,labelStrSep])
+
+Static Function pLegend([graphName,labels,location,labelStr,fontName,fontSize,labelStrSep,x_offset,y_offset])
+	// Puts labels for the traces (assumed in same order as plotted) onto graphname
+	// at location (anchor code). 'labels' is a wave, or labelStr is a string. (*default is csv*)	//
+	//
+	// Args:
+	//		graphName: which graph to put the legend on
+	//		labels: what to label each trace. assume a csv string, one entry per trace; if empty, dont label
+	//		location: where to put the legend, in terms of the 'A' flag of Legend
+	//		fontName / font size: what font and size to use
+	//		labelStrSep: can use something besides comma if you set this
+	//		x_offset,y_offset: the x and y offdsets fed to the legend 
+	// Returns:
+	//		Nothing
+	//
 	String graphName,location
 	String labelStr,labelStrSep
 	Wave /T Labels
-	Variable fontSize
+	Variable fontSize,x_offset,y_offset
 	String fontName
+	x_offset = ParamIsDefault(x_offset) ? 0 : x_offset
+	y_offset = ParamIsDefault(y_offset) ? 0 : y_offset
 	if (ParamIsDefault(fontSize))
 		fontSize = DEF_FONT_LEGEND
 	EndIf
@@ -841,7 +855,7 @@ Static Function pLegend([graphName,labels,location,labelStr,fontName,fontSize,la
 	// Textbox (711)
 	// /C:  changes existing (XXX need name?)
 	// /A: anchor code
-	Legend /W=$(graphName) /A=$(location) (mLegendStr)
+	Legend /X=(x_offset)/Y=(y_offset)/W=$(graphName) /A=$(location) (mLegendStr)
 End Function
 
 // adds units to labelStr (assuming units isn't empty)
@@ -905,9 +919,19 @@ Static Function SaveGen(Path,exportFormat,Transparent,dpi,figname,saveName,saveA
 End Function
 
 Static Function SaveFig([saveName,saveAsPxp,figName,path,closeFig,dpi,transparent,exportFormat])
-	//saveName: what to save as
-	// figName: which figure to save
-	// path: symbolic path to save. XXX cnat find the path, turn it into one here.
+	// Saves the figure as specified
+	//
+	// Args:
+	//		saveName: what to save it as 
+	//		saveAsPxp: if true, saves as a pxp (inludes all the data, etc)
+	//		figName: the name of the figure to save
+	//		path: symbolic name to start the save as. default to home (where  the ipf was run)
+	//		closefig: if true, closes the figure after saving
+	//		dpi: dots per inch to save
+	//		transparent: if true, figure is saved with a transparent background
+	//		exportformat: for non-pxp files, how to save (e.g. PNG)
+	// Returns:
+	//		Nothing
 	String saveName,figName
 	String path
 	Variable closeFig,dpi,transparent,exportFormat
@@ -1310,22 +1334,25 @@ Static Function clf()
 	ClearAllGraphs()
 End Function
 
-Static Function TightAxes([fig,points])
+Static Function TightAxes([fig, points_left,points_right,points_bottom,points_top])
 	// Reduces the margins to the same value for the given figure. Probably want to do this *after* other formatting
 	//
 	// Args:
 	//		ax: what axis to use
+	//	    	points_<x>: how many points to use
 	// Returns:
 	//	 	Nothing
 	String fig
-	Variable points
+	Variable points_left,points_right,points_bottom,points_top
 	if (ParamIsDefault(fig))
 		fig = gcf()
 	EndIf
-	if (ParamIsDefault(points))
-		points=2
-	EndIf
-	ModifyGraph /W=$(fig) margin(left)=points,margin(bottom)=points,margin(top)=points,margin(right)=points
+	Variable DefaultPoints = 2
+	points_left = ParamIsDefault(points_left) ? DefaultPoints : points_left
+	points_right = ParamIsDefault(points_right) ? DefaultPoints : points_right
+	points_top = ParamIsDefault(points_top) ? DefaultPoints : points_top
+	points_bottom = ParamIsDefault(points_bottom) ? DefaultPoints : points_bottom
+	ModifyGraph /W=$(fig) margin(left)=points_left,margin(bottom)=points_bottom,margin(top)=points_top,margin(right)=points_right
 End Function
 
 Static Function AxisOff([ax])
