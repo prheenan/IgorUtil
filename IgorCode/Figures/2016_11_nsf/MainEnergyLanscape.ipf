@@ -40,7 +40,7 @@ Static Function Main()
 	String Base ="Macintosh HD:Users:patrickheenan:src_prh:IgorUtil:IgorCode:Figures:"
 	String InDir = Base + "2016_11_nsf:Data:"
 	ModIoUtil#LoadFile(InDir + "Fold.txt")
-	ModIoUtil#LoadFile(InDir + "UnFold.txt")
+	ModIoUtil#LoadFile(InDir + "Unfold.txt")
 	ModIoUtil#LoadFile(InDir + "Landscape.txt")
 	Wave Folded= $("wave1")
 	Wave Unfolded= $("wave0")
@@ -70,13 +70,13 @@ Static Function Main()
 	ModPlotUtil#AxisOff()
 	ModPlotUtil#TightAxes(points_left=30,points_bottom=15)
 	// Add arrows. First, the outgoing
-	Variable  ArrowSharp=0.5,Arrow=1,ArrowLen=10
-	SetDrawEnv arrow=Arrow,arrowlen=ArrowLen,save
+	Variable  ArrowSharp=0.0,Arrow=1,ArrowLen=10,linethick=3,arrowfat=1
+	SetDrawEnv arrow=Arrow,arrowlen=ArrowLen,linethick=linethick,arrowfat=arrowfat,save
 	SetDrawEnv arrowsharp= ArrowSharp,linefgc=(65535,37029,37029), save
 	DrawLine 0.1,0.2,0.3,0.0
 	// Next , the incoming 
-	SetDrawEnv arrow=Arrow,arrowlen=ArrowLen,save
-	SetDrawEnv arrowsharp= 0.5,linefgc=(49151,53155,65535), save
+	SetDrawEnv arrow=Arrow,arrowlen=ArrowLen,linethick=linethick,arrowfat=arrowfat,save
+	SetDrawEnv arrowsharp= ArrowSharp,linefgc=(49151,53155,65535), save
 	DrawLine 0.8,0.15,0.6,0.3
 	Variable Rotation=0,fontsize=20,factor_caption=2
 	// Make a slightly bigger caption...
@@ -84,14 +84,14 @@ Static Function Main()
 	String EnergyPlot=ModPlotUtil#Subplot(1,2,2)
 	ModPlotUtil#Plot(LandscapeY,mX=LandscapeX,color="g",alpha=0.3)
 	ModPlotUtil#YLim(0,5,graphname=EnergyPlot)
-	XOffset = -1.2
+	XOffset = -1.5
 	XOffPct = 0
-	YOffset = -2
-	YOffsetPct = 50
-	ScaleBar("XEnergy",XOffset+57.9,XOffset+60,YOffset+2.2,YOffset+2.2,"2nm",XOffPct+-32,YOffsetPct+38,0)
-	ScaleBar("YEnergy",XOffset+58,XOffset+58,YOffset+2.2,YOffset+3.2,"1\f02k\[0\BB\]0T",XOffPct+-47,YOffsetPct+20,90)
+	YOffset = -2.6
+	YOffsetPct = 53
+	ScaleBar("XEnergy",XOffset+57.9,XOffset+60,YOffset+2.2,YOffset+2.2,"2nm",XOffPct+-30,YOffsetPct+35,0)
+	ScaleBar("YEnergy",XOffset+58,XOffset+58,YOffset+2.2,YOffset+3.2,"1\f02k\[0\BB\]0T",XOffPct+-43,YOffsetPct+17,90)
 	ModPlotUtil#AxisOff()
-	ModPlotUtil#TightAxes(points_left=30,points_bottom=15)
+	ModPlotUtil#TightAxes(points_left=40,points_bottom=35)
 	// put in the arrows
 	pTextBox(Rotation,-25,20,fontsize,"Folded")
 	pTextBox(Rotation,34,20,fontsize,"Unfolded")
