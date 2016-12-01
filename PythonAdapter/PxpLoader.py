@@ -42,6 +42,13 @@ def IsValidFec(Record):
     """
     return ProcessSingleWave.ValidName(Record.wave)
 
+def valid_fec_allow_endings(Record):
+    name = ProcessSingleWave.GetWaveName(Record.wave).lower()
+    for ext in ProcessSingleWave.DATA_EXT:
+        if (ext.lower() in name):
+            return True
+    return False
+
 def IsValidImage(Record):
     """
     Returns true if this wave appears to be a valid image
@@ -142,16 +149,16 @@ def GroupWavesByEnding(WaveObjs):
         finalList[preamble[idxWithSameId] + key] = tmp
     return finalList
     
-def LoadPxp(inFile):
+def LoadPxp(inFile,**kwargs):
     """
     Convenience Wrapper. Given a pxp file, reads in all data waves and
     groups by common ID
 
     Args:
         Infile: file to input
-    
+        **kwargs: passed to LoadAllWavesFromPxp
     Returns:
         dictionary: see GroupWavesByEnding, same output
     """
-    mWaves = LoadAllWavesFromPxp(inFile)
+    mWaves = LoadAllWavesFromPxp(inFile,**kwargs)
     return GroupWavesByEnding(mWaves)
