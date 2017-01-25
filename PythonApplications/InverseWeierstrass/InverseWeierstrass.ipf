@@ -21,6 +21,7 @@ Structure InverseWeierstrassOptions
 	Variable f_one_half_N
 	Variable flip_forces
 	String path_to_research_directory
+	String path_to_input_file
 EndStructure
 
 Static Function /S append_argument(Base,Name,Value,[AddSpace])
@@ -78,15 +79,6 @@ Static Function /S python_binary_string()
 	endif
 End Function
 
-Static Function /S input_file_name(options)
-	//
-	// Returns:
-	//		the input file to use
-	Struct InverseWeierstrassOptions & options
-	String FolderPath = ModInverseWeierstrass#full_path_to_iwt_folder(options)
-	return Folderpath + "iwt_input.pxp"
-End Function
-
 Static Function /S output_file_name(options)
 	//
 	// Returns:
@@ -112,7 +104,7 @@ Static Function /S python_command(opt)
 	append_argument(Output,"fraction_velocity_fit",num2str(opt.fraction_velocity_fit))
 	append_argument(Output,"flip_forces",num2str(opt.flip_forces))
 	String output_file = output_file_name(opt)
-	String input_file = input_file_name(opt)
+	String input_file = opt.path_to_input_file
 	append_argument(Output,"file_input",input_file)
 	append_argument(Output,"file_output",output_file,AddSpace=0)
 	return Output
@@ -144,32 +136,44 @@ Static Function /S full_path_to_iwt_main(options)
 End Function
 
 
-Static Function inverse_weierstrass(separation_wave,force_wave,output,options)
+Static Function inverse_weierstrass(options,output)
 	// Function that calls the IWT python code
 	//
 	// Args:
-	//		<separation/force>_wave: the separation and forces to be transformed.
 	// 		options : instance of the InverseWeierstrassOptions struct. See inverse_weierstrass_options function
 	//		output: instance of InverseWeierstrassOutput. Note that the waves should already be allocated
 	// Returns:
 	//		Nothing, but sets options appropriately. 
 	//
-	Wave separation_wave
-	Wave force_wave
 	Struct InverseWeierstrassOutput & output
 	Struct InverseWeierstrassOptions & options
 	// // XXX Ensure that we can actually call the file
-	String input_name = input_file_name(options)
-	String output_name = output_file_name(options)
-	// Make a graph to easily save the data out. 
-	String for_pxp = ModIoUtil#UniqueGraphName("prh_iwt_tmp")
-	ModPlotUtil#Figure(name=for_pxp,hide=1)
-	ModPlotUtil#Plot(force_wave,mX=separation_wave)
-	SaveGraphCopy /P=$"/"/O/W=$(for_pxp) as output_name
-	// no longer need the graph
-	KillWindow $for_pxp
+	String output_file = output_file_name(options)
 	// Run the python code 
 	execute_python(options)
-	// Get the data
-	ModIoUtil#LoadFile(input_name)
+	// Get the data into basename
+	String basename = "iwt_tmp"
+	// Igor is evil and uses colons, defying decades of convention for paths
+	String igor_path = ReplaceString("/",output_file,":")
+	// Also, requires adding to the absolute path... yay...
+	if (!running_windows())
+		igor_path = "Macintosh HD:" + igor_path
+	endif
+	// replace possible doubles colons
+	igor_path = ReplaceString("::",igor_path,":")
+	// load the wave (the first 2 lines are header)
+	Variable FirstLine = 3
+	// Q: quiet
+	// J: delimited text
+	// D: doouble precision
+	// K=1: all columns are numeric 
+	// /L={x,y,x,x}: skip first y-1 lines
+	// /A=<z>: auto name, start with z and work up from zero
+	LoadWave/Q/J/D/K=1/L={0,FirstLine,0,0,0}/A=$(basename) igor_path
+	// Put it in the output parts
+	Duplicate /O $(basename + "0"), output.molecular_extension_meters
+	Duplicate /O $(basename + "1"), output.energy_landscape_joules
+	Duplicate /O $(basename + "2"), output.tilted_energy_landscape_joules
+	// kill all the temporary stuff
+	KillWaves /Z $(basename + "0"), $(basename + "1"), $(basename + "2")
 End Function
