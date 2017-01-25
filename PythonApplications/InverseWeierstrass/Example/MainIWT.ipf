@@ -14,8 +14,9 @@ Static Function Main()
 	opt.fraction_velocity_fit = 0.1
 	opt.f_one_half_N = 15e-12
 	opt.flip_forces = 0
-	opt.path_to_research_directory = "/Users/patrickheenan/src_prh/"
-	opt.path_to_input_file = "/Users/patrickheenan/src_prh/Research/Perkins/Projects/PythonCommandLine/InverseWeierstrass/Example/iwt_input.pxp"
+	String base = "/c/Users/pahe3165/src_prh"
+	opt.path_to_input_file = base + "/IgorUtil/PythonApplications/InverseWeierstrass/Example/input.pxp"
+	opt.path_to_research_directory = base
 	// Make the output waves
 	Struct InverseWeierstrassOutput output
 	Make /O/N=0, output.molecular_extension_meters

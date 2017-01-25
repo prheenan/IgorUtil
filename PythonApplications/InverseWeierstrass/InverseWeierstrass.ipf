@@ -114,9 +114,13 @@ Static Function execute_python(options)
 	Struct InverseWeierstrassOptions & options
 	String PythonCommand = ModInverseWeierstrass#python_command(options)
 	String Command
-	// XXX make windows-friendly...
-	sprintf Command,"do shell script \"%s\"",PythonCommand
-	print(Command)
+	if (!running_windows())
+		// Pass to mac scripting system
+		sprintf Command,"do shell script \"%s\"",PythonCommand
+	else
+		// Pass to windows command prompt
+		sprintf Command,"cmd.exe \"%s\"",PythonCommand
+	endif	
 	// UNQ: remove leading and trailing double-quote (only for mac)
 	ExecuteScriptText /Z Command
 	if (V_flag != 0)
@@ -135,6 +139,20 @@ Static Function /S full_path_to_iwt_main(options)
 	return full_path_to_iwt_folder(options) + iwt_file
 End Function
 
+Static Function /S replace_double(needle,haystack)
+	String needle,haystack
+	return ReplaceString(needle + needle,haystack,needle)
+End Function
+
+Static Function /S to_igor_path(unix_style)
+	String unix_style
+	String with_colons = ReplaceString("/",unix_style,":")
+	// Igor doesnt want a leading colon for an absolute path
+	if (strlen(with_colons) > 1 && (cmpstr(with_colons[0],":")== 0))
+		with_colons = with_colons[1,strlen(with_colons)]
+	endif
+	return with_colons
+End Function
 
 Static Function inverse_weierstrass(options,output)
 	// Function that calls the IWT python code
@@ -147,20 +165,33 @@ Static Function inverse_weierstrass(options,output)
 	//
 	Struct InverseWeierstrassOutput & output
 	Struct InverseWeierstrassOptions & options
-	// // XXX Ensure that we can actually call the file
+	// do some cleaning on the input and output...
+	options.path_to_input_file = replace_double("/",options.path_to_input_file)
+	options.path_to_research_directory = replace_double("/",options.path_to_research_directory)
+	// // ensure we can actually call the input file (ie: it should exist)
+	Variable FileExists = ModIoUtil#FileExists(to_igor_path(options.path_to_input_file))
+	String ErrorString = "IWT received non-existing input file: " + options.path_to_input_file
+	ModErrorUtil#Assert(FileExists,msg=ErrorString)
+	// POST: input file exists
+	// // ensure we can actually find the python file
+	String python_file = ModInverseWeierstrass#full_path_to_iwt_main(options)
+	FileExists = ModIoUtil#FileExists(to_igor_path(python_file))
+	ErrorString = "IWT couldnt find python script at: " + python_file
+	ModErrorUtil#Assert(FileExists,msg=ErrorString)
+	// POST: input and output directories are a thing!
 	String output_file = output_file_name(options)
 	// Run the python code 
 	execute_python(options)
 	// Get the data into basename
 	String basename = "iwt_tmp"
 	// Igor is evil and uses colons, defying decades of convention for paths
-	String igor_path = ReplaceString("/",output_file,":")
+	String igor_path = to_igor_path(output_file)
 	// Also, requires adding to the absolute path... yay...
 	if (!running_windows())
 		igor_path = "Macintosh HD:" + igor_path
 	endif
 	// replace possible doubles colons
-	igor_path = ReplaceString("::",igor_path,":")
+	igor_path = replace_double(":",igor_path)
 	// load the wave (the first 2 lines are header)
 	Variable FirstLine = 3
 	// Q: quiet
