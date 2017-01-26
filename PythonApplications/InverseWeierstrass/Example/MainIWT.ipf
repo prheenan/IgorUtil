@@ -15,7 +15,7 @@ Static Function Main()
 	opt.fraction_velocity_fit = 0.1
 	opt.f_one_half_N = 0e-12
 	opt.flip_forces = 0
-	String base = "C:/Users/pahe3165/src_prh/"
+	String base = "/Users/patrickheenan/src_prh/"
 	opt.path_to_input_file = base + "IgorUtil/PythonApplications/InverseWeierstrass/Example/input.pxp"
 	opt.path_to_research_directory = base
 	// Make the output waves
