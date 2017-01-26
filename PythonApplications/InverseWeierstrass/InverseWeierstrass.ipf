@@ -158,12 +158,12 @@ Static Function inverse_weierstrass(user_options,output)
 	endif
 	// // ensure we can actually call the input file (ie: it should exist)
 	Variable FileExists = ModIoUtil#FileExists(input_file_igor)
-	String ErrorString = "IWT received non-existing input file: " + options.path_to_input_file
+	String ErrorString = "Bad Path, IWT received non-existing input file: " + options.path_to_input_file
 	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// POST: input file exists
 	// // ensure we can actually find the python file
 	FileExists = ModIoUtil#FileExists(ModOperatingSystemUtil#to_igor_path(python_file_igor))
-	ErrorString = "IWT couldnt find python script at: " + python_file_igor
+	ErrorString = "Bad Path, IWT couldnt find python script at: " + python_file_igor
 	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// POST: input and python directories are a thing!
 	String output_file = output_file_name(options)
@@ -172,7 +172,16 @@ Static Function inverse_weierstrass(user_options,output)
 	// Get the data into wavesd starting with <basename>
 	String basename = "iwt_tmp"
 	// Igor is evil and uses colons, defying decades of convention for paths
-	String igor_path = ModOperatingSystemUtil#sanitize_mac_path_for_igor(output_file)
+	String igor_path
+	if (!running_windows())
+		igor_path = ModOperatingSystemUtil#sanitize_mac_path_for_igor(output_file)
+	else
+		igor_path = ModOperatingSystemUtil#to_igor_path(output_file)
+	endif
+	// Ensure the file actually got made...
+	FileExists = ModIoUtil#FileExists(igor_path)
+	ErrorString = "IWT couldnt find output file at: " + igor_path
+	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// load the wave (the first 2 lines are header)
 	Variable FirstLine = 3
 	// Q: quiet

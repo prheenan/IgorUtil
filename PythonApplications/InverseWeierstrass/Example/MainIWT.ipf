@@ -4,19 +4,37 @@
 #include "::InverseWeierstrass"
 #pragma ModuleName = ModMainIWT
 
+Static StrConstant DEF_INPUT_REL_TO_BASE =  "IgorUtil/PythonApplications/InverseWeierstrass/Example/input.pxp"
 
-Static Function Main()
+Static Function Main_Windows()
+	// Runs a simple IWT on patrick's windows setup
+	ModMainIWT#Main("/c/Users/pahe3165/src_prh/")
+End Function 
+
+Static Function Main_Mac()
+	// Runs a simple IWT on patrick's mac setup 
+	ModMainIWT#Main("/c/Users/patrickheenan/src_prh/")
+End Function
+
+Static Function Main(base,[input_file])
 	// // This function shows how to use the IWT code
-	// Make the input arguments
+	// Args:
+	//		base: the folder where the Research Git repository lives 
+	//		input_file: the pxp to load. If not present, defaults to 
+	//		<base>DEF_INPUT_REL_TO_BASE
+	String base,input_file
+	if (ParamIsDefault(input_file))
+		input_file  = base +DEF_INPUT_REL_TO_BASE
+	EndIf
 	KillWaves /A/Z
+	// IWT options
 	Struct InverseWeierstrassOptions opt
 	opt.number_of_pairs = 16
 	opt.number_of_bins = 80
 	opt.fraction_velocity_fit = 0.1
-	opt.f_one_half_N = 0e-12
+	opt.f_one_half_N = 12e-12
 	opt.flip_forces = 0
-	String base = "/Users/patrickheenan/src_prh/"
-	opt.path_to_input_file = base + "IgorUtil/PythonApplications/InverseWeierstrass/Example/input.pxp"
+	opt.path_to_input_file = input_file
 	opt.path_to_research_directory = base
 	// Make the output waves
 	Struct InverseWeierstrassOutput output
