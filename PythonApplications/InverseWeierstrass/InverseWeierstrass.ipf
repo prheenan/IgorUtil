@@ -64,8 +64,10 @@ Static Function /S append_argument(Base,Name,Value,[AddSpace])
 	Variable AddSpace
 	String Output
 	AddSpace = ParamIsDefault(AddSpace) ? 1 : AddSpace
+	// By convention, all the arguments go like "-<name> <value>"
 	sprintf Output,"-%s %s",Name,Value
 	Base = Base + Output
+	// intermediate arugments may want a space
 	if (AddSpace)
 		Base = Base + " "
 	EndIf
