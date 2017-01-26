@@ -147,6 +147,7 @@ Static Function inverse_weierstrass(user_options,output)
 	options.path_to_research_directory = ModOperatingSystemUtil#replace_double("/",options.path_to_research_directory)
 	String input_file_igor, python_file_igor
 	String path_to_iwt_main = ModInverseWeierstrass#full_path_to_iwt_main(options)
+	// first thing we do is check if all the files exist
 	if (ModOperatingSystemUtil#running_windows())
 		options.path_to_input_file = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.path_to_input_file)
 		options.path_to_research_directory = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.path_to_research_directory)
@@ -167,6 +168,11 @@ Static Function inverse_weierstrass(user_options,output)
 	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// POST: input and python directories are a thing!
 	String output_file = output_file_name(options)
+	if (running_windows())
+		// much easier just to use the user's input, assume it is OK at this point.
+		// note that windows needs the <.py> file path to be something like C:/...
+		options.path_to_research_directory = ModOperatingSystemUtil#sanitize_path_for_windows(options.path_to_research_directory)
+	endif
 	// Run the python code 
 	execute_python(options)
 	// Get the data into wavesd starting with <basename>

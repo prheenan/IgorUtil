@@ -61,7 +61,7 @@ Static Function os_command_line_execute(execute_string,[pause_after])
 		// Pass to windows command prompt
 		String PauseString = ""
 		if (pause_after)
-			PauseString = " & Pause"
+			PauseString = " && Pause"
 		endif
 		sprintf Command,"cmd.exe \"%s%s\"",execute_string,PauseString
 	endif	
@@ -100,7 +100,7 @@ Static Function /S to_igor_path(unix_style)
 	if (strlen(with_colons) > 1 && (cmpstr(with_colons[0],":")== 0))
 		with_colons = with_colons[1,strlen(with_colons)]
 	endif
-	return with_colons
+	return replace_double(":",with_colons)
 End Function
 
 Static Function /S sanitize_path_for_windows(path)
