@@ -49,15 +49,21 @@ Static Function /S python_binary_string()
 	endif
 End Function
 
-Static Function os_command_line_execute(execute_string)
+Static Function os_command_line_execute(execute_string,[pause_after])
 	String execute_string
+	Variable pause_after
+	pause_after = ParamIsDefault(pause_after) ? 0 : pause_after
 	String Command
 	if (!running_windows())
 		// Pass to mac scripting system
 		sprintf Command,"do shell script \"%s\"",execute_string
 	else
 		// Pass to windows command prompt
-		sprintf Command,"cmd.exe \"%s\"",execute_string
+		String PauseString = ""
+		if (pause_after)
+			PauseString = " & Pause"
+		endif
+		sprintf Command,"cmd.exe \"%s%s\"",execute_string,PauseString
 	endif	
 	// UNQ: remove leading and trailing double-quote (only for mac)
 	ExecuteScriptText /Z Command
