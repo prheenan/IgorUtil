@@ -8,14 +8,16 @@
 Static Function Main()
 	// // This function shows how to use the IWT code
 	// Make the input arguments
+	KillWaves /A/Z
 	Struct InverseWeierstrassOptions opt
 	opt.number_of_pairs = 16
 	opt.number_of_bins = 80
 	opt.fraction_velocity_fit = 0.1
-	opt.f_one_half_N = 10e-12
+	opt.f_one_half_N = 0e-12
 	opt.flip_forces = 0
-	opt.path_to_research_directory = "/Users/patrickheenan/src_prh/"
-	opt.path_to_input_file = "/Users/patrickheenan/src_prh/Research/Perkins/Projects/PythonCommandLine/InverseWeierstrass/Example/iwt_input.pxp"
+	String base = "C:/Users/pahe3165/src_prh/"
+	opt.path_to_input_file = base + "IgorUtil/PythonApplications/InverseWeierstrass/Example/input.pxp"
+	opt.path_to_research_directory = base
 	// Make the output waves
 	Struct InverseWeierstrassOutput output
 	Make /O/N=0, output.molecular_extension_meters

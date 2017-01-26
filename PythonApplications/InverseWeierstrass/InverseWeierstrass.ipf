@@ -15,6 +15,31 @@ Structure InverseWeierstrassOutput
 EndStructure
 
 Structure InverseWeierstrassOptions
+	// Structure describing all the options the IWT takes
+	//
+	//	Args: 
+	//		number_of_pairs: the number of approach/retract curves (assumed all the same length)
+	//		present in the file to load. If just one approach/retract (bad idea, IWT is for ensembles), this
+	//		would be one.
+	//
+	//		number_of_bins: number of extension bins to use. Depends on data, but setting this
+	//		so the bin size is 1-10AA is a good place to start (eg: 100 for an extenesion change of 10nm)
+	//
+	//		fraction_velocity_fit: the IWT recquires knowing the velocity the tip-sample separation would
+	//		move at in the absense of a sample. For relatively symmetric approach/retracts, < 0.5 is safe
+	//		
+	//		f_one_half_N: the force at which half of everything is folded/unfolded. In Newtons
+	//
+	//		path_to_research_directory: absolute path to directory one above Research (parent of 
+	//		Research/Perkins/Projects/ ...)
+	//
+	//		flip_forces: if true (1), then multiply all forces by -1 to get the force on the molecule.
+	// 		By default, the cypher gets the force on the tip (e.g. default is negative means the tip
+	//		is pulled towards the surface), and IWT needs the force on the molecule
+	//
+	//		path_to_input_file: where the pxp you want to analyze is. Should have a single wave 
+	// 		like <x>_Sep and a single wave like <y>_Force which are zeroed in separation and
+	// 		force and have an integer number of retract/approach pairs.
 	Variable number_of_pairs
 	Variable number_of_bins
 	Variable fraction_velocity_fit
@@ -89,8 +114,13 @@ Static Function /S output_file_name(options)
 End Function
 
 Static Function /S python_command(opt)
+	// Function that turns an options structure into a python command string
+	//
+	// Args:
+	//		options: the InverseWeierstrassOptions structure, initialized (see inverse_weierstrass_options function)
+	// Returns:
+	//		string to command, OS-specific
 	Struct InverseWeierstrassOptions & opt
-	// XXX check if windows
 	String PythonCommand
 	String python_str  = python_binary_string()
 	String FolderPath = ModInverseWeierstrass#full_path_to_iwt_folder(opt)
@@ -105,22 +135,37 @@ Static Function /S python_command(opt)
 	append_argument(Output,"flip_forces",num2str(opt.flip_forces))
 	String output_file = output_file_name(opt)
 	String input_file = opt.path_to_input_file
+	// Windows is a special flower and needs its paths adjusted
+	if (running_windows())
+		output_file = sanitize_path_for_windows(output_file)
+		input_file = sanitize_path_for_windows(input_file)
+	endif
 	append_argument(Output,"file_input",input_file)
 	append_argument(Output,"file_output",output_file,AddSpace=0)
 	return Output
 End Function
 
 Static Function execute_python(options)
+	// executes a python command, given the options
+	//
+	// Args:
+	//		options: the InverseWeierstrassOptions structure, initialized (see inverse_weierstrass_options function)
+	// Returns:
+	//		nothing; throws an error if it finds one.
 	Struct InverseWeierstrassOptions & options
 	String PythonCommand = ModInverseWeierstrass#python_command(options)
 	String Command
-	// XXX make windows-friendly...
-	sprintf Command,"do shell script \"%s\"",PythonCommand
-	print(Command)
+	if (!running_windows())
+		// Pass to mac scripting system
+		sprintf Command,"do shell script \"%s\"",PythonCommand
+	else
+		// Pass to windows command prompt
+		sprintf Command,"cmd.exe \"%s && PAUSE \"",PythonCommand
+	endif	
 	// UNQ: remove leading and trailing double-quote (only for mac)
 	ExecuteScriptText /Z Command
 	if (V_flag != 0)
-		print(S_value)
+		ModErrorUtil#Assert(0,msg="executing " + Command + " failed with return:"+S_Value)
 	endif
 End Function
 
@@ -135,32 +180,130 @@ Static Function /S full_path_to_iwt_main(options)
 	return full_path_to_iwt_folder(options) + iwt_file
 End Function
 
+Static Function /S replace_double(needle,haystack)
+	// replaces double-instances of a needle in haystaack with a single instance
+	//
+	// Args:
+	//		needle : what we are looking for
+	//		haystack: what to search for
+	// Returns:
+	//		unix_style, compatible with (e.g.) GetFileFolderInfo
+	//
+	String needle,haystack
+	return ReplaceString(needle + needle,haystack,needle)
+End Function
 
-Static Function inverse_weierstrass(options,output)
+Static Function /S to_igor_path(unix_style)
+	// convers a unix-style path to an igor-style path
+	//
+	// Args:
+	//		unix_style : absolute path to sanitize
+	// Returns:
+	//		unix_style, compatible with (e.g.) GetFileFolderInfo
+	//
+	String unix_style
+	String with_colons = ReplaceString("/",unix_style,":")
+	// Igor doesnt want a leading colon for an absolute path
+	if (strlen(with_colons) > 1 && (cmpstr(with_colons[0],":")== 0))
+		with_colons = with_colons[1,strlen(with_colons)]
+	endif
+	return with_colons
+End Function
+
+Static Function /S sanitize_path_for_windows(path)
+	// Makes an absolute path windows-compatible.
+	//
+	// Args:
+	//		path : absolute path to sanitize
+	// Returns:
+	//		path, with leading /c/ or c/ replaced by "C:/"
+	//
+	String path
+	Variable n = strlen(path) 
+	if (GrepString(path[0],"^/"))
+		path = path[1,n]
+	endif
+	// POST: no leading /
+	return replace_start("c/",path,"C:/")
+End Function
+
+Static Function /S replace_start(needle,haystack,replace_with)
+	// Replaces a match of a pattern at the start of a string
+	//
+	// Args:
+	//		needle : pattern we are looking for at the start
+	//		haystack : the string we are searching in
+	//		replace_with: what to replace needle with, if we find it
+	// Returns:
+	//		<haystack>, with <needle> replaced by <replace_with>, if we find it. 
+	String needle,haystack,replace_with
+	Variable n_needle = strlen(needle)
+	Variable n_haystack = strlen(haystack)
+	if ( (GrepString(haystack,"^" + needle)))
+		haystack = replace_with + haystack[n_needle,n_haystack]
+	endif 
+	return haystack
+End Function
+
+Static Function /S sanitize_windows_path_for_igor(path)
+	// Makes an absolute windows-style path igor compatible
+	//
+	// Args:
+	//		path : absolute path to sanitize
+	// Returns:
+	//		path, with leading "C:/" replaced by /c/ 
+	//
+	String path
+	return replace_start("C:/",path,"/c/")
+End Function
+
+Static Function inverse_weierstrass(user_options,output)
 	// Function that calls the IWT python code
 	//
 	// Args:
-	// 		options : instance of the InverseWeierstrassOptions struct. See inverse_weierstrass_options function
-	//		output: instance of InverseWeierstrassOutput. Note that the waves should already be allocated
+	// 		options : instance of the InverseWeierstrassOptions struct. 
+	//		output: instance of InverseWeierstrassOutput. Note that the waves 
+	//		should already be allocated
 	// Returns:
-	//		Nothing, but sets options appropriately. 
+	//		Nothing, but sets output appropriately. 
 	//
 	Struct InverseWeierstrassOutput & output
-	Struct InverseWeierstrassOptions & options
-	// // XXX Ensure that we can actually call the file
+	Struct InverseWeierstrassOptions & user_options
+	// make a local copy of user_options, since we have to mess with paths (ugh)
+	// and we want to adhere to principle of least astonishment
+	Struct InverseWeierstrassOptions options 
+	options = user_options
+	// do some cleaning on the input and output...
+	options.path_to_input_file = replace_double("/",options.path_to_input_file)
+	options.path_to_research_directory = replace_double("/",options.path_to_research_directory)
+	if (running_windows())
+		options.path_to_input_file = sanitize_windows_path_for_igor(options.path_to_input_file)
+		options.path_to_research_directory = sanitize_windows_path_for_igor(options.path_to_research_directory)
+	endif
+	// // ensure we can actually call the input file (ie: it should exist)
+	Variable FileExists = ModIoUtil#FileExists(to_igor_path(options.path_to_input_file))
+	String ErrorString = "IWT received non-existing input file: " + options.path_to_input_file
+	ModErrorUtil#Assert(FileExists,msg=ErrorString)
+	// POST: input file exists
+	// // ensure we can actually find the python file
+	String python_file = ModInverseWeierstrass#full_path_to_iwt_main(options)
+	FileExists = ModIoUtil#FileExists(to_igor_path(python_file))
+	ErrorString = "IWT couldnt find python script at: " + python_file
+	ModErrorUtil#Assert(FileExists,msg=ErrorString)
+	// POST: input and python directories are a thing!
 	String output_file = output_file_name(options)
 	// Run the python code 
 	execute_python(options)
-	// Get the data into basename
+	// Get the data into wavesd starting with <basename>
 	String basename = "iwt_tmp"
 	// Igor is evil and uses colons, defying decades of convention for paths
-	String igor_path = ReplaceString("/",output_file,":")
-	// Also, requires adding to the absolute path... yay...
+	String igor_path = to_igor_path(output_file)
+	// Also, requires adding to the absolute path on mac... yay...
 	if (!running_windows())
-		igor_path = "Macintosh HD:" + igor_path
+		igor_path = "Macintosh HD:" + igor_path		
 	endif
 	// replace possible doubles colons
-	igor_path = ReplaceString("::",igor_path,":")
+	igor_path = replace_double(":",igor_path)
 	// load the wave (the first 2 lines are header)
 	Variable FirstLine = 3
 	// Q: quiet
