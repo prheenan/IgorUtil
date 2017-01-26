@@ -13,7 +13,7 @@ End Function
 
 Static Function Main_Mac()
 	// Runs a simple IWT on patrick's mac setup 
-	ModMainIWT#Main("/c/Users/patrickheenan/src_prh/")
+	ModMainIWT#Main("/Users/patrickheenan/src_prh/")
 End Function
 
 Static Function Main(base,[input_file])
