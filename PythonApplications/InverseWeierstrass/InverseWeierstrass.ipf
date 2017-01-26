@@ -112,7 +112,7 @@ Static Function execute_python(options)
 	//		nothing; throws an error if it finds one.
 	Struct InverseWeierstrassOptions & options
 	String PythonCommand = ModInverseWeierstrass#python_command(options)
-	ModOperatingSystemUtil#os_command_line_execute(PythonCommand)
+	ModOperatingSystemUtil#os_command_line_execute(PythonCommand,pause_after=1)
 End Function
 
 Static Function /S full_path_to_iwt_main(options)
