@@ -43,7 +43,7 @@ Static Function /S python_binary_string()
 	// Returns:
 	//		1 if windows, 0 if mac
 	if (running_windows())
-		return "python"
+		return "python.exe"
 	else
 		return "//anaconda/bin/python"
 	endif
@@ -59,13 +59,10 @@ Static Function os_command_line_execute(execute_string,[pause_after])
 		sprintf Command,"do shell script \"%s\"",execute_string
 	else
 		// Pass to windows command prompt
-		String PauseString = ""
-		if (pause_after)
-			PauseString = " && Pause"
-		endif
-		sprintf Command,"cmd.exe \"%s%s\"",execute_string,PauseString
+		sprintf Command,"%s",execute_string
 	endif	
 	// UNQ: remove leading and trailing double-quote (only for mac)
+	print(Command)
 	ExecuteScriptText /Z Command
 	if (V_flag != 0)
 		ModErrorUtil#Assert(0,msg="executing " + Command + " failed with return:"+S_Value)
