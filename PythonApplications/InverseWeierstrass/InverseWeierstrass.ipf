@@ -203,4 +203,8 @@ Static Function inverse_weierstrass(user_options,output)
 	Duplicate /O $(basename + "2"), output.tilted_energy_landscape_joules
 	// kill all the temporary stuff
 	KillWaves /Z $(basename + "0"), $(basename + "1"), $(basename + "2")
+	// kill the output file
+	// /Z: if the file doesn't exist, dont worry about it  (we assert we deleted below)
+	DeleteFile /Z (igor_path)
+	ModErrorUtil#Assert(V_flag == 0,msg="Couldn't delete output file")
 End Function

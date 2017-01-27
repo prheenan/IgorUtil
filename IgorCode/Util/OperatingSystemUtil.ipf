@@ -4,6 +4,11 @@
 #pragma ModuleName = ModOperatingSystemUtil
 #include ":ErrorUtil"
 
+// XXX TODO README:
+// (1) python2.7
+// (2) anaconda
+// (3) on path!
+
 Static Function /S append_argument(Base,Name,Value,[AddSpace])
 	// Function that appends "-<Name> <Value>" to Base, possible adding a space to the end
 	//
@@ -68,7 +73,6 @@ Static Function os_command_line_execute(execute_string,[pause_after])
 		ModErrorUtil#Assert(0,msg="executing " + Command + " failed with return:"+S_Value)
 	endif
 End Function
-
 
 Static Function /S replace_double(needle,haystack)
 	// replaces double-instances of a needle in haystaack with a single instance
