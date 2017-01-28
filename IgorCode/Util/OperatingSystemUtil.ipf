@@ -72,8 +72,11 @@ Static Function assert_python_binary_accessible()
 	// according to python -h:
 	// -V     : print the Python version number and exit (also --version)
 	sprintf Command,"%s --version",binary
-	Variable V_Flag = os_command_line_execute(Command)	
-	ModErrorUtil#Assert(V_Flag == 0,msg="Python binary is inaccessible")
+	// We want to do our own error handling
+	Variable V_Flag = os_command_line_execute(Command,throw_error_if_failed=0)	
+	String err
+	sprintf err,"Python binary is inaccessible where we expect it (%s)", binary
+	ModErrorUtil#Assert(V_Flag == 0,msg=err)
 End Function
 
 Static Function os_command_line_execute(execute_string,[throw_error_if_failed,pause_after])
