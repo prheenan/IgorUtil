@@ -103,6 +103,7 @@ Static Function /S python_command(opt)
 	return Output
 End Function
 
+
 Static Function execute_python(options)
 	// executes a python command, given the options
 	//
@@ -112,7 +113,9 @@ Static Function execute_python(options)
 	//		nothing; throws an error if it finds one.
 	Struct InverseWeierstrassOptions & options
 	String PythonCommand = ModInverseWeierstrass#python_command(options)
-	ModOperatingSystemUtil#os_command_line_execute(PythonCommand,pause_after=1)
+	ModOperatingSystemUtil#assert_python_binary_accessible()
+	// POST: we can for sure call the python binary
+	ModOperatingSystemUtil#os_command_line_execute(PythonCommand)
 End Function
 
 Static Function /S full_path_to_iwt_main(options)
@@ -203,4 +206,8 @@ Static Function inverse_weierstrass(user_options,output)
 	Duplicate /O $(basename + "2"), output.tilted_energy_landscape_joules
 	// kill all the temporary stuff
 	KillWaves /Z $(basename + "0"), $(basename + "1"), $(basename + "2")
+	// kill the output file
+	// /Z: if the file doesn't exist, dont worry about it  (we assert we deleted below)
+	DeleteFile /Z (igor_path)
+	ModErrorUtil#Assert(V_flag == 0,msg="Couldn't delete output file")
 End Function
