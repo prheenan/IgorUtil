@@ -11,12 +11,21 @@ Function window_hook_prototype(s)
 End Function
 
 Static Function /S get_output_path()
+	// Using the global string variable (!) get the output path for the saved file
+	// Returns:
+	//		the output path for the file we want
 	String my_file_name =ModIoUtil#current_experiment_name()
 	SVAR base = prh_tagging_output_directory
 	return base + my_file_name +"_events.txt"
 End Function
 
 Function  save_cursor_updates_by_globals(s)
+	// hook functgion; called when the window has an event
+	//
+	// Args:
+	//		s: instance of Struct WMWinHookStruct &s
+	// Returns:
+	//		Nothing
 	// Window hook prototype function which saves the 
 	Struct WMWinHookStruct &s
 	Variable status_code = 0
@@ -37,25 +46,31 @@ Function  save_cursor_updates_by_globals(s)
 End Function
 
 Static Function assert_window_exists(window_name)
+	// asserts that the given window exists
+	//
+	// Args:
+	//		window_name: name of the window to check
+	// Returns:
+	//		Nothing
 	String window_name
 	String error_msg = "Couldn't find window "+ window_name
 	ModErrorUtil#Assert(ModIoUtil#WindowExists(window_name),msg=error_msg)
 End Function
 
 Static Function hook_cursor_saver_to_window(window_name,file_directory)
+	// sets up the hook for a window to point to save_cursor_updates_by_globals
+	//
+	// Args:
+	//		window_name: name of the window to hook to
+	//		file_directory: location where we want to save the file
+	// Returns:
+	//
+	//	Nothing
 	String window_name,file_directory
 	// only way to get the file path to the save file, above, if via a global string X_X...
 	// XXX try to fix?
 	// Overwrite the global variables
 	String /G prh_tagging_output_directory = file_directory
-	KillWaves /Z prh_tagging_wave
-	Make /T/O/N=(0,3) prh_tagging_wave	
-	// SetDimLabel x,y,name,wave:
-	// sets number y of dimension  x (0=rows,1=columns,etc) of wave to name
-	// set the first column label
-	SetDimLabel 1,0,trace_name,prh_tagging_wave
-	SetDimLabel 1,1,event_start_idx,prh_tagging_wave
-	SetDimLabel 1,2,event_end_idx,prh_tagging_wave
 	// Check that the file path is real
 	ModErrorUtil#Assert(ModIoUtil#FileExists(prh_tagging_output_directory))
 	// Write the output file
@@ -71,6 +86,13 @@ Static Function hook_cursor_saver_to_window(window_name,file_directory)
 End Function
 
 Static Function hook_cursor_saver_interactive(window_name)
+	// sets up the hook for a window to point to save_cursor_updates_by_globals, asking the
+	//user to give the folder 
+	//
+	// Args:
+	//		window_name: name of the window to hook to
+	// Returns:
+	//		Nothing
 	String window_name
 	String file_directory
 	// we pass file_name by reference; updated if we succeed
@@ -79,6 +101,22 @@ Static Function hook_cursor_saver_interactive(window_name)
 	else
 		ModErrorUtil#Assert(0,msg="couldn't find the file...")
 	endif
+End Function
+
+Static Function hook_cursor_current_directory(window_name)
+	// sets up the hook for a window to point to save_cursor_updates_by_globals, saving alongside
+	// wherever this pxp is
+	//
+	// Args:
+	//		window_name: name of the window to hook to
+	// Returns:
+	//		Nothing
+	String window_name
+	PathInfo home
+	ModErrorUtil#Assert( (V_Flag == 0),msg="To use current directory as save, must save .pxp")
+	// POST: path exists
+	String file_directory = S_Path
+	hook_cursor_saver_to_window(window_name,file_directory)
 End Function
 
 Static Function Main()
@@ -90,5 +128,5 @@ Static Function Main()
 	// Returns:
 	//
 	//
-	hook_cursor_saver_interactive("ForceReviewGraph")
+	hook_cursor_current_directory("ForceReviewGraph")
 End Function
