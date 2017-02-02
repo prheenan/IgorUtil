@@ -242,6 +242,12 @@ End Function
 
 
 Static Function Assert(bool,[msg])
+	// throws a fatal error if bool != 1
+	// 	Args:
+	//		bool: condition
+	//		msg: the message to display on failure
+	//	Returns:
+	//		nothing
 	Variable bool
 	String msg
 	if (ParamIsDefault(msg))

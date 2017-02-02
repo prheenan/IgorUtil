@@ -90,6 +90,12 @@ StrConstant MATCH_LAST_DIR = ".*:([^:]+):[^:]*"
 Constant PATH_RET_SUCESS = 0
 // default wave name for initialization
 StrConstant DEF_WAVE_NAME = "prhWave"
+// Useful ASCII codes
+Constant ASCII_ENTER = 13
+Static Function is_ascii_enter(d)
+	Variable d
+	return d == 13
+End Function
 
 Structure Font
 	String FontName
@@ -204,6 +210,34 @@ Static Function /S GetDataFolders(path,waveToPop)
 	KillWaves /Z tmp
 	// have every folder. XXX redimension wave?
 End Function
+
+Static Function /S current_experiment_name()
+	//	Returns the file name (not path) of the current experiment
+	//	Args:
+	//		None
+	//	Returns:
+	//		String of the current experiment name
+	return IgorInfo(1)
+End Function
+
+Static Function cursor_info(graph_name,a_idx_ref,b_idx_ref,trace_name)
+	//	updates the given references to the A and B cursors on the given image
+	//	Args:
+	//		graph_name: name of a graph to look for
+	//		a/b_idx_ref: reference to the index where the a/b cursor is
+	//		trace_name: reference name of the trace the cursors are on 
+	//	Returns:
+	//		nothing, but updates the name and index references
+	String graph_name
+	Variable & a_idx_ref,&b_idx_ref
+	String & trace_name
+	String a_info = CsrInfo(A,graph_name)
+	String b_info = CsrInfo(B,graph_name)
+	a_idx_ref = NumberByKey("POINT",a_info)
+	b_idx_ref = NumberByKey("POINT",b_info)
+	trace_name = StringByKey("TNAME",a_info)
+End Function
+
 
 Static Function GetWindowLeftTopRightBottom(WindowName,left,top,right,bottom)
 	String WindowName
@@ -605,6 +639,11 @@ Static Function/S GetWaveList(RootFolder, ListSep,DirSep,[RegExpr])
 End
 
 Static Function WindowExists(mName)
+	// Returns true if the given window exists
+	// 	Args:
+	//		mFile: the igor-style path to the window
+	//	Returns:
+	//		0/1 if the file exists/doesnt exist
 	String mName
 	Variable Type = WinType(mName)
 	return type != WINTYPE_NOT_A_WINDOW
@@ -671,6 +710,11 @@ Static Function /S GetPathFromString(StrV)
 End Function
 
 Static Function FileExists(mFile)
+	// Returns true is the give igor-style path for mFile exists
+	// 	Args:
+	//		mFile: the igor-style file path passed to GetFileFolderInfo
+	//	Returns:
+	//		0/1 if the file exists/doesnt exist
 	String mFile
 	// For flags, see get folder interactive.
 	GetFileFolderInfo /Q/Z=(GETFILEFOLDER_ONLYEXISTING) mFile
@@ -680,6 +724,12 @@ End Functon
 Static Function GetFolderInteractive(NameReference)
 	// If user picks a folder, sets NameReference to it, returns true.
 	// Else (doesn't exist, user cancelled), returns false
+	//
+	//	Args:
+	//		NameReference: reference to a string, which will be set to what the user says 
+	//		on success 
+	//	Returns:
+	//		True on success, false on failure
 	String &NameReference
 	// /D : opens dialog
 	// /Q: quiet
@@ -981,6 +1031,42 @@ Static Function IsFinite(Value)
 	return numtype(Value) == NUMTYPE_NORMAL
 End Function
 
+Static Function save_as_comma_delimited(output_wave,file_path,[append_flag,newline])
+	// saves the (assumed 1D) wave to a row of the output_wave
+	// XXX allow for saving matrices
+	//
+	// 	Args:
+	//		output_wave: (text) wave to save out
+	//		file_path: igor-style full path to save
+	//		append_flag: passed to the /A flag of "Save". Defaults to 0 (dont append)
+	//		newline: what to use for a newline. defaults to \n (Unix)
+	Wave /T output_wave
+	String file_path,newline
+	Variable append_flag
+	append_flag = ParamIsDefault(append_flag) ? 0 : append_flag
+	if (ParamIsDefault(newline))
+		newline = "\n"
+	endIf
+	// POST: we know all the parametes
+	// go ahead and make the comma list
+	Variable columns = min(1,DimSize(output_wave,1))
+	Variable rows = DimSize(output_wave,0)
+	Variable n = rows
+	// Add in commas betwen each element for a csv
+	Make /FREE/T/N=(2*n-1) with_commas 
+	// very last character will be a newline
+	Variable n_with_commas = DimSize(with_commas,0)
+	// all even elements are just the data (p runs from 0,2,4,... so p/2 is 0,1,2,...)
+	with_commas[0,n_with_commas-1;2] = output_wave[p/2]
+	// all odd elements are commas
+	with_commas[1,n_with_commas-1;2] = ","
+	// Transpose the matrix; igor has awful conventions
+	MatrixTranspose with_commas
+	// /A=2: append as-is, dont add newline (A=1 adds newline)
+	// /G: save in general text format
+	// /J: tab delimited
+	Save /A=(append_flag)/G/M="\n" with_commas as file_path
+End Function
 
  Static Function SaveWaveDelimited(ToSave,Folder,[Name])
 	Wave ToSave
