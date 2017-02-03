@@ -113,7 +113,7 @@ Static Function hook_cursor_current_directory(window_name)
 	//		Nothing
 	String window_name
 	PathInfo home
-	ModErrorUtil#Assert( (V_Flag == 0),msg="To use current directory as save, must save .pxp")
+	ModErrorUtil#Assert( (V_Flag == 1),msg="To use current directory as save, must save .pxp")
 	// POST: path exists
 	String file_directory = S_Path
 	hook_cursor_saver_to_window(window_name,file_directory)
