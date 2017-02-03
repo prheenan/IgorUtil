@@ -113,6 +113,8 @@ Static Function hook_cursor_current_directory(window_name)
 	//		Nothing
 	String window_name
 	PathInfo home
+	// according to PathInfo:
+	// "V_flag	[is set to] 0 if the symbolic path does not exist, 1 if it does exist."
 	ModErrorUtil#Assert( (V_Flag == 1),msg="To use current directory as save, must save .pxp")
 	// POST: path exists
 	String file_directory = S_Path
