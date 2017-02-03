@@ -5,6 +5,10 @@
 #include "::Util:IoUtil"
 #include "::Util:ErrorUtil"
 
+Macro DataTagging()
+	ModDataTagging#Main()
+End Macro
+
 // Note: hook functions *must* not be static, or all is lost.
 Function window_hook_prototype(s)
 	Struct WMWinHookStruct &s
@@ -75,17 +79,19 @@ Static Function hook_cursor_saver_to_window(window_name,file_directory)
 	ModErrorUtil#Assert(ModIoUtil#FileExists(prh_tagging_output_directory))
 	// Write the output file
 	Variable ref
+	// Open without flags: new file, overwrites
 	String output_path = get_output_path()
-	//	 only create the file if it doesnt exist
-	if (	ModIoUtil#FileExists(output_path))
-		// append to the existing file
-		Open /Z/A ref as output_path
-	else
-		//  Create a new file
-		//	Open without flags: new file, overwrites
-		Open /Z ref as output_path	
-	endif
-	ModErrorUtil#Assert( (V_Flag == 0),msg="couldn't open file" + output_path)
+      //       only create the file if it doesnt exist
+       if (    ModIoUtil#FileExists(output_path))
+               // append to the existing file
+               Open /Z/A ref as output_path
+       else
+               //  Create a new file
+               //      Open without flags: new file, overwrites
+               Open /Z ref as output_path
+       endif
+       // check that we actually created the file
+      	ModErrorUtil#Assert(ModIoUtil#FileExists(output_path))
 	Close ref
 	// Make sure the window exists
 	assert_window_exists(window_name)
