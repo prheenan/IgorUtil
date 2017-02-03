@@ -75,10 +75,17 @@ Static Function hook_cursor_saver_to_window(window_name,file_directory)
 	ModErrorUtil#Assert(ModIoUtil#FileExists(prh_tagging_output_directory))
 	// Write the output file
 	Variable ref
-	// Open without flags: new file, overwrites
 	String output_path = get_output_path()
-	Open /Z ref as output_path
-	ModErrorUtil#Assert( (V_Flag == 0),msg="couldn't open file")
+	//	 only create the file if it doesnt exist
+	if (	ModIoUtil#FileExists(output_path))
+		// append to the existing file
+		Open /Z/A ref as output_path
+	else
+		//  Create a new file
+		//	Open without flags: new file, overwrites
+		Open /Z ref as output_path	
+	endif
+	ModErrorUtil#Assert( (V_Flag == 0),msg="couldn't open file" + output_path)
 	Close ref
 	// Make sure the window exists
 	assert_window_exists(window_name)
