@@ -7,6 +7,15 @@ import matplotlib.pyplot as plt
 from WaveDataGroup import WaveDataGroup
 from DataObj import DataObj as DataObj
 
+class Event():
+    def __init__(self,start,end):
+        self.start = start
+        self.end = end
+    def __str__(self):
+        return "[{:d},{:d}]".format(self.start,self.end)
+    def __repr__(self):
+        return self.__str__()
+
 class Bunch:
     """
     see 
@@ -46,6 +55,7 @@ class TimeSepForceObj:
                 DataObjByConcat(mWaves.CreateTimeSepForceWaveObject())
             # by default, assume we *dont* have high res data
             self.HiResData = None
+            self.has_events = False
             if (mWaves.HasHighBandwidth()):
                 hiResConcat = mWaves.HighBandwidthCreateTimeSepForceWaveObject()
                 self.HiResData = DataObjByConcat(hiResConcat)
@@ -57,6 +67,18 @@ class TimeSepForceObj:
         # three means both, etc.
         DwellInt = int(self.Meta.DwellSetting) 
         return (DwellInt != 0) and (DwellInt % 2 == 1)
+    def set_events(self,list_of_events):
+        """
+        sets the events of this object
+    
+        Args:
+            list_of_events: list of Event objects.
+        Returns: nothing
+        """
+        self.has_events = True
+        self.Events = list_of_events
+    def get_meta_as_string(self,):
+        return str(self.Meta.__dict__)
     @property
     def TriggerTime(self):
         return self.Meta.TriggerTime
