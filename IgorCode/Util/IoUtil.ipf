@@ -238,6 +238,39 @@ Static Function cursor_info(graph_name,a_idx_ref,b_idx_ref,trace_name)
 	trace_name = StringByKey("TNAME",a_info)
 End Function
 
+Static Function strings_equal(a,b)
+	//	returns true if the strings are equal
+	//
+	//	Args:
+	//		a/b: the two strings 
+	//	Returns:
+	//		0/1 if we didn't / did find them equal
+	String a,b
+	//cmpstr returns the following values:
+	// -1:	str1  is alphabetically before str2.
+	//  0:	str1  and str2  are equal.
+	//  1:	str1  is alphabetically after str2.
+	return (cmpstr(a,b) == 0)
+End Function
+
+Static Function string_ends_with(haystack,needle)
+	//	returns true if haystack ends with needle
+	//
+	//	Args:
+	//		haystack: where to search the end of 
+	//		needle: the string we are looking for at the end of haystack
+	//		(note that this defines a minimum length for haystack for this to work)
+	//	Returns:
+	//		0/1 if we didn't / did find them equal
+	String haystack,needle
+	Variable n_haystack = strlen(haystack), n_needle = strlen(needle)
+	if (n_haystack < n_needle)
+		return 0
+	endif
+	// POST: at least as many characters as we need (ie: n_needle)
+	return ModIoUtil#strings_equal(haystack[n_haystack-n_needle,n_haystack],needle)
+End Function
+
 
 Static Function GetWindowLeftTopRightBottom(WindowName,left,top,right,bottom)
 	String WindowName

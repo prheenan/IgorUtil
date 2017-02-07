@@ -41,8 +41,45 @@ Function  save_cursor_updates_by_globals(s)
 				Variable a_idx,b_idx
 				String trace
 				ModIoUtil#cursor_info(window_name,a_idx,b_idx,trace)
+				Wave tmp_trace = TraceNameToWaveRef(window_name,trace)
+				// Get the data folder...
+				// Args:
+				//	kind: what to treturn
+				// 		0 	Returns only the name of the data folder containing waveName.
+				//		1 	Returns full path of data folder containing waveName, without wave name.
+				//
+				Variable kind =1
+				String data_folder = GetWavesDataFolder(tmp_trace,kind)
+				// Get the base name; we want to get the absolute offset for the entire trace...
+				String base_name
+				// our regex is anything, following by a single underscore and letters
+				String regex = "(.+)_[a-zA-Z]"
+				SplitString /E=(regex) trace,base_name
+				// get the offset associated 
+				String appr_str = "_Ext",dwell_str = "_Towd",ret_str="_Ret"
+				String base_path = data_folder + base_name
+				Variable n_approach = DimSize( $(base_path + appr_str),0)
+				Variable n_dwell = DimSize($(base_path+dwell_str),0)
+				// get the actual offset
+				Variable offset  =0 
+				if (ModIoUtil#string_ends_with(trace,appr_str))
+					// no offset; dont do anything
+					break
+				elseif(ModIoUtil#string_ends_with(trace,dwell_str))
+					offset = n_approach
+				else
+					String err_message = "Dont recognize wave: " + base_path + trace
+					ModErrorUtil#Assert(ModIoUtil#string_ends_with(trace,ret_str),msg=err_message)
+					// POST: we know what is happening
+					offset = n_approach + n_dwell
+				endif
+				Variable start_idx = a_idx + offset
+				Variable end_idx = b_idx + offset
 				// POST: have the A and B cursors. Save them to the output file
-				Make/FREE/T/N=(1,3) tmp = {trace,num2str(a_idx),num2str(b_idx)}
+				String start_idx_print,end_idx_print
+				sprintf start_idx_print,"%d",start_idx
+				sprintf end_idx_print, "%d",end_idx
+				Make/FREE/T/N=(1,3) tmp = {base_name,start_idx_print,end_idx_print}
 				ModIoUtil#save_as_comma_delimited(tmp,get_output_path(),append_flag=2)
 			EndIf
 	endswitch
