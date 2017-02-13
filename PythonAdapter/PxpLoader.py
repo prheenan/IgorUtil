@@ -4,15 +4,14 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-import igor
 import ProcessSingleWave
 from GeneralUtil.python.LibUtil import IgorUtil as IgorUtil
 from GeneralUtil.python import GenUtilities as pGenUtil
 
 from pprint import pformat
-from igor.binarywave import load as loadibw
-from igor.packed import load as loadpxp
-from igor.record.wave import WaveRecord
+from IgorUtil.PythonAdaptor.igor.binarywave import load as loadibw
+from IgorUtil.PythonAdaptor.igor.packed import load as loadpxp
+from IgorUtil.PythonAdaptor.igor.record.wave import WaveRecord
 
 import re
 import collections
