@@ -39,6 +39,22 @@ def DataObjByConcat(ConcatData,*args,**kwargs):
     Meta = Bunch(ConcatData.Note)
     time,sep,force = ConcatData.GetTimeSepForceAsCols()
     return DataObj(time,sep,force,Meta,*args,**kwargs)
+    
+def data_obj_by_columns_and_dict(time,sep,force,meta_dict,*args,**kwargs):
+    """
+    Initializes an data object from a concatenated wave object (e.g., 
+    high resolution time,sep, and force)
+    
+    Args:
+        time,sep,force: arrays of size N corresponding to FEC measurements
+        meta_dict: the meta information as a dictionary
+        *args,**kwargs: passed to DataObjByConcat
+    Returns:
+        DataObj instance
+    """
+    Meta = Bunch(meta_dict)
+    return DataObj(time,sep,force,Meta,*args,**kwargs)
+
 
 class TimeSepForceObj:
     def __init__(self,mWaves=None):
@@ -50,12 +66,12 @@ class TimeSepForceObj:
             mWaves: WaveDataGroup. Should be able to get time,sep,and force 
             from it
         """
+        self.has_events = False
         if (mWaves is not None):
             self.LowResData = \
                 DataObjByConcat(mWaves.CreateTimeSepForceWaveObject())
             # by default, assume we *dont* have high res data
             self.HiResData = None
-            self.has_events = False
             if (mWaves.HasHighBandwidth()):
                 hiResConcat = mWaves.HighBandwidthCreateTimeSepForceWaveObject()
                 self.HiResData = DataObjByConcat(hiResConcat)
@@ -97,9 +113,16 @@ class TimeSepForceObj:
         self.set_z_sensor(self.Zsnsr-offset)
     def set_z_sensor(self,set_to):
         self.LowResData.Zsnsr = set_to
+    def offset(self,separation,zsnsr,force):
+        self.LowResData.force -= force
+        self.LowResData.sep-= separation
+        self.offset_z_sensor(zsnsr)
     @property
     def Zsnsr(self):
         return self.LowResData.Zsnsr
+    @property
+    def ThermalFrequency(self):
+        return float(self.Meta.ThermalCenter)
     @property
     def Frequency(self):
         ToRet = float(self.Meta.NumPtsPerSec)
