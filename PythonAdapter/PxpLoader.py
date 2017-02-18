@@ -9,9 +9,9 @@ from GeneralUtil.python.LibUtil import IgorUtil as IgorUtil
 from GeneralUtil.python import GenUtilities as pGenUtil
 
 from pprint import pformat
-from IgorUtil.PythonAdaptor.igor.binarywave import load as loadibw
-from IgorUtil.PythonAdaptor.igor.packed import load as loadpxp
-from IgorUtil.PythonAdaptor.igor.record.wave import WaveRecord
+from IgorUtil.PythonAdapter.igor.binarywave import load as loadibw
+from IgorUtil.PythonAdapter.igor.packed import load as loadpxp
+from IgorUtil.PythonAdapter.igor.record.wave import WaveRecord
 
 import re
 import collections
@@ -58,6 +58,7 @@ def IsValidImage(Record):
     Wave = Record.wave
     # check if the name matches
     Name = ProcessSingleWave.GetWaveName(Wave)
+    # last four characters should be numbers (eg Image0007)
     Numbers = 4
     pattern = re.compile("^[0-9]{4}$")
     if (not pattern.match(Name[-Numbers:])):
