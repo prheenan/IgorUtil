@@ -69,7 +69,7 @@ def IsValidImage(Record):
     ToRet = len(dat.shape) == 3
     return ToRet
 
-def LoadAllWavesFromPxp(filepath,ValidFunc=IsValidFec):
+def LoadAllWavesFromPxp(filepath,load_func=loadpxp,ValidFunc=IsValidFec):
     """
     Given a file path to an igor pxp file, loads all waves associated with it
 
@@ -81,7 +81,7 @@ def LoadAllWavesFromPxp(filepath,ValidFunc=IsValidFec):
         list of WaveObj (see ParseSingleWave), containing data and metadata
     """
     # XXX use file system to filter?
-    records,_ = loadpxp(filepath)
+    records,_ = load_func(filepath)
     mWaves = []
     for i,record in enumerate(records):
         # if this is a wave with a proper name, go for it
@@ -96,13 +96,15 @@ def LoadAllWavesFromPxp(filepath,ValidFunc=IsValidFec):
     return mWaves
 
 
-def GroupWavesByEnding(WaveObjs):
+def GroupWavesByEnding(WaveObjs,grouping_function):
     """
     Given a list of waves and (optional) list of endings, groups the waves
 
     Args:
         WaveObjs: List of wave objects, from LoadAllWavesFromPxp
-    
+        grouping_function: function that takes in a wave name and returns   
+        a tuple of <preamble,ids,endings>. wave with the same id but different
+        endings are grouped
     Returns:
         dictionary of lists; each sublist is a 'grouping' of waves by extension
     """
@@ -116,7 +118,7 @@ def GroupWavesByEnding(WaveObjs):
     goodObj = []
     for n,obj in zip(rawNames,WaveObjs):
         try:
-            digitEndingList.append(ProcessSingleWave.IgorNameRegex(n))
+            digitEndingList.append(grouping_function(n))
             goodNames.append(n)
             goodObj.append(obj)
         except ValueError as e:
@@ -148,7 +150,7 @@ def GroupWavesByEnding(WaveObjs):
         finalList[preamble[idxWithSameId] + key] = tmp
     return finalList
     
-def LoadPxp(inFile,**kwargs):
+def LoadPxp(inFile,grouping_function=ProcessSingleWave.IgorNameRegex,**kwargs):
     """
     Convenience Wrapper. Given a pxp file, reads in all data waves and
     groups by common ID
@@ -160,4 +162,22 @@ def LoadPxp(inFile,**kwargs):
         dictionary: see GroupWavesByEnding, same output
     """
     mWaves = LoadAllWavesFromPxp(inFile,**kwargs)
-    return GroupWavesByEnding(mWaves)
+    return GroupWavesByEnding(mWaves,grouping_function=grouping_function)
+
+def load_ibw_from_directory(in_dir,grouping_function):
+    """
+    Convenience Wrapper. Given a directory, reads in all ibw and groups 
+
+    Args:
+        in_dir: where we are grouping 
+        grouping_function: takes in a file name, see GroupWavesByEnding
+    Returns:
+        dictionary: see GroupWavesByEnding, same output
+    """
+    files = pGenUtil.getAllFiles(in_dir,ext=".ibw")
+    ValidFunc= lambda *args,**keywords: True
+    ibw_raw = [loadibw(f) for f in files]
+    ibw_waves = [ProcessSingleWave.WaveObj(record=raw,SourceFile=f) 
+                for raw,f in zip(ibw_raw,files)]
+    return GroupWavesByEnding(ibw_waves,grouping_function=grouping_function)
+    
