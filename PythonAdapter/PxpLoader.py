@@ -164,13 +164,14 @@ def LoadPxp(inFile,grouping_function=ProcessSingleWave.IgorNameRegex,**kwargs):
     mWaves = LoadAllWavesFromPxp(inFile,**kwargs)
     return GroupWavesByEnding(mWaves,grouping_function=grouping_function)
 
-def load_ibw_from_directory(in_dir,grouping_function):
+def load_ibw_from_directory(in_dir,grouping_function,limit=None):
     """
     Convenience Wrapper. Given a directory, reads in all ibw and groups 
 
     Args:
         in_dir: where we are grouping 
         grouping_function: takes in a file name, see GroupWavesByEnding
+        limit: maximum number to load
     Returns:
         dictionary: see GroupWavesByEnding, same output
     """
@@ -179,5 +180,6 @@ def load_ibw_from_directory(in_dir,grouping_function):
     ibw_raw = [loadibw(f) for f in files]
     ibw_waves = [ProcessSingleWave.WaveObj(record=raw,SourceFile=f) 
                 for raw,f in zip(ibw_raw,files)]
-    return GroupWavesByEnding(ibw_waves,grouping_function=grouping_function)
-    
+    dict_raw = GroupWavesByEnding(ibw_waves,grouping_function=grouping_function)
+    dict_ret = dict([ [k,v] for k,v in dict_raw.items()][:limit])
+    return dict_ret
