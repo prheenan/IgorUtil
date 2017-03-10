@@ -17,6 +17,47 @@ import re
 import collections
 
 
+class SurfaceImage:
+    """
+    Class for encapsulating (XXX just the height) of an image
+    """
+    def __init__(self,Example):
+        """
+        Args:
+
+            Example: a single ProcessSingleWave.XX object
+            height: the heights extracted from example (Example is pretty much 
+            exclusively used for meta information)
+        """
+        height = Example.DataY[:,:,0]
+        self.height = height
+        self.pixel_size_meters = Example.ImagePixelSize()
+        self.NumRows = height.shape[0]
+        self.range_meters = self.pixel_size_meters * self.NumRows
+    def height_nm(self):
+        """
+        Returns the height as a 2-D array in nm
+        """
+        return self.height * 1e9
+    def height_nm_rel(self):
+        """
+        returns the height, relative to the 'surface' (see args) in nm
+
+        Args:
+             pct_considered_surface: the lowest pct heights are consiered to be
+             the absolute surface. between 0 and 100
+        Returns:
+             height_nm_rel, offset to the pct
+        """
+        height_nm = self.height_nm()
+        MinV = np.median(height_nm)
+        height_nm_rel = height_nm - MinV
+        return height_nm_rel
+    def range_microns(self):
+        height_nm_relative = self.height_nm_rel()
+        range_microns = self.range_meters * 1e6
+        return range_microns
+
 def LoadPxpFilesFromDirectory(directory):
     """
     Given a directory, load all the pxp files into a wave
@@ -178,9 +219,34 @@ def load_ibw_from_directory(in_dir,grouping_function,limit=None):
     """
     files = pGenUtil.getAllFiles(in_dir,ext=".ibw")
     ValidFunc= lambda *args,**keywords: True
-    ibw_raw = [loadibw(f) for f in files]
-    ibw_waves = [ProcessSingleWave.WaveObj(record=raw,SourceFile=f) 
-                for raw,f in zip(ibw_raw,files)]
+    ibw_waves = [read_ibw_as_wave(f) for f in files]
     dict_raw = GroupWavesByEnding(ibw_waves,grouping_function=grouping_function)
     dict_ret = dict([ [k,v] for k,v in dict_raw.items()][:limit])
     return dict_ret
+
+def read_ibw_as_wave(in_file):
+    """
+    Reads a *single* image from the given ibw file
+
+    Args:
+         in_file: path to the file
+    Returns:
+         SurfaceImage object
+    """
+    raw = loadibw(in_file)
+    ex = ProcessSingleWave.WaveObj(record=raw,SourceFile=in_file) 
+    return SurfaceImage(ex)
+
+def ReadImage(InFile):
+    """
+    Reads a *single* image from the given pxp file
+
+    Args:
+         InFile: path
+    Returns:
+         List of tuple of <Full Wave Object, height array>
+    """
+    Waves = PxpLoader.LoadAllWavesFromPxp(InFile,
+                                          ValidFunc=PxpLoader.IsValidImage)
+    # get all the images
+    return [ Example for Example in Waves]
