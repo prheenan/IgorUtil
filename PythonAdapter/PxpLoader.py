@@ -4,7 +4,7 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-import ProcessSingleWave
+from IgorUtil.PythonAdapter import ProcessSingleWave
 from GeneralUtil.python.LibUtil import IgorUtil as IgorUtil
 from GeneralUtil.python import GenUtilities as pGenUtil
 
