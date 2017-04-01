@@ -67,6 +67,7 @@ class TimeSepForceObj:
             from it
         """
         self.has_events = False
+        self.Events = []
         if (mWaves is not None):
             self.LowResData = \
                 DataObjByConcat(mWaves.CreateTimeSepForceWaveObject())
