@@ -1,75 +1,56 @@
 // Use modern global access method, strict compilation
 #pragma rtGlobals=3	
 
-#pragma ModuleName = ModInverseWeierstrass
+#pragma ModuleName = ModFeather
 #include ":::IgorCode:Util:IoUtil"
 #include ":::IgorCode:Util:PlotUtil"
 #include ":::IgorCode:Util:OperatingSystemUtil"
 
 
-Static StrConstant path_to_iwt_folder = "Research/Perkins/Projects/PythonCommandLine/InverseWeierstrass/"
-Static StrConstant iwt_file = "main_iwt.py"
+Static StrConstant path_to_feather_folder = "Research/Perkins/Projects/PythonCommandLine/FEATHER/"
+Static StrConstant feather_file = "main_feather.py"
 
-Structure InverseWeierstrassOutput
-	Wave molecular_extension_meters
-	Wave energy_landscape_joules
-	Wave tilted_energy_landscape_joules
+Structure FeatherOutput
+	Wave event_starts
 EndStructure
 
-Structure InverseWeierstrassOptions
-	// Structure describing all the options the IWT takes
+Structure FeatherOptions
+	// Structure describing all the options the feather takes
 	//
 	//	Args: 
-	//		number_of_pairs: the number of approach/retract curves (assumed all the same length)
-	//		present in the file to load. If just one approach/retract (bad idea, IWT is for ensembles), this
-	//		would be one.
-	//
-	//		number_of_bins: number of extension bins to use. Depends on data, but setting this
-	//		so the bin size is 1-10AA is a good place to start (eg: 100 for an extenesion change of 10nm)
-	//
-	//		fraction_velocity_fit: the IWT recquires knowing the velocity the tip-sample separation would
-	//		move at in the absense of a sample. For relatively symmetric approach/retracts, < 0.5 is safe
-	//		
-	//		f_one_half_N: the force at which half of everything is folded/unfolded. In Newtons
+	//		threshold: the probability (between 0 and 1, log spacing is a good idea)
+	//		tau: the number of points to use for spline fitting XXX currently not supported
 	//
 	//		path_to_research_directory: absolute path to directory one above Research (parent of 
 	//		Research/Perkins/Projects/ ...)
 	//
-	//		flip_forces: if true (1), then multiply all forces by -1 to get the force on the molecule.
-	// 		By default, the cypher gets the force on the tip (e.g. default is negative means the tip
-	//		is pulled towards the surface), and IWT needs the force on the molecule
-	//
 	//		path_to_input_file: where the pxp you want to analyze is. Should have a single wave 
-	// 		like <x><d>_Sep and a single wave like <x><d>_Force which are zeroed in separation and
-	// 		force and have an integer number of retract/approach pairs. <x> and <y> can be anything,
+	// 		like <x><d>_Sep and a single wave like <x><d>_Force. <x> can be anything,
 	//  		<d> should be a 4-digit identifier (e.g. "Image0001_Sep" would be OK)
-	Variable number_of_pairs
-	Variable number_of_bins
-	Variable fraction_velocity_fit
-	Variable f_one_half_N
-	Variable flip_forces
+	Variable threshold
+	Variable tau
 	String path_to_research_directory
 	String path_to_input_file
 EndStructure
 
-Static Function /S full_path_to_iwt_folder(options)
+Static Function /S full_path_to_feather_folder(options)
 	// Function that gives the full path to the inverse weierstrass python folder
 	//
 	// Args:
-	//		options: the InverseWeierstrassOptions structure, initialized (see inverse_weierstrass_options function)
+	//		options: the FeatherOptions structure, initialized (see inverse_weierstrass_options function)
 	// Returns:
 	//		string to full path
-	Struct InverseWeierstrassOptions & options
-	return options.path_to_research_directory + path_to_iwt_folder
+	Struct FeatherOptions & options
+	return options.path_to_research_directory + path_to_feather_folder
 End Function
 
 Static Function /S output_file_name(options)
 	//
 	// Returns:
 	//		the output file to read from
-	Struct InverseWeierstrassOptions & options
-	String FolderPath = ModInverseWeierstrass#full_path_to_iwt_folder(options)
-	return FolderPath + "landscape.csv"
+	Struct FeatherOptions & options
+	String FolderPath = ModFeather#full_path_to_feather_folder(options)
+	return FolderPath + "events.csv"
 End Function
 
 Static Function /S python_command(opt)
@@ -79,19 +60,15 @@ Static Function /S python_command(opt)
 	//		options: the InverseWeierstrassOptions structure, initialized (see inverse_weierstrass_options function)
 	// Returns:
 	//		string to command, OS-specific
-	Struct InverseWeierstrassOptions & opt
+	Struct FeatherOptions & opt
 	String PythonCommand
 	String python_str  = ModOperatingSystemUtil#python_binary_string()
-	String FolderPath = ModInverseWeierstrass#full_path_to_iwt_folder(opt)
-	String FullPath = ModInverseWeierstrass#full_path_to_iwt_main(opt)
+	String FolderPath = ModFeather#full_path_to_feather_folder(opt)
+	String FullPath = ModFeather#full_path_to_feather_main(opt)
 	// Get just the python portion of the command
 	String Output
 	sprintf Output,"%s %s ",python_str,FullPath
-	ModOperatingSystemUtil#append_argument(Output,"number_of_pairs",num2str(opt.number_of_pairs))
-	ModOperatingSystemUtil#append_argument(Output,"number_of_bins",num2str(opt.number_of_bins))
-	ModOperatingSystemUtil#append_argument(Output,"f_one_half",num2str(opt.f_one_half_N))
-	ModOperatingSystemUtil#append_argument(Output,"fraction_velocity_fit",num2str(opt.fraction_velocity_fit))
-	ModOperatingSystemUtil#append_argument(Output,"flip_forces",num2str(opt.flip_forces))
+	ModOperatingSystemUtil#append_argument(Output,"threshold",num2str(opt.threshold))
 	String output_file = output_file_name(opt)
 	String input_file = opt.path_to_input_file
 	// Windows is a special flower and needs its paths adjusted
@@ -104,18 +81,18 @@ Static Function /S python_command(opt)
 	return Output
 End Function
 
-Static Function /S full_path_to_iwt_main(options)
+Static Function /S full_path_to_feather_main(options)
 	// Function that gives the full path to the inverse weierstrass python folder
 	//
 	// Args:
 	//		options: the InverseWeierstrassOptions structure, initialized (see inverse_weierstrass_options function)
 	// Returns:
-	//		string, full path to iwt python main
-	Struct InverseWeierstrassOptions & options
-	return full_path_to_iwt_folder(options) + iwt_file
+	//		string, full path to feather python main
+	Struct FeatherOptions & options
+	return full_path_to_feather_folder(options) + feather_file
 End Function
 
-Static Function inverse_weierstrass(user_options,output)
+Static Function feather(user_options,output)
 	// Function that calls the IWT python code
 	//
 	// Args:
@@ -125,35 +102,35 @@ Static Function inverse_weierstrass(user_options,output)
 	// Returns:
 	//		Nothing, but sets output appropriately. 
 	//
-	Struct InverseWeierstrassOutput & output
-	Struct InverseWeierstrassOptions & user_options
+	Struct FeatherOutput & output
+	Struct FeatherOptions & user_options
 	// make a local copy of user_options, since we have to mess with paths (ugh)
 	// and we want to adhere to principle of least astonishment
-	Struct InverseWeierstrassOptions options 
+	Struct FeatherOptions options 
 	options = user_options
 	// do some cleaning on the input and output...
 	options.path_to_input_file = ModOperatingSystemUtil#replace_double("/",options.path_to_input_file)
 	options.path_to_research_directory = ModOperatingSystemUtil#replace_double("/",options.path_to_research_directory)
 	String input_file_igor, python_file_igor
-	String path_to_iwt_main = ModInverseWeierstrass#full_path_to_iwt_main(options)
+	String path_to_feather_main = ModFeather#full_path_to_feather_main(options)
 	// first thing we do is check if all the files exist
 	if (ModOperatingSystemUtil#running_windows())
 		options.path_to_input_file = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.path_to_input_file)
 		options.path_to_research_directory = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.path_to_research_directory)
 		input_file_igor = ModOperatingSystemUtil#to_igor_path(options.path_to_input_file)
-		python_file_igor = ModOperatingSystemUtil#to_igor_path(path_to_iwt_main)
+		python_file_igor = ModOperatingSystemUtil#to_igor_path(path_to_feather_main)
 	else
 		input_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(options.path_to_input_file)
-		python_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(path_to_iwt_main)
+		python_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(path_to_feather_main)
 	endif
 	// // ensure we can actually call the input file (ie: it should exist)
 	Variable FileExists = ModIoUtil#FileExists(input_file_igor)
-	String ErrorString = "Bad Path, IWT received non-existing input file: " + options.path_to_input_file
+	String ErrorString = "Bad Path, received non-existing input file: " + options.path_to_input_file
 	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// POST: input file exists
 	// // ensure we can actually find the python file
 	FileExists = ModIoUtil#FileExists(ModOperatingSystemUtil#to_igor_path(python_file_igor))
-	ErrorString = "Bad Path, IWT couldnt find python script at: " + python_file_igor
+	ErrorString = "Bad Path, couldnt find python script at: " + python_file_igor
 	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// POST: input and python directories are a thing!
 	String output_file = output_file_name(options)
@@ -163,24 +140,22 @@ Static Function inverse_weierstrass(user_options,output)
 		options.path_to_research_directory = ModOperatingSystemUtil#sanitize_path_for_windows(options.path_to_research_directory)
 	endif
 	// Run the python code 
-	String PythonCommand = ModInverseWeierstrass#python_command(options)	
+	String PythonCommand = ModFeather#python_command(options)
 	ModOperatingSystemUtil#execute_python(PythonCommand)
 	// Get the data into wavesd starting with <basename>
-	String basename = "iwt_tmp"
+	String basename = "tmp"
 	String igor_path = ModOperatingSystemUtil#sanitize_path(output_file)
 	// Ensure the file actually got made...
 	FileExists = ModIoUtil#FileExists(igor_path)
-	ErrorString = "IWT couldnt find output file at: " + igor_path
+	ErrorString = "Couldnt find output file at: " + igor_path
 	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// load the wave (the first 2 lines are header)
-	Variable first_line = 3
+	Variable first_line = 2
 	ModOperatingSystemUtil#read_csv_to_path(basename,igor_path,first_line=first_line)
 	// Put it in the output parts
-	Duplicate /O $(basename + "0"), output.molecular_extension_meters
-	Duplicate /O $(basename + "1"), output.energy_landscape_joules
-	Duplicate /O $(basename + "2"), output.tilted_energy_landscape_joules
+	Duplicate /O $(basename + "0"), output.event_starts
 	// kill all the temporary stuff
-	KillWaves /Z $(basename + "0"), $(basename + "1"), $(basename + "2")
+	KillWaves /Z $(basename + "0")
 	// kill the output file
 	// /Z: if the file doesn't exist, dont worry about it  (we assert we deleted below)
 	DeleteFile /Z (igor_path)

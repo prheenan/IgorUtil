@@ -49,15 +49,14 @@ Static Function read_csv_to_path(basename,igor_path,[first_line])
 	LoadWave/Q/J/D/K=1/L={0,first_line,0,0,0}/A=$(basename) igor_path	
 End Function
 
-Static Function execute_python(options)
+Static Function execute_python(PythonCommand)
 	// executes a python command, given the options
 	//
 	// Args:
-	//		options: the InverseWeierstrassOptions structure, initialized (see inverse_weierstrass_options function)
+	//	 	PythonCommand: the string to use 
 	// Returns:
 	//		nothing; throws an error if it finds one.
-	Struct InverseWeierstrassOptions & options
-	String PythonCommand = ModInverseWeierstrass#python_command(options)
+	String PythonCommand
 	ModOperatingSystemUtil#assert_python_binary_accessible()
 	// POST: we can for sure call the python binary
 	ModOperatingSystemUtil#os_command_line_execute(PythonCommand)
