@@ -15,7 +15,8 @@ from IgorUtil.PythonAdapter.igor.record.wave import WaveRecord
 
 import re
 import collections
-
+# for rotating surface image 
+from scipy import ndimage
 
 class SurfaceImage:
     """
@@ -34,6 +35,9 @@ class SurfaceImage:
         self.pixel_size_meters = Example.ImagePixelSize()
         self.NumRows = height.shape[0]
         self.range_meters = self.pixel_size_meters * self.NumRows
+    def rotate(self,angle_degrees,**kwargs):
+        self.height = ndimage.interpolation.rotate(self.height,
+                                                   angle=angle_degrees,**kwargs)
     def height_nm(self):
         """
         Returns the height as a 2-D array in nm
@@ -231,10 +235,22 @@ def read_ibw_as_wave(in_file):
     Args:
          in_file: path to the file
     Returns:
-         SurfaceImage object
+         WaveObj object
     """
     raw = loadibw(in_file)
     ex = ProcessSingleWave.WaveObj(record=raw,SourceFile=in_file) 
+    return ex
+    
+def read_ibw_as_image(in_file):
+    """
+    Reads a *single* image from the given ibw file as a SurfaceImage
+
+    Args:
+         in_file: path to the file
+    Returns:
+        SurfaceImage object
+    """
+    ex = read_ibw_as_wave(in_file)
     return SurfaceImage(ex)
 
 def ReadImage(InFile):
@@ -249,4 +265,4 @@ def ReadImage(InFile):
     Waves = PxpLoader.LoadAllWavesFromPxp(InFile,
                                           ValidFunc=PxpLoader.IsValidImage)
     # get all the images
-    return [ Example for Example in Waves]
+    return [ SurfaceImage(Example) for Example in Waves]

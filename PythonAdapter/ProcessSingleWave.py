@@ -227,7 +227,7 @@ class WaveObj:
         Returns the pixel size (in meters; side of a pixel) for this,
         *assuming* the wave is an image. XXX assume square images
         """
-        ScanString = self.Note["ScanSize"]
+        ScanString = self.Note["SlowScanSize"]
         try:
             size_in_meters = float(ScanString)
         except ValueError:

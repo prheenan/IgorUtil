@@ -8,7 +8,7 @@ Static StrConstant DEF_INPUT_REL_TO_BASE =  "IgorUtil/PythonApplications/Inverse
 
 Static Function Main_Windows()
 	// Runs a simple IWT on patrick's windows setup
-	ModMainIWT#Main("C:/Users/walderr/Dropbox/src_prh/")
+	ModMainIWT#Main("C:/Users/pahe3165/src_prh/")
 End Function 
 
 Static Function Main_Mac()
