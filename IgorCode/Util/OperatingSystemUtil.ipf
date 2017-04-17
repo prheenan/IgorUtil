@@ -13,6 +13,55 @@
 //		os x       : "//anaconda/bin/python"
 //
 
+Static Function /S sanitize_path(igor_path)
+	// Igor is evil and uses colons, defying decades of convention for paths. This function helps S
+	//
+	// Args:
+	//		igor_path: the (raw) path to sanitize
+	// Returns:
+	//		the path as a string
+	String igor_path
+	if (!running_windows())
+		igor_path = ModOperatingSystemUtil#sanitize_mac_path_for_igor(igor_path)
+	else
+		igor_path = ModOperatingSystemUtil#to_igor_path(igor_path)
+	endif
+	return igor_path
+End Function
+
+Static Function read_csv_to_path(basename,igor_path,[first_line])
+	// reads a (simple) csv file into a wave specified 
+	// Args:
+	//		basename: the wave to read into; starts with <basename>0
+	//		igor_path: the igor-style path to the file to read in
+	//		first_line: skip the first y-1 lines
+	// Returns;
+	//		nothing, but reads each column of the wave into <basename><0,1,2,...>
+	// Q: quiet
+	// J: delimited text
+	// D: doouble precision
+	// K=1: all columns are numeric 
+	// /L={x,y,x,x}: skip first y-1 lines
+	// /A=<z>: auto name, start with "<z>0" and work up
+	String basename, igor_path
+	Variable first_line
+	first_line = ParamIsDefault(first_line) ? 1 : first_line
+	LoadWave/Q/J/D/K=1/L={0,first_line,0,0,0}/A=$(basename) igor_path	
+End Function
+
+Static Function execute_python(options)
+	// executes a python command, given the options
+	//
+	// Args:
+	//		options: the InverseWeierstrassOptions structure, initialized (see inverse_weierstrass_options function)
+	// Returns:
+	//		nothing; throws an error if it finds one.
+	Struct InverseWeierstrassOptions & options
+	String PythonCommand = ModInverseWeierstrass#python_command(options)
+	ModOperatingSystemUtil#assert_python_binary_accessible()
+	// POST: we can for sure call the python binary
+	ModOperatingSystemUtil#os_command_line_execute(PythonCommand)
+End Function
 
 Static Function /S append_argument(Base,Name,Value,[AddSpace])
 	// Function that appends "-<Name> <Value>" to Base, possible adding a space to the end

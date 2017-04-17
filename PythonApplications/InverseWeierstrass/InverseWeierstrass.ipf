@@ -40,8 +40,9 @@ Structure InverseWeierstrassOptions
 	//		is pulled towards the surface), and IWT needs the force on the molecule
 	//
 	//		path_to_input_file: where the pxp you want to analyze is. Should have a single wave 
-	// 		like <x>_Sep and a single wave like <y>_Force which are zeroed in separation and
-	// 		force and have an integer number of retract/approach pairs.
+	// 		like <x><d>_Sep and a single wave like <x><d>_Force which are zeroed in separation and
+	// 		force and have an integer number of retract/approach pairs. <x> and <y> can be anything,
+	//  		<d> should be a 4-digit identifier (e.g. "Image0001_Sep" would be OK)
 	Variable number_of_pairs
 	Variable number_of_bins
 	Variable fraction_velocity_fit
@@ -103,21 +104,6 @@ Static Function /S python_command(opt)
 	return Output
 End Function
 
-
-Static Function execute_python(options)
-	// executes a python command, given the options
-	//
-	// Args:
-	//		options: the InverseWeierstrassOptions structure, initialized (see inverse_weierstrass_options function)
-	// Returns:
-	//		nothing; throws an error if it finds one.
-	Struct InverseWeierstrassOptions & options
-	String PythonCommand = ModInverseWeierstrass#python_command(options)
-	ModOperatingSystemUtil#assert_python_binary_accessible()
-	// POST: we can for sure call the python binary
-	ModOperatingSystemUtil#os_command_line_execute(PythonCommand)
-End Function
-
 Static Function /S full_path_to_iwt_main(options)
 	// Function that gives the full path to the inverse weierstrass python folder
 	//
@@ -177,29 +163,17 @@ Static Function inverse_weierstrass(user_options,output)
 		options.path_to_research_directory = ModOperatingSystemUtil#sanitize_path_for_windows(options.path_to_research_directory)
 	endif
 	// Run the python code 
-	execute_python(options)
+	ModOperatingSystemUtil#execute_python(options)
 	// Get the data into wavesd starting with <basename>
 	String basename = "iwt_tmp"
-	// Igor is evil and uses colons, defying decades of convention for paths
-	String igor_path
-	if (!running_windows())
-		igor_path = ModOperatingSystemUtil#sanitize_mac_path_for_igor(output_file)
-	else
-		igor_path = ModOperatingSystemUtil#to_igor_path(output_file)
-	endif
+	String igor_path = ModOperatingSystemUtil#sanitize_path(output_file)
 	// Ensure the file actually got made...
 	FileExists = ModIoUtil#FileExists(igor_path)
 	ErrorString = "IWT couldnt find output file at: " + igor_path
 	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// load the wave (the first 2 lines are header)
-	Variable FirstLine = 3
-	// Q: quiet
-	// J: delimited text
-	// D: doouble precision
-	// K=1: all columns are numeric 
-	// /L={x,y,x,x}: skip first y-1 lines
-	// /A=<z>: auto name, start with "<z>0" and work up
-	LoadWave/Q/J/D/K=1/L={0,FirstLine,0,0,0}/A=$(basename) igor_path
+	Variable first_line = 3
+	ModOperatingSystemUtil#read_csv_to_path(basename,igor_path,first_line=first_line)
 	// Put it in the output parts
 	Duplicate /O $(basename + "0"), output.molecular_extension_meters
 	Duplicate /O $(basename + "1"), output.energy_landscape_joules
