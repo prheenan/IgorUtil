@@ -1223,7 +1223,7 @@ Static Function AxGenLine(mWin,axisName,valueI,valueF,mPlotObj,mDoUpdate)
 	 DrawGen(mWin,axisName,valueI,valueF,mPlotObj,mDoUpdate,TYPE_DRAW_LINE)
 End Function
 
-Static Function AxVLine(xValue,[GraphName,color,mDoUpdate])
+Static Function axvline(xValue,[GraphName,color,mDoUpdate])
 	// 'xValue' is the x location we want the vertical line to pass through
 	Variable xValue
 	Variable mDoUpdate 
@@ -1247,7 +1247,7 @@ Static Function AxVLine(xValue,[GraphName,color,mDoUpdate])
 	 AxGenLine(GraphName,Y_AXIS_DEFLOC,xValue,xValue,mPlotObj,mDoUpdate)	
 End Function
 
-Static Function AxHLine(yValue,[GraphName,color,mDoUpdate])
+Static Function axhline(yValue,[GraphName,color,mDoUpdate])
 	// 'yValue' is the y location we want the vertical line to pass through
 	Variable yValue
 	Variable mDoUpdate 
@@ -1282,6 +1282,21 @@ Static Function GetTracesAsWave(GraphName,mWave)
 	// Add all the items
 	mWave[] =  StringFromList(p,Traces,Sep)
 End Function
+
+Function KillAllGraphs()
+	// Kills all open graphs or windows
+	// See:
+	//http://www.igorexchange.com/node/2555
+	string fulllist = WinList("*", ";","WIN:1")
+	string name, cmd
+	variable i
+ 
+	for(i=0; i<itemsinlist(fulllist); i +=1)
+		name= stringfromlist(i, fulllist)
+		sprintf  cmd, "Dowindow/K %s", name
+		execute cmd		
+	endfor
+end
 
 Static Function ClearFig([GraphName])
 	String GraphName
