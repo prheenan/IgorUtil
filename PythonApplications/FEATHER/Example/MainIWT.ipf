@@ -33,8 +33,8 @@ Static Function Main(base,[input_file])
 	Struct FeatherOptions opt
 	opt.tau = 0
 	opt.threshold = 1e-2
-	opt.path_to_input_file = input_file
-	opt.path_to_research_directory = base
+	opt.meta.path_to_input_file = input_file
+	opt.meta.path_to_research_directory = base
 	// Make the output waves
 	Struct FeatherOutput output
 	Make /O/N=0, output.event_starts

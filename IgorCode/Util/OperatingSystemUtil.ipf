@@ -13,6 +13,13 @@
 //		os x       : "//anaconda/bin/python"
 //
 
+Structure RuntimeMetaInfo
+	String path_to_research_directory
+       String path_to_input_file
+	String path_to_python_binary
+EndStructure
+
+
 Static Function /S sanitize_path(igor_path)
 	// Igor is evil and uses colons, defying decades of convention for paths. This function helps S
 	//
