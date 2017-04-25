@@ -12,7 +12,7 @@ WAVE_NOTE_STR = 'note'
 # the delimiter for the notes
 NOTE_DELIM = ":"
 # extensons for datawaves
-DATA_EXT = ["Defl","DeflV","Force","Sep","ZSnsr"]
+DATA_EXT = ["defl","deflv","force","sep","zsnsr"]
 TEXT_ENCODING = "utf-8"
 import re
 import copy
@@ -422,8 +422,9 @@ def ValidName(mWave):
     """
     name = GetWaveName(mWave)
     # loop through each extension, return true on a match
+    name = str(name.lower())
     for ext in DATA_EXT:
-        if name.lower().endswith(ext.lower()):
+        if name.endswith(ext):
             return True
     return False
 
