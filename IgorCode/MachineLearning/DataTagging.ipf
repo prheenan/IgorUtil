@@ -3,6 +3,7 @@
 
 #pragma ModuleName = ModDataTagging
 #include "::Util:IoUtil"
+#include "::Util:PlotUtil"
 #include "::Util:ErrorUtil"
 
 Macro DataTagging()
@@ -21,6 +22,35 @@ Static Function /S get_output_path()
 	String my_file_name =ModIoUtil#current_experiment_name()
 	SVAR base = prh_tagging_output_directory
 	return base + my_file_name +"_events.txt"
+End Function
+
+Static Function offset_from_wave_base(data_folder,base_name,trace)
+	String data_folder,base_name,trace
+	// get the offset associated 
+	String appr_str = "_Ext",dwell_str = "_Towd",ret_str="_Ret"
+	String base_path = data_folder + base_name
+	String ApproachName =  (base_path + appr_str)
+	String DwellName =  (base_path + dwell_str)
+	Variable offset  =0 
+	if (!WaveExists($ApproachName) || !WaveExists($DwellName))
+		offset = 0
+		return offset
+	endif
+	Variable n_approach = DimSize( $ApproachName,0)
+	Variable n_dwell = DimSize($(DwellName),0)
+	// get the actual offset
+	if (ModIoUtil#string_ends_with(trace,appr_str))
+		// no offset; dont do anything
+		offset = 0 
+	elseif(ModIoUtil#string_ends_with(trace,dwell_str))
+		offset = n_approach
+	else
+		String err_message = "Dont recognize wave: " + base_path + trace
+		ModErrorUtil#Assert(ModIoUtil#string_ends_with(trace,ret_str),msg=err_message)
+		// POST: we know what is happening
+		offset = n_approach + n_dwell
+	endif
+	return offset
 End Function
 
 Function  save_cursor_updates_by_globals(s)
@@ -52,27 +82,10 @@ Function  save_cursor_updates_by_globals(s)
 				String data_folder = GetWavesDataFolder(tmp_trace,kind)
 				// Get the base name; we want to get the absolute offset for the entire trace...
 				String base_name
-				// our regex is anything, following by a single underscore and letters
-				String regex = "(.+)_[a-zA-Z]"
+				// our regex is anything, following by numbers, a (possible) single underscore, then letters
+				String regex = "(.+?)[_]?[a-zA-Z]+$"
 				SplitString /E=(regex) trace,base_name
-				// get the offset associated 
-				String appr_str = "_Ext",dwell_str = "_Towd",ret_str="_Ret"
-				String base_path = data_folder + base_name
-				Variable n_approach = DimSize( $(base_path + appr_str),0)
-				Variable n_dwell = DimSize($(base_path+dwell_str),0)
-				// get the actual offset
-				Variable offset  =0 
-				if (ModIoUtil#string_ends_with(trace,appr_str))
-					// no offset; dont do anything
-					break
-				elseif(ModIoUtil#string_ends_with(trace,dwell_str))
-					offset = n_approach
-				else
-					String err_message = "Dont recognize wave: " + base_path + trace
-					ModErrorUtil#Assert(ModIoUtil#string_ends_with(trace,ret_str),msg=err_message)
-					// POST: we know what is happening
-					offset = n_approach + n_dwell
-				endif
+				Variable offset = offset_from_wave_base(data_folder,base_name,trace)
 				Variable start_idx = a_idx + offset
 				Variable end_idx = b_idx + offset
 				// POST: have the A and B cursors. Save them to the output file
@@ -180,5 +193,11 @@ Static Function Main()
 	// Returns:
 	//
 	//
-	hook_cursor_current_directory("ForceReviewGraph")
+	String window_name = "ForceReviewGraph"
+	// Make sure the window exists, otherwise just do a top-level
+	if (!ModIoUtil#WindowExists(window_name))
+		print("Couldn't find force review panel, attempting top level graph instead")
+		window_name = ModPlotUtil#gcf()
+	EndIf
+	hook_cursor_current_directory(window_name)
 End Function

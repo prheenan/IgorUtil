@@ -29,8 +29,7 @@ Structure FeatherOptions
 	//  		<d> should be a 4-digit identifier (e.g. "Image0001_Sep" would be OK)
 	Variable threshold
 	Variable tau
-	String path_to_research_directory
-	String path_to_input_file
+	Struct RuntimeMetaInfo meta
 EndStructure
 
 Static Function /S full_path_to_feather_folder(options)
@@ -41,7 +40,7 @@ Static Function /S full_path_to_feather_folder(options)
 	// Returns:
 	//		string to full path
 	Struct FeatherOptions & options
-	return options.path_to_research_directory + path_to_feather_folder
+	return options.meta.path_to_research_directory + path_to_feather_folder
 End Function
 
 Static Function /S output_file_name(options)
@@ -70,7 +69,7 @@ Static Function /S python_command(opt)
 	sprintf Output,"%s %s ",python_str,FullPath
 	ModOperatingSystemUtil#append_argument(Output,"threshold",num2str(opt.threshold))
 	String output_file = output_file_name(opt)
-	String input_file = opt.path_to_input_file
+	String input_file = opt.meta.path_to_input_file
 	// Windows is a special flower and needs its paths adjusted
 	if (running_windows())
 		output_file = ModOperatingSystemUtil#sanitize_path_for_windows(output_file)
@@ -109,23 +108,23 @@ Static Function feather(user_options,output)
 	Struct FeatherOptions options 
 	options = user_options
 	// do some cleaning on the input and output...
-	options.path_to_input_file = ModOperatingSystemUtil#replace_double("/",options.path_to_input_file)
-	options.path_to_research_directory = ModOperatingSystemUtil#replace_double("/",options.path_to_research_directory)
+	options.meta.path_to_input_file = ModOperatingSystemUtil#replace_double("/",options.meta.path_to_input_file)
+	options.meta.path_to_research_directory = ModOperatingSystemUtil#replace_double("/",options.meta.path_to_research_directory)
 	String input_file_igor, python_file_igor
 	String path_to_feather_main = ModFeather#full_path_to_feather_main(options)
 	// first thing we do is check if all the files exist
 	if (ModOperatingSystemUtil#running_windows())
-		options.path_to_input_file = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.path_to_input_file)
-		options.path_to_research_directory = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.path_to_research_directory)
-		input_file_igor = ModOperatingSystemUtil#to_igor_path(options.path_to_input_file)
+		options.meta.path_to_input_file = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.meta.path_to_input_file)
+		options.meta.path_to_research_directory = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.meta.path_to_research_directory)
+		input_file_igor = ModOperatingSystemUtil#to_igor_path(options.meta.path_to_input_file)
 		python_file_igor = ModOperatingSystemUtil#to_igor_path(path_to_feather_main)
 	else
-		input_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(options.path_to_input_file)
+		input_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(options.meta.path_to_input_file)
 		python_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(path_to_feather_main)
 	endif
 	// // ensure we can actually call the input file (ie: it should exist)
 	Variable FileExists = ModIoUtil#FileExists(input_file_igor)
-	String ErrorString = "Bad Path, received non-existing input file: " + options.path_to_input_file
+	String ErrorString = "Bad Path, received non-existing input file: " + options.meta.path_to_input_file
 	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// POST: input file exists
 	// // ensure we can actually find the python file
@@ -137,7 +136,7 @@ Static Function feather(user_options,output)
 	if (running_windows())
 		// much easier just to use the user's input, assume it is OK at this point.
 		// note that windows needs the <.py> file path to be something like C:/...
-		options.path_to_research_directory = ModOperatingSystemUtil#sanitize_path_for_windows(options.path_to_research_directory)
+		options.meta.path_to_research_directory = ModOperatingSystemUtil#sanitize_path_for_windows(options.meta.path_to_research_directory)
 	endif
 	// Run the python code 
 	String PythonCommand = ModFeather#python_command(options)

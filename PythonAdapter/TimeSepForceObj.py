@@ -108,6 +108,8 @@ class TimeSepForceObj:
             return self.Meta.DwellTime
         else:
             return 0
+    def set_dwell_time(self,t):
+        self.Meta.DwellTime = t
     def offset_z_sensor(self,offset=None):
         if (offset is None):
             offset = np.min(self.Zsnsr)
