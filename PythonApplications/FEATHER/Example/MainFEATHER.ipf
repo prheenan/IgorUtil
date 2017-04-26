@@ -5,7 +5,7 @@
 #include "::::IgorCode:Util:PlotUtil"
 #pragma ModuleName = ModMainFEATHER
 
-Static StrConstant DEF_INPUT_REL_TO_BASE =  "IgorUtil/PythonApplications/FEATHER/Example/feather_example.pxp"
+Static StrConstant DEF_INPUT_REL_TO_BASE =  "IgorUtil/PythonApplications/FEATHER/Example/Graph3.pxp"
 
 Static Function Main_Windows()
 	// Runs a simple IWT on patrick's windows setup
@@ -43,13 +43,13 @@ Static Function Main(base,[input_file])
 	// Make a fun plot wooo
 	LoadData /O/Q/R (ModOperatingSystemUtil#sanitize_path(input_file))
 	Wave Y =  $("Image0994Force")
-	Display Y
+	Wave X =  $("Image0994Sep")
+	Display Y vs X
 	Variable n_events = DimSize(output.event_starts,0)
 	Variable i
 	for (i=0; i<n_events; i+=1)
 		Variable event_idx = output.event_starts[i]
-		Variable dt = DimDelta(Y, 0)
-		ModPlotUtil#axvline(dt*event_idx)
+		ModPlotUtil#axvline(X[event_idx])
 	endfor
 	Edit output.event_starts as "Predicted Event Indices in Wave"
 End Function
