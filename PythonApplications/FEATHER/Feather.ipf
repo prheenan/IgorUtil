@@ -29,6 +29,9 @@ Structure FeatherOptions
 	//  		<d> should be a 4-digit identifier (e.g. "Image0001_Sep" would be OK)
 	Variable threshold
 	Variable tau
+	Variable trigger_time
+	Variable dwell_time
+	Variable spring_constant
 	Struct RuntimeMetaInfo meta
 EndStructure
 
@@ -68,6 +71,10 @@ Static Function /S python_command(opt)
 	String Output
 	sprintf Output,"%s %s ",python_str,FullPath
 	ModOperatingSystemUtil#append_argument(Output,"threshold",num2str(opt.threshold))
+	ModOperatingSystemUtil#append_argument(Output,"tau",num2str(opt.tau))
+	ModOperatingSystemUtil#append_argument(Output,"spring_constant",num2str(opt.spring_constant))
+	ModOperatingSystemUtil#append_argument(Output,"dwell_time",num2str(opt.dwell_time))
+	ModOperatingSystemUtil#append_argument(Output,"trigger_time",num2str(opt.trigger_time))
 	String output_file = output_file_name(opt)
 	String input_file = opt.meta.path_to_input_file
 	// Windows is a special flower and needs its paths adjusted

@@ -12,7 +12,7 @@ WAVE_NOTE_STR = 'note'
 # the delimiter for the notes
 NOTE_DELIM = ":"
 # extensons for datawaves
-DATA_EXT = ["defl","deflv","force","sep","zsnsr"]
+DATA_EXT = ["defl","deflv","force","sep","zsnsr","time"]
 TEXT_ENCODING = "utf-8"
 import re
 import copy

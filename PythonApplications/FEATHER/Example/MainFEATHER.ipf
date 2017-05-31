@@ -5,7 +5,7 @@
 #include "::::IgorCode:Util:PlotUtil"
 #pragma ModuleName = ModMainFEATHER
 
-Static StrConstant DEF_INPUT_REL_TO_BASE =  "IgorUtil/PythonApplications/FEATHER/Example/Graph3.pxp"
+Static StrConstant DEF_INPUT_REL_TO_BASE =  "IgorUtil/PythonApplications/FEATHER/Example/feather_example.pxp"
 
 Static Function Main_Windows()
 	// Runs a simple IWT on patrick's windows setup
@@ -33,6 +33,12 @@ Static Function Main(base,[input_file])
 	Struct FeatherOptions opt
 	opt.tau = 0
 	opt.threshold = 1e-2
+	opt.tau = 2e-2
+	// Add the meta information
+	opt.trigger_time = 0.081
+	opt.dwell_time = 0.9
+	opt.spring_constant = 6.7e-3
+	// add the file information
 	opt.meta.path_to_input_file = input_file
 	opt.meta.path_to_research_directory = base
 	// Make the output waves
