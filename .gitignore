@@ -16,6 +16,7 @@
 *py~
 *~
 *.pkl
+*.pyo
 *.npz
 *.npy
 *.svg
