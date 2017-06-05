@@ -87,9 +87,8 @@ Static Function capture_indenter([speed,timespan,wave0,wave1])
 	Note wave0, low_res_note
 	Note wave1, low_res_note
 	// save out the high resolution wave to *disk*
-	Variable save_to_disk = 3;
-	ARSaveAsForce(save_to_disk,"SaveForce","Defl;ZSnsr",wave0,wave1,$"",$"",$"",$"",$"",CustomNote=low_res_note)
 	// XXX delete the high resolution wave (in memory only)?
+	ModAsylumInterface#save_to_disk(wave0,wave1,note_to_use=low_res_note)
 	return to_ret
 End Function
 

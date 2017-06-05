@@ -54,6 +54,11 @@ Static Function /S default_wave_base_name()
 	return  formatted_wave_name(base,suffix)
 End Function 
 
+// XXX should make version of these functions...
+//	NoteStr = ReplaceNumberbyKey("VerDate",NoteStr,VersionNumber(),":","\r")
+//	NoteStr = ReplaceStringByKey("Version",NoteStr,VersionString(),":","\r")
+
+
 Static Function save_to_disk(zsnsr_wave,defl_wave,[note_to_use])
 	// Saves the given ZSnsr and deflection to disk
 	//
