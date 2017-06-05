@@ -1,14 +1,35 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
+#include ":::Util:ErrorUtil"
 
-Function JustSetupStream(speed,timespan,wave0,wave1,[Wave0String,Wave1String])
+Function fast_capture_start()
+	//	Acutally starts the fast capture routine 
+	//
+	//Args:
+	//		None
+	// Returns
+	//		result of td_ws
+	return  td_ws("ARC.Events.once", "1") 
+End Function
+
+Function fast_capture_setup(speed,timespan,wave0,wave1,[Wave0String,Wave1String])
+	// Function which sets up Cypher for fast capture
+	//
+	// Args:
+	//		speed: 0/1 for 500KHz / 2MHz
+	//		timespan: how long the wave should be, in seconds
+	//		wave0/1: where to read the waves
+	//		Wave<0/1>String: which waves the cypher will understand to read
+	// Returns:
+	//		error code 
+	//
 	variable speed, timespan
 	string Wave0String,Wave1String
 	wave wave0,wave1
-	td_ws("Cypher.crosspoint.infastb","Defl") //We will make the deflection measurement on inFastB
+	 //We will make the deflection measurement on inFastB
+	td_ws("Cypher.crosspoint.infastb","Defl")
 	//This sets default behavior which is read Input.FastA and the Zsensor
 	if( ParamIsDefault(Wave0String))
 		Wave0String="Input.FastB"
-	
 	endif
 	
 	if( ParamIsDefault(Wave1String))
@@ -48,22 +69,18 @@ Function JustSetupStream(speed,timespan,wave0,wave1,[Wave0String,Wave1String])
 		duplicate/o H0, wave0
 		duplicate/o H1,wave1
 		killwaves H0,H1
-
 	endif
 	
-	
-	
-	
-	error += td_StopStream("Cypher.Stream.0")			// stop the stream	
-
-	error += td_ws("Cypher.Stream.0.Channel.0", Wave0String)		// only Cypher signals
-	error += td_ws("Cypher.Stream.0.Channel.1", Wave1String)		// do not use "Cypher" in front of the channel names
+	// stop the stream	
+	error += td_StopStream("Cypher.Stream.0")		
+	// only Cypher signals	
+	error += td_ws("Cypher.Stream.0.Channel.0", Wave0String)		
+	// do not use "Cypher" in front of the channel names
+	error += td_ws("Cypher.Stream.0.Channel.1", Wave1String)		
 	
 	if(speed==0) //Running at 500 kHz
 		error += td_ws("Cypher.Stream.0.Rate", "500 kHz")
-	
 	elseif(speed == 1)
-		
 		error += td_ws("Cypher.Stream.0.Rate", "2 MHz")
 	endif
 	
@@ -73,8 +90,7 @@ Function JustSetupStream(speed,timespan,wave0,wave1,[Wave0String,Wave1String])
 	error += td_DebugStream("Cypher.Stream.0.Channel.1", Wave1, "") 
 	
 	error += td_SetupStream("Cypher.Stream.0")
-	
-	//error+=td_ws("ARC.Events.once", "1") //Here's how you fire~~
-
+	set_fc_setup()
 	return error
 End
+
