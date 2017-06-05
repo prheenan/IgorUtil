@@ -1141,8 +1141,24 @@ Static Function DateStrToTime(str,[sep])
 End Function
 
 Static Function /S GetPathToWave(mWave)
+	//
+	// Args:
+	//		mWave:  wave to get 
+	// Returns:
+	//'		The *full* path to the wave (including the wave name itself)
 	Wave mWave
 	return GetWavesDataFolder(mWave,GETWAVES_DF_FULL_PATH)
+End Function
+
+Static Function /S path_to_wave_name(wave_str)
+	// See : GetPathToWave, except takes a string as input
+	// Args:
+	//	wave_str: string name of wave
+	// Returns:
+	//	see GetPathToWave
+	String wave_str
+	Wave tmp = $(wave_str)
+	return GetPathToWave(tmp)
 End Function
 
 Static Function /S MakeSymbolicPath(osPath)
