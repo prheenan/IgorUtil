@@ -69,8 +69,8 @@ Static Function save_to_disk(zsnsr_wave,defl_wave,[note_to_use])
 		note_to_use = Note(defl_wave)
 	endif
 	Variable save_to_disk = 0x2;
-	String raw_wave_name = ModIoUtil#GetPathToWave(zsnsr_wave)
-	ReplaceString("ZSnsr",raw_wave_name,"Raw",0)
+	String zsnsr_wave_name = ModIoUtil#GetPathToWave(zsnsr_wave)
+	String raw_wave_name = ReplaceString("ZSnsr",zsnsr_wave_name,"Raw",0)
 	Duplicate /O zsnsr_wave,$(raw_wave_name)
 	Wave wave_raw = $(raw_wave_name)
 	// For ARSaveAsForce... (modelled after DE_SaveFC, 2017-6-5)
