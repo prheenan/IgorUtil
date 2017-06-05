@@ -6,19 +6,6 @@
 #include ":::Util:IoUtil"
 #include ":::Util:PlotUtil"
 
-
-Static Function /WAVE master_variable_info()
-	// Returns: the master panel variable wave
-	return root:packages:MFP3D:Main:Variables:MasterVariablesWave
-End Function
-
-Static Function /S master_base_name()
-	// Returns: the master panel base name
-	SVAR str_v = root:packages:MFP3D:Main:Variables:BaseName
-	// XXX check SVAR exists.
-	return str_v
-End Function
-
 Static Function default_speed()
 	// Returns: the default speed for the indenter capture
 	return 0
@@ -47,38 +34,6 @@ Static Function setup_directory_sturcture()
 	NewDataFolder /O root:prh:fast_indenter:data
 End Function
 
-Static Function current_image_suffix()
-	// Returns: the current image id or suffix (e.g. 1 for 0001)
-	return master_variable_info()[%BaseSuffix][%Value]
-End Function
-
-Static Function /S formatted_wave_name(base,suffix,[type])
-	// Formats a wave name as the cyper (e.g.  Image_0101Deflv)
-	//
-	// Args:
-	//	base: name of the wave (e.g. 'Image')
-	//	suffix: id of the wave (e.g. 1)
-	//     type: optional type after the suffix (e.g. 'force')
-	// Returns:
-	//	Wave formatted as an asylum name would be, given the inputs
-	String base,type
-	Variable suffix
-	String to_ret
-	if (ParamIsDefault(type))
-		type = ""
-	EndIf
-	// Formatted like <BaseName>_<justified number><type>
-	// e.g. Image_0101Deflv
-	sprintf to_ret,"%s_%04d%s",base,suffix,type
-	return to_ret
-End Function
-
-Static Function /S default_wave_base_name()
-	// Returns: the default wave, according to the (global / cypher) Suffix and base
-	Variable suffix =current_image_suffix()
-	String base = master_base_name()
-	return  formatted_wave_name(base,suffix)
-End Function 
 
 Static Function capture_indenter([speed,timespan,wave0,wave1])
 	//	Starts the fast capture routine using the indenter panel, 
@@ -94,7 +49,7 @@ Static Function capture_indenter([speed,timespan,wave0,wave1])
 	speed = ParamIsDefault(speed) ? default_speed() : speed
 	timespan=ParamIsDefault(timespan) ? default_timespan() : timespan
 	// Determine the output wave names...
-	String default_base = (default_wave_base_name() + default_wave_base_suffix())
+	String default_base = (ModAsylumInterface#default_wave_base_name() + default_wave_base_suffix())
 	// Make sure the output folder exists
 	String default_save = default_save_folder()
 	setup_directory_sturcture()	
@@ -118,31 +73,27 @@ Static Function capture_indenter([speed,timespan,wave0,wave1])
 	// Call the single force curve
 	DoForceFunc("Single")
 	// POST: data is saved into the waves we want
-	// get the current figure, assuming it is the force review, etc..
-	String figure = ModPlotUtil#gcf()
 	// Get the *reference* to the wave we want
-	Variable current_suffix = current_image_suffix()
-	String base_name = master_base_name()
-	String full_path = formatted_wave_name(base_name,current_suffix,type="DeflV")
-	Wave low_res_wave = TraceNameToWaveRef(figure,full_path)
-	// get the note of the wave we want (want them to be consistent)
-	String low_res_note = note(low_res_wave)
+	Variable current_suffix = ModAsylumInterface#current_image_suffix()
+	String base_name = ModAsylumInterface#master_base_name()
+	String trace_name = ModAsylumInterface#formatted_wave_name(base_name,current_suffix,type="Defl")
+	// set the current graph to the force review panel
+	String review_name = ModAsylumInterface#force_review_graph_name()
+	ModPlotUtil#scf(review_name)
+	// get the note of DeflV on the force review graph
+	String low_res_note = ModPlotUtil#top_graph_wave_note(trace_name,fig=(review_name))
 	// Add the note to the higher-res waves
 	// XXX fix deltax, etc?
 	Note wave0, low_res_note
 	Note wave1, low_res_note
-	// save out the high resolution wave
+	// save out the high resolution wave to *disk*
+	Variable save_to_disk = 3;
+	ARSaveAsForce(save_to_disk,"SaveForce","Defl;ZSnsr",wave0,wave1,$"",$"",$"",$"",$"",CustomNote=low_res_note)
+	// XXX delete the high resolution wave (in memory only)?
 	return to_ret
 End Function
 
 Static Function Main()
-	// Description goes here
-	//
-	// Args:
-	//		Arg 1:
-	//		
-	// Returns:
-	//
-	//
+	// Runs the capture_indenter function with all defaults
 	capture_indenter()
 End Function

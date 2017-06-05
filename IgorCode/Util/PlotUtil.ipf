@@ -974,6 +974,35 @@ Static Function /S gcf()
 	return S_Value
 End Function
 
+Static Function scf(figure)
+	// Sets the top window to the specified window
+	// Args:
+	//	figure: the name of the figure
+	String figure
+	// /F:Brings the window with the given name to the front (top of desktop).
+	DoWindow /F $(figure)
+End Function
+
+
+Static Function /S top_graph_wave_note(trace_name,[fig])
+	// returns the note of the given trace in the top graph
+	//
+	// Args:
+	//	trace_name: name of the trace; should be in the figure
+	//	fig: figure name. defaults to ModPlotUtil#gcf()
+	// Returns
+	//	Wave note associated with the trace
+	// get the current figure, assuming it is the force review, etc..
+	String trace_name,fig
+	If (ParamIsDefault(fig))
+		fig = ModPlotUtil#gcf()	
+	EndIf
+	Wave low_res_wave = TraceNameToWaveRef(fig,trace_name)
+	// get the note of the wave we want (want them to be consistent)
+	String low_res_note = note(low_res_wave)	
+	return low_res_note
+End Function
+
 Static Function InitPlotDef(ToInit)
 	// Initialize the Plot Definitions...
 	Struct PlotDefines &ToInit

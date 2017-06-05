@@ -36,7 +36,6 @@ Function fast_capture_setup(speed,timespan,wave0,wave1,[Wave0String,Wave1String]
 	
 	if( ParamIsDefault(Wave1String))
 		Wave1String="LVDT.Z" //
-
 	endif
 	 td_ws("Cypher.input.fastB.gain","0 dB")
 	variable totpoints
