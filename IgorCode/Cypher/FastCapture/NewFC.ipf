@@ -1,9 +1,11 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
+#pragma ModuleName = ModFastIndenter
 #include ":::Util:ErrorUtil"
 
 Function fast_capture_start()
-	//	Acutally starts the fast capture routine 
+	//	Starts the fast capture routine 
 	//
+	//	PRE: must call fast_capture_setup appropriately
 	//Args:
 	//		None
 	// Returns
@@ -90,7 +92,6 @@ Function fast_capture_setup(speed,timespan,wave0,wave1,[Wave0String,Wave1String]
 	error += td_DebugStream("Cypher.Stream.0.Channel.1", Wave1, "") 
 	
 	error += td_SetupStream("Cypher.Stream.0")
-	set_fc_setup()
 	return error
 End
 
