@@ -3,9 +3,19 @@
 
 #pragma ModuleName = ModForceModifications
 
-function DoForceFunc(ctrlName)			//this handles all of the Force buttons
+function prh_DoForceFunc(ctrlName,[non_ramp_callback])			//this handles all of the Force buttons
+	// This is a very slight modification of DoForceFunc from Cypher 14.30.157 (copied 2017-6-6, prh)
+	// Args:
+	//	ctrlName: see  DoForceFunc
+	//	non_ramp_callback: single-function function name (like "foo", *not* like "foo(arg)") 
+	//	taking in the control name. Should *definitely* call FinishForceFunc before it does anything else
+	//
+	// Returns :
+	//	see DoForceFunc
 	string ctrlName
-
+	if (ParamIsDefault(non_ramp_callback))
+		non_ramp_callback = "FinishForceFunc"
+	EndIf 
 	if (GV("DoThermal"))
 		DoThermalFunc("ReallyStopButton_1")
 	endif
@@ -276,7 +286,7 @@ function DoForceFunc(ctrlName)			//this handles all of the Force buttons
 	if (StringMatch(CtrlName,"Ramp*"))
 		Callback = "ZRampCallback()"
 	else
-		Callback = "FinishForceFunc(\""+ctrlName+"\")"
+		Callback = non_ramp_callback + "(\""+ctrlName+"\")"
 	endif
 	
 	String RampChannel, TriggerChannel, Event, EventRamp, EventDwell
