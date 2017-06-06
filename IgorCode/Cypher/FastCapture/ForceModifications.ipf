@@ -3,7 +3,8 @@
 
 #pragma ModuleName = ModForceModifications
 
-function prh_DoForceFunc(ctrlName,[non_ramp_callback])			//this handles all of the Force buttons
+//this handles all of the Force buttons
+Static Function prh_DoForceFunc(ctrlName,[non_ramp_callback])
 	// This is a very slight modification of DoForceFunc from Cypher 14.30.157 (copied 2017-6-6, prh)
 	// Args:
 	//	ctrlName: see  DoForceFunc
@@ -12,7 +13,7 @@ function prh_DoForceFunc(ctrlName,[non_ramp_callback])			//this handles all of t
 	//
 	// Returns :
 	//	see DoForceFunc
-	string ctrlName
+	string ctrlName,non_ramp_callback
 	if (ParamIsDefault(non_ramp_callback))
 		non_ramp_callback = "FinishForceFunc"
 	EndIf 

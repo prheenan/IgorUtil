@@ -3,6 +3,7 @@
 
 #pragma ModuleName = ModFastIndenter
 #include ":NewFC"
+#include ":ForceModifications"
 #include ":::Util:IoUtil"
 #include ":::Util:PlotUtil"
 #include ":asylum_interface"
@@ -81,12 +82,11 @@ Static Function capture_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	// POST: inputs are correct, set up the fast capture
 	Variable to_ret = ModFastCapture#fast_capture_setup(speed,timespan,defl_wave,zsnsr_wave)
 	// Set up the CTFC to call our special callback 
-	td_WriteString("CTFC.CallBack","prh_callback()")
 	// POST: fast capture and callback is setup 
 	// Call Fast Capture
 	ModFastCapture#fast_capture_start()
 	// Call the single force curve
-	DoForceFunc("Single")
+	ModForceModifications#prh_DoForceFunc("Single")
 	// Make sure we are still correctly connected after the force input (it changes the cross point)
 	ModAsylumInterface#assert_infastb_correct()
 	// XXX kludge; just busy-wait until the force plot comes back
