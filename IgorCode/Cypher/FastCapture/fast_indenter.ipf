@@ -5,6 +5,7 @@
 #include ":NewFC"
 #include ":::Util:IoUtil"
 #include ":::Util:PlotUtil"
+#include ":asylum_interface"
 
 Static Function default_speed()
 	// Returns: the default speed for the indenter capture
@@ -66,19 +67,22 @@ Static Function capture_indenter([speed,timespan,wave0,wave1])
 		Wave wave1 = $(default_y_path)
 	endif
 	// POST: all parameters set.
+	String review_name = ModAsylumInterface#force_review_graph_name()
+	// before anything else, make sure the review exists
+	ModPlotUtil#assert_window_exists(review_name)
 	Variable to_ret = ModFastCapture#fast_capture_setup(speed,timespan,wave0,wave1)
 	// POST: fast capture is setup 
 	// Call Fast Capture
 	ModFastCapture#fast_capture_start()
 	// Call the single force curve
 	DoForceFunc("Single")
+	// XXX kludge; just busy-wait until the force plot comes back
 	// POST: data is saved into the waves we want
 	// Get the *reference* to the wave we want
-	Variable current_suffix = ModAsylumInterface#current_image_suffix()
+	Variable current_suffix = ModAsylumInterface#current_image_suffix()+1
 	String base_name = ModAsylumInterface#master_base_name()
 	String trace_name = ModAsylumInterface#formatted_wave_name(base_name,current_suffix,type="Defl")
 	// set the current graph to the force review panel
-	String review_name = ModAsylumInterface#force_review_graph_name()
 	ModPlotUtil#scf(review_name)
 	// get the note of DeflV on the force review graph
 	String low_res_note = ModPlotUtil#top_graph_wave_note(trace_name,fig=(review_name))

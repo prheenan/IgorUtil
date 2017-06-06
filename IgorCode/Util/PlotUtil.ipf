@@ -967,6 +967,26 @@ Static Function SaveFig([saveName,saveAsPxp,figName,path,closeFig,dpi,transparen
 	EndIf
 End Function
 
+Static Function window_exists(name)
+	// Args:
+	//	name: of the window
+	// Returns: 
+	//	true if the window exists
+	String name
+	// /Z: suppress errors
+	GetWindow /Z $(name) active
+	return V_flag == 0 
+End Function
+
+Static Function assert_window_exists(name)
+	// Throws an error if the given window doesn't exist
+	//
+	// Args:
+	//	See: window_exists	
+	String name
+	ModErrorUtil#assert(window_exists(name),msg=("Couldn't find window: " + name))
+End Function
+
 Static Function /S gcf()
 	// Get the current FIgure. See: pp 230 or igor manual, GetWindow
 	// By side effect, this stores the window 'path' in S_Value
@@ -979,6 +999,7 @@ Static Function scf(figure)
 	// Args:
 	//	figure: the name of the figure
 	String figure
+	assert_window_exists(figure)
 	// /F:Brings the window with the given name to the front (top of desktop).
 	DoWindow /F $(figure)
 End Function
@@ -997,6 +1018,7 @@ Static Function /S top_graph_wave_note(trace_name,[fig])
 	If (ParamIsDefault(fig))
 		fig = ModPlotUtil#gcf()	
 	EndIf
+	assert_window_exists(fig)
 	Wave low_res_wave = TraceNameToWaveRef(fig,trace_name)
 	// get the note of the wave we want (want them to be consistent)
 	String low_res_note = note(low_res_wave)	

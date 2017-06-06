@@ -6,7 +6,7 @@
 #include ":::Util:IoUtil"
 
 Static Function /S force_review_graph_name()
-	return "Force Review Graph"
+	return "ForceReviewGraph"
 End Function
 
 Static Function /WAVE master_variable_info()
