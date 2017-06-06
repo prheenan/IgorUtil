@@ -36,7 +36,7 @@ Static Function setup_directory_sturcture()
 End Function
 
 
-Static Function capture_indenter([speed,timespan,wave0,wave1])
+Static Function capture_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	//	Starts the fast capture routine using the indenter panel, 
 	//	accounting for the parameters and notes appropriately.
 	//
@@ -45,7 +45,7 @@ Static Function capture_indenter([speed,timespan,wave0,wave1])
 	// Returns
 	//		result of ModFastIndenter#fast_capture_setup
 	Variable speed,timespan
-	Wave wave0,wave1
+	Wave zsnsr_wave,defl_wave
 	// determine what the actual values of the parameters are
 	speed = ParamIsDefault(speed) ? default_speed() : speed
 	timespan=ParamIsDefault(timespan) ? default_timespan() : timespan
@@ -58,25 +58,26 @@ Static Function capture_indenter([speed,timespan,wave0,wave1])
 	String default_base_path = default_save + default_base
 	String default_y_path = default_base_path + "Deflv"
 	String default_x_path = default_base_path + "ZSnsr"
-	if (ParamIsDefault(wave0))
+	if (ParamIsDefault(defl_wave))
 		Make /O/N=0 $default_y_path
-		Wave wave0 = $(default_y_path)
+		Wave defl_wave = $(default_y_path)
 	endif
-	if (ParamIsDefault(wave1))
+	if (ParamIsDefault(zsnsr_wave))
 		Make /O/N=0 $default_x_path
-		Wave wave1 = $(default_y_path)
+		Wave zsnsr_wave = $(default_x_path)
 	endif
 	// POST: all parameters set.
 	String review_name = ModAsylumInterface#force_review_graph_name()
 	// before anything else, make sure the review exists
 	ModPlotUtil#assert_window_exists(review_name)
-	Variable to_ret = ModFastCapture#fast_capture_setup(speed,timespan,wave0,wave1)
+	Variable to_ret = ModFastCapture#fast_capture_setup(speed,timespan,defl_wave,zsnsr_wave)
 	// POST: fast capture is setup 
 	// Call Fast Capture
 	ModFastCapture#fast_capture_start()
 	// Call the single force curve
 	DoForceFunc("Single")
 	// XXX kludge; just busy-wait until the force plot comes back
+	Sleep /C=6  /S (2*timespan)
 	// POST: data is saved into the waves we want
 	// Get the *reference* to the wave we want
 	Variable current_suffix = ModAsylumInterface#current_image_suffix()+1
@@ -88,11 +89,11 @@ Static Function capture_indenter([speed,timespan,wave0,wave1])
 	String low_res_note = ModPlotUtil#top_graph_wave_note(trace_name,fig=(review_name))
 	// Add the note to the higher-res waves
 	// XXX fix deltax, etc?
-	Note wave0, low_res_note
-	Note wave1, low_res_note
+	Note zsnsr_wave, low_res_note
+	Note defl_wave, low_res_note
 	// save out the high resolution wave to *disk*
 	// XXX delete the high resolution wave (in memory only)?
-	ModAsylumInterface#save_to_disk(wave0,wave1,note_to_use=low_res_note)
+	ModAsylumInterface#save_to_disk(zsnsr_wave,defl_wave,note_to_use=low_res_note)
 	return to_ret
 End Function
 
