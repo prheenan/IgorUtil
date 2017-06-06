@@ -58,8 +58,31 @@ End Function
 //	NoteStr = ReplaceNumberbyKey("VerDate",NoteStr,VersionNumber(),":","\r")
 //	NoteStr = ReplaceStringByKey("Version",NoteStr,VersionString(),":","\r")
 
+Static Function save_to_disk_volts(zsnsr_volts_wave,defl_volts_wave,[note_to_use])
+	// Saves the given waves (all in volts) to disk (in meters)
+	// Args:
+	// 	See: save_to_disk
+	// Returns: 
+	//	nothing
+	Wave zsnsr_volts_wave,defl_volts_wave
+	String note_to_use
+	if (ParamIsDefault(note_to_use))
+		note_to_use = Note(defl_volts_wave)
+	endif
+	// Convert the volts to meters for ZSnsr
+	Duplicate /O zsnsr_volts_wave,z_meters
+	Fastop z_meters=(GV("ZLVDTSens"))*zsnsr_volts_wave
+	SetScale d -10, 10, "m", z_meters
+  	// Convert the volts to meters for DeflV
+	Duplicate /O defl_volts_wave,defl_meters
+	fastop defl_meters=(GV("Invols"))*defl_volts_wave
+	SetScale d -10, 10, "m", defl_meters
+	// save the zsnsr and defl to the disk
+	save_to_disk(z_meters,defl_meters,note_to_use)
+	KillWaves /Z defl_meters,z_meters
+End Function
 
-Static Function save_to_disk(zsnsr_wave,defl_wave,[note_to_use])
+Static Function save_to_disk(zsnsr_wave,defl_wave,note_to_use)
 	// Saves the given ZSnsr and deflection to disk
 	//
 	// Args:
@@ -70,14 +93,8 @@ Static Function save_to_disk(zsnsr_wave,defl_wave,[note_to_use])
 	//	Nothing
 	Wave zsnsr_wave,defl_wave
 	String note_to_use
-	if (ParamIsDefault(note_to_use))
-		note_to_use = Note(defl_wave)
-	endif
 	Variable save_to_disk = 0x2;
-	String zsnsr_wave_name = ModIoUtil#GetPathToWave(zsnsr_wave)
-	String raw_wave_name = ReplaceString("ZSnsr",zsnsr_wave_name,"Raw",0)
-	Duplicate /O zsnsr_wave,$(raw_wave_name)
-	Wave wave_raw = $(raw_wave_name)
+	Duplicate /O zsnsr_wave,raw_wave
 	// For ARSaveAsForce... (modelled after DE_SaveFC, 2017-6-5)
 	// Args:
 	//	1: 0x10 means 'save to disk, not memory'
@@ -86,7 +103,9 @@ Static Function save_to_disk(zsnsr_wave,defl_wave,[note_to_use])
 	//	4,5 : the actual waves
 	//	6-10: empty waves (not saving)
 	//	11: CustomNote: the note we are using toe save eveything
-	ARSaveAsForce(save_to_disk,"SaveForce","ZSnsr,Defl",wave_raw,zsnsr_wave,defl_wave,$"",$"",$"",$"",CustomNote=note_to_use)
+	ARSaveAsForce(save_to_disk,"SaveForce","ZSnsr,Defl",raw_wave,zsnsr_wave,defl_wave,$"",$"",$"",$"",CustomNote=note_to_use)
+	// Clean up the wave we just made
+	KillWaves /Z raw_wave
 End Function
 
 

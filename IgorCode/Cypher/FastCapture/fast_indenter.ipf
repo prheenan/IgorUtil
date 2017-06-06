@@ -35,6 +35,11 @@ Static Function setup_directory_sturcture()
 	NewDataFolder /O root:prh:fast_indenter:data
 End Function
 
+Static Function prh_callback()
+	// Immediately call the 'normal' Asylum trigger
+	TriggerScale()
+	// Now do our stuff 
+End Function
 
 Static Function capture_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	//	Starts the fast capture routine using the indenter panel, 
@@ -75,7 +80,9 @@ Static Function capture_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	ModAsylumInterface#assert_infastb_correct()
 	// POST: inputs are correct, set up the fast capture
 	Variable to_ret = ModFastCapture#fast_capture_setup(speed,timespan,defl_wave,zsnsr_wave)
-	// POST: fast capture is setup 
+	// Set up the CTFC to call our special callback 
+	td_WriteString("CTFC.CallBack","prh_callback()")
+	// POST: fast capture and callback is setup 
 	// Call Fast Capture
 	ModFastCapture#fast_capture_start()
 	// Call the single force curve
