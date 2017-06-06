@@ -36,13 +36,6 @@ Static Function setup_directory_sturcture()
 	NewDataFolder /O root:prh:fast_indenter:data
 End Function
 
-Static Function prh_callback(ctrl_name)
-	String ctrl_name
-	// Immediately call the 'normal' Asylum trigger
-	FinishForceFunc(ctrl_name)
-	// Now do our stuff 
-End Function
-
 Static Function capture_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	//	Starts the fast capture routine using the indenter panel, 
 	//	accounting for the parameters and notes appropriately.
@@ -86,8 +79,8 @@ Static Function capture_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	// POST: fast capture and callback is setup 
 	// Call Fast Capture
 	ModFastCapture#fast_capture_start()
-	// Call the single force curve
-	ModForceModifications#prh_DoForceFunc("Single")
+	// Call the single force curve (using modified function from ForceModifications)
+	ModForceModifications#prh_DoForceFunc("Single",non_ramp_callback="prh_indenter_callback")
 	// Make sure we are still correctly connected after the force input (it changes the cross point)
 	ModAsylumInterface#assert_infastb_correct()
 	// XXX kludge; just busy-wait until the force plot comes back

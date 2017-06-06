@@ -3,6 +3,22 @@
 
 #pragma ModuleName = ModForceModifications
 
+
+Function prh_indenter_callback(ctrl_name)
+	// callback which immediately calls the asylum callback, then saves out the indenter data
+	//
+	// Note: callbacks __must__ not be static, otherwise we get an error
+	//
+	// Args:
+	//	ctrl_name: see FinishForceFunc
+	// Returns: 
+	//	nothing
+	String ctrl_name
+	// Immediately call the 'normal' Asylum trigger
+	FinishForceFunc(ctrl_name)
+	// Now do our stuff 
+End Function
+
 //this handles all of the Force buttons
 Static Function prh_DoForceFunc(ctrlName,[non_ramp_callback])
 	// This is a very slight modification of DoForceFunc from Cypher 14.30.157 (copied 2017-6-6, prh)
