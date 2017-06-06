@@ -13,11 +13,29 @@ Function fast_capture_start()
 	return  td_ws("ARC.Events.once", "1") 
 End Function
 
+Static Function speed_option_to_frequency_in_Hz(speed)
+	// converts a speed option into a frequency in Hz
+	//
+	// Args: 
+	//	speed: : 0/1 for 500KHz / 2MHz 
+	// Returns:
+	//	relevant float
+	Variable speed
+	if (speed == 0)
+		return 5e5
+	elseif(speed == 1)
+		return 2e6
+	else
+		// default to higher res?
+		ModErrorUtil#Assert(False,msg="Unknown speed")
+	endif
+End Function
+
 Function fast_capture_setup(speed,timespan,wave0,wave1,[Wave0String,Wave1String])
 	// Function which sets up Cypher for fast capture
 	//
 	// Args:
-	//		speed: 0/1 for 500KHz / 2MHz
+	//		speed: see speed_option_to_frequency_in_Hz
 	//		timespan: how long the wave should be, in seconds
 	//		wave0/1: where to read the waves
 	//		Wave<0/1>String: which waves the cypher will understand to read

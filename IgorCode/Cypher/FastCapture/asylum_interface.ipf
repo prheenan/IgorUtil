@@ -43,8 +43,24 @@ Static Function /S formatted_wave_name(base,suffix,[type])
 	EndIf
 	// Formatted like <BaseName>_<justified number><type>
 	// e.g. Image_0101Deflv
-	sprintf to_ret,"%s_%04d%s",base,suffix,type
+	sprintf to_ret,"%s%04d%s",base,suffix,type
 	return to_ret
+End Function
+
+Static Function /S replace_note_variable(note_v,key_to_replace,new_value)
+	// replaces an asylum-style string variable
+	// 
+	// Args:
+	//	note_v: the note to search in / replace
+	//	key_to_replace: within the asylum-style note, the key we want to replace
+	// 	new_value: the numeric value to put in (saved to 10 decimal places)
+	// Returns:
+	//	updated note 
+	String note_v,key_to_replace
+	Variable new_value
+	String value_as_string
+	sprintf value_as_string,"%.10g",new_value
+	return ReplaceStringbyKey(key_to_replace,note_v,value_as_string,":","\r")
 End Function
 
 Static Function /S default_wave_base_name()
@@ -53,10 +69,6 @@ Static Function /S default_wave_base_name()
 	String base = master_base_name()
 	return  formatted_wave_name(base,suffix)
 End Function 
-
-// XXX should make version of these functions...
-//	NoteStr = ReplaceNumberbyKey("VerDate",NoteStr,VersionNumber(),":","\r")
-//	NoteStr = ReplaceStringByKey("Version",NoteStr,VersionString(),":","\r")
 
 Static Function save_to_disk_volts(zsnsr_volts_wave,defl_volts_wave,[note_to_use])
 	// Saves the given waves (all in volts) to disk (in meters)
@@ -103,7 +115,7 @@ Static Function save_to_disk(zsnsr_wave,defl_wave,note_to_use)
 	//	4,5 : the actual waves
 	//	6-10: empty waves (not saving)
 	//	11: CustomNote: the note we are using toe save eveything
-	ARSaveAsForce(save_to_disk,"SaveForce","ZSnsr,Defl",raw_wave,zsnsr_wave,defl_wave,$"",$"",$"",$"",CustomNote=note_to_use)
+	ARSaveAsForce(save_to_disk,"SaveForce","ZSnsr;Defl",raw_wave,zsnsr_wave,defl_wave,$"",$"",$"",$"",CustomNote=note_to_use)
 	// Clean up the wave we just made
 	KillWaves /Z raw_wave
 End Function

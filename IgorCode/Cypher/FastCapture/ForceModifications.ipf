@@ -4,21 +4,6 @@
 #pragma ModuleName = ModForceModifications
 
 
-Function prh_indenter_callback(ctrl_name)
-	// callback which immediately calls the asylum callback, then saves out the indenter data
-	//
-	// Note: callbacks __must__ not be static, otherwise we get an error
-	//
-	// Args:
-	//	ctrl_name: see FinishForceFunc
-	// Returns: 
-	//	nothing
-	String ctrl_name
-	// Immediately call the 'normal' Asylum trigger
-	FinishForceFunc(ctrl_name)
-	// Now do our stuff 
-End Function
-
 //this handles all of the Force buttons
 Static Function prh_DoForceFunc(ctrlName,[non_ramp_callback])
 	// This is a very slight modification of DoForceFunc from Cypher 14.30.157 (copied 2017-6-6, prh)
@@ -395,3 +380,927 @@ Static Function prh_DoForceFunc(ctrlName,[non_ramp_callback])
 	ARReportError(ErrorStr)
 	SetDataFolder(SavedDataFolder)
 End Function //DoForceFunc
+
+
+
+
+function prh_FinishForceFunc(ctrlName,[callback_string])			//this finishes off the Force
+	string ctrlName,callback_string
+	if (ParamIsDefault(callback_string))
+		callback_string = "TriggerScale()"	
+	EndIf
+	//Override List (list of ipfs that can override this function)
+	//ForceReiviewDemo
+
+	string SavedDataFolder = GetDataFolder(1)
+	SetDataFolder root:Packages:MFP3D:Force:		//all of the Force waves live in here
+															//make all of the waves	
+	if (GV("ZStateChanged"))
+		DoForceFunc(ctrlName+"Force")
+		SetDataFolder(SavedDataFolder)
+		return 1
+	endif
+
+
+	//just read these things, to clear the <edit> built up in there.
+	td_ReadString("Head.Temperature")
+	td_ReadString("Scanner.Temperature")
+
+
+	variable sampleRate = GV("NumPtsPerSec")
+	Variable ForceScanRate = GV("ForceScanRate")
+	variable forceDecimation = GV("ForceDecimation")
+	Variable StartDist = GV("StartDist")
+	variable displayPoints = round(sampleRate/ForceScanRate)		//you MUST round this or there will be trouble, MBV
+	variable test, inputPoints, dwellTime = 0, inputDwellPoints = 0, displayDwellPoints = 0, drivePoints = 0
+	Variable InputDwellPoints0, InputDwellPoints1
+	variable useDwellRate = GV("UseDwellRate")
+	variable dwellRate = GV("DwellRate")
+	variable triggerChannel = GV("TriggerChannel")
+	variable dwellSetting = GV("DwellSetting")
+	Variable DoIndent = GV("IndentMode")
+	Variable DoIV = GV("ARDoIVFP")
+	Variable IndentMode = GV("DwellRampMode")
+	Variable ForceDistSign = GV("ForceDistSign")
+	variable zPiezoSens = GV("ZPiezoSens")
+	variable zLVDTSens = GV("ZLVDTSens")
+	variable forceDist = GV("ForceDist")
+	variable ratio = .5
+//	variable PGain = GV("ProportionalGain")/10		//grab the gains
+//	variable IGain = GV("IntegralGain")*100
+//	variable SGain = GV("SecretGain")/1e+12
+	variable zLVDTOffset = GV("ZLVDTOffset")
+//	Variable Scale		//to scale the trigger point
+	Variable TriggerPoint, IsGreater, TriggerTime
+	Variable ForceMode = GV("ForceMode")
+	variable dualACMode = GV("DualACMode")
+	Variable RampVelocity, ForceDistVolts, StartDistVolts
+	Variable i, Divisor
+	Variable approachVelocity, retractVelocity
+//	Variable Factor		//used for Virtual deflection scaling.
+	Variable TrigAtStart
+	Variable CurrentPos, GetOut//, ZScale
+	Variable FMapStatus = GV("FMapStatus")
+	Variable DisplayXYLVDT = GV("FMapDisplayLVDTTraces")*FMapStatus
+	Variable ImagingMode = GV("ImagingMode")
+	Variable IsAbsTrig = GV("TriggerType")
+	String DataFolder = GetDF("Force")
+
+	String TriggerStr = ""
+	String ErrorStr = ""
+	String tempSeconds = ""
+	String RampChannel = ""
+	Variable A, nop
+	Struct ARCTFCParms CTFCParmStruct
+	Wave/T CTFCParms = InitOrDefaultTextWave("CTFCParms",0)
+
+	
+	if (GV("VelocitySynch") == 0)
+		ratio = GV("RetractVelocity")/(GV("ApproachVelocity")+GV("RetractVelocity"))
+	endif
+
+	if (ForceMode)
+		RampChannel = "$OutputZLoop.Setpoint"
+	else
+		RampChannel = "Output.Z"
+	endif
+
+	if (triggerChannel)
+		triggerStr = GetTriggerString()
+//		scale = GetTriggerScale()
+		ForceDistVolts = -ForceDist/zPiezoSens
+		StartDistVolts = StartDist/ZPiezoSens
+		RampVelocity = 50
+		
+		//well then we must have done a triggered ramp.
+		//to get in here the first time
+		//so we read back that to make sure we are working with the correct values.
+		//technically I think I can just use the wave send down from CTFCRamp
+		//I should probably just read that wave instead of asking the controller.
+		ErrorStr += Num2str(td_ReadGroup("CTFC",CTFCParms))+","
+		
+		//Nope, we can't do that.
+		//Say they engage on the surface with a relative trigger.
+		//The Trigger Ramp sets a poor trigger point
+		//so we need to recalc the trigger point after they get to start position
+		StrSwitch (TriggerStr)
+			Case "Indent"://"LinearCombo.Output":
+				IsAbsTrig = 1
+				break
+				
+		endswitch
+		
+		TriggerPoint = str2num(CTFCParms[%TriggerPoint1])
+		TriggerTime = str2num(CTFCParms[%TriggerTime1])
+		
+
+//		if (IsAbsTrig)
+//			TriggerPoint = GV("TriggerPoint")/Scale
+//		else
+//			if (stringmatch(StringFromList(TriggerChannel,ActiveForceList()),"AmpPercent"))
+//				triggerPoint = limit(td_ReadValue(TriggerStr)*GV("TriggerPoint")/100,.1,9.5/10^(GV("ADCgain")/20))
+//			else
+//				triggerPoint = limit(td_ReadValue(TriggerStr)*scale+GV("TriggerPoint"),GVL("TriggerPoint")/2,GVH("TriggerPoint")/2)/scale
+//			endif
+//		endif
+		
+		//TriggerPoint = str2num(CTFCParms[%TriggerValue1][0])
+		IsGreater = WhichListItem(CTFCParms[%TriggerCompare1][0],"<=;>=;",";",0,0)*2-1
+		//IsGreater does not change between ramp and force plot.
+		//ZScale = ZPiezoSens
+		
+		if (ForceMode)
+			//ForceDistVolts *= zPiezoSens/ZLVDTSens
+			StartDistVolts = startDistVolts*zPiezoSens/ZLVDTSens+zLVDTOffset
+			RampVelocity = 5
+			//ZScale = ZLVDTSens
+		endif
+
+		
+		TrigAtStart = 0
+		if (TriggerTime && (TriggerTime < 4e5))
+			if (IsGreater > 0)
+				if (TriggerPoint <= td_ReadValue(TriggerStr))
+					TrigAtStart = 1
+				endif
+			else
+				if (TriggerPoint >= td_ReadValue(triggerStr))
+					TrigAtStart = 1
+				endif
+			endif
+		endif
+		
+
+		if (TrigAtStart)
+			CurrentPos = td_ReadValue("Height")
+			GetOut = 0
+			if (!ForceMode)
+				if ((CurrentPos+StartDistVolts)*ZPiezoSens < GVL("StartDist"))
+					GetOut = 1
+				endif
+			else
+				CurrentPos = (td_ReadValue("ZSensor")*ZLVDTSens/ZPiezoSens+70)
+				if (CurrentPos < GVL("StartDist"))
+				//bacically we trigger before we get to the "start" of the closed loop force plot range.
+					GetOut = 1
+				endif
+			endif
+			
+			SetDataFolder(SavedDataFolder)		//either way we are done, set the folder
+			if (GetOut)
+				Print "Ran out of Z Range, Either move the tip up, or fix your trigger point"
+				DoWindow/H
+				ForcePlotCleanup()
+//				HideForceButtons("Stop")
+//				ForceSetVarFunc("StartDistSetVarFunc_2",CurrentPos*ZPiezoSens,"",":Variables:ForceVariablesWave[%StartDist]")
+//				PV("FMapStatus",0)
+//				SetLowNoise(0)
+//				GhostForceMapPanel()
+				//maybe this should call ForcePlotCleanup...
+			else			
+				//Ramp back ForceDist
+				if (ForceMode)
+					CurrentPos = td_ReadValue(RampChannel)
+				endif
+				ErrorStr += num2str(td_SetRamp(4,RampChannel,RampVelocity,CurrentPos+ForceDistVolts,"",0,0, "",0,0,GetFuncName()+"(\""+CtrlName+"\")"))+","
+			endif					
+			ARReportError(ErrorStr)
+			return(0)
+		endif
+		
+		//************************************************************************************************************
+		//This code gets 99% of the CTFC setup.
+		if (ARGetCTFCParms(CTFCParmStruct))
+			return(0)		//there was a failure setting up the CTFC.
+			//the user has been warned, we have to get out.
+		endif
+		CTFCParmStruct.Callback = callback_string
+		//************************************************************************************************************
+		
+	endif	
+
+	variable dwellPoints0, dwellPoints1, ramp, rampPoints0, rampPoints1, dwellPointsInput0, dwellPointsInput1, dwellTime0, dwellTime1
+
+
+	
+	if ((DoIndent || DoIV) && triggerChannel)
+		
+		useDwellRate = 0
+		DwellRate = SampleRate
+		DwellSetting = DwellSetting | ((ForceDistSign == -1) + 1)
+		
+		
+	elseif (DwellSetting)
+	elseif (FMapStatus)
+		useDwellRate = 0
+	endif
+	if (TriggerChannel)
+		DwellTime0 = CTFCParmStruct.DwellTime[0]
+		DwellTime1 = CTFCParmStruct.DwellTime[1]
+	elseif ((DwellSetting & 0x3) == 0x3)
+		DwellTime0 = GV("DwellTime")
+		DwellTime1 = GV("DwellTime1")
+	elseif (((DwellSetting == 1) && (ForceDistSign > 0)) || ((DwellSetting == 2) && (ForceDistSign < 0)))
+		dwellTime0 = GV("DwellTime")
+		dwellTime1 = 0
+	elseif (DwellSetting)
+		dwellTime0 = 0
+		dwellTime1 = GV("DwellTime")
+	endif
+
+	DwellTime = DwellTime0+DwellTime1
+	inputDwellPoints = round(sampleRate*DwellTime)
+	inputDwellPoints0 = Round(SampleRate*DwellTime0)
+	InputDwellPoints1 = Round(SampleRate*DwellTime1)
+	drivePoints = DisplayPoints+inputDwellPoints
+	inputPoints = DrivePoints*2*forceDecimation
+
+
+	if (!useDwellRate)
+		dwellRate = sampleRate
+	endif
+	dwellPoints0 = round(dwellTime0*dwellRate)
+	dwellPoints1 = round(dwellTime1*dwellRate)
+	dwellPointsInput0 = round(dwellTime0*sampleRate)
+	dwellPointsInput1 = round(dwellTime1*sampleRate)
+	ramp = round(displayPoints)			//the dwell hasn't been added in yet to displayPoints
+	rampPoints0 = round(ramp*ratio)
+	rampPoints1 = round(ramp*(1-ratio))
+	displayPoints += dwellPoints0+dwellPoints1
+	
+	i = Max(ceil(log(displayPoints/4096)/Log(2)),0)
+	i = max(Ceil(log(DrivePoints/86000)/Log(2)),i)
+
+	divisor = 2^i
+
+	if (triggerChannel)
+		if (GV("VelocitySynch"))
+			approachVelocity = GV("Velocity")
+			retractVelocity = approachVelocity
+		else
+			approachVelocity = GV("ApproachVelocity")
+			retractVelocity = GV("RetractVelocity")
+		endif
+		
+		inputPoints = round(sampleRate*(150*ZPiezoSens-StartDist)/approachVelocity+sampleRate*ForceDist/retractVelocity+inputDwellPoints+sampleRate)
+		inputPoints *= forceDecimation
+	endif
+
+	inputPoints -= mod(inputPoints,32)
+	PV("InputTime",inputPoints/sampleRate/forceDecimation)
+
+	Wave TimeWave = $DataFolder+"TimeWave"
+	SetScale d,0,0,"s",TimeWave
+	Wave MarkerNumWave = $DataFolder+"MarkerNumWave"
+	Wave RealDrive = $DataFolder+"RealDrive"
+	Wave Setpoint = $DataFolder+"Setpoint"
+//	Wave DriveVolts = $DataFolder+"DriveVolts"
+	Wave RawZSensor = $DataFolder+"RawZSensor"
+	Redimension/N=(drivePoints/divisor) RealDrive, Setpoint
+
+	if (!triggerChannel)	//if triggered then we have no idea what size to use, so it is done in TriggerScale()
+		Redimension/N=(displayPoints) MarkerNumWave, TimeWave
+
+	//this calc is in FinishForceFunc, TriggerScale and RTForceWriteFunc
+		TimeWave[0,rampPoints0-1] = p/sampleRate
+		TimeWave[rampPoints0,rampPoints0+dwellPoints0-1] = rampPoints0/sampleRate+(p-rampPoints0)/dwellRate
+		TimeWave[rampPoints0+dwellPoints0,rampPoints0+dwellPoints0+rampPoints1-1] = rampPoints0/sampleRate+dwellTime0+(p-(rampPoints0+dwellPoints0))/sampleRate
+		if ((displayPoints-1) >= (rampPoints0+dwellPoints0+rampPoints1))
+			TimeWave[rampPoints0+dwellPoints0+rampPoints1,displayPoints-1] = (rampPoints0+rampPoints1)/sampleRate+dwellTime0+(p-(rampPoints0+dwellPoints0+rampPoints1))/dwellRate
+		endif
+		if (ForceMode)
+			MakeSetpointDrive(Setpoint,startDist,forceDist,forceDistSign,zLVDTSens,ratio,inputDwellPoints0/divisor,inputDwellPoints1/divisor)					//this makes the drive wave
+			Setpoint += zLVDTOffset
+			ErrorStr += ir_xSetOutWave(0,cForceStartEvent+","+cForceStartEvent,RampChannel,Setpoint,Num2char(7),ARGetDeci(SampleRate/Divisor))
+			CopyScales/P Setpoint RealDrive
+		else
+			MakeDrive(RealDrive,startDist,forceDist,forceDistSign,zPiezoSens,ratio,inputDwellPoints0/divisor,InputDwellPoints1/Divisor)
+			ErrorStr += IR_xSetOutWave(0,cForceStartEvent+","+cForceStartEvent,RampChannel,RealDrive,Num2char(7),ARGetDeci(-SampleRate/Divisor))
+		endif
+	else
+		Variable PPS = cMasterSampleRate/ARGetDeci(SampleRate/Divisor)
+		SetScale/P x,0,1/PPS,"s",RealDrive
+		ErrorStr += IR_StopOutWaveBank(0)
+	endif
+	
+
+	
+
+//************************************************************************************************************************************************************************************************
+//																Data Channel Loop.
+//************************************************************************************************************************************************************************************************
+
+	Struct ARForceChannelStruct ForceChannelParms
+	GetForceChannelParms(ForceChannelParms)
+	variable stop, DeltaTime, HaveChannel
+	wave/T ForceChannels = root:Packages:MFP3D:Force:ForceChannels
+	String ParmName, DataList, Units
+	Struct ARDataTypeInfo DataTypeParms
+	DataTypeParms.GraphStr = "RealTime"
+	stop = FindDimLabel(ForceChannels,0,"UserCalc")
+	DeltaTime = DimDelta(RealDrive,0)/divisor
+	Variable DontHaveSize = 200		//Make this a bit more different than the stock 2016, so it is more obvious when there is an error
+	
+	for (i = 0;i < stop;i += 1)
+		ParmName = GetDimLabel(ForceChannels,0,i)
+		wave InputWave = InitOrDefaultWave(DataFolder+"Input"+ParmName,0)
+		Wave FilteredWave = InitOrDefaultWave(DataFolder+"Filtered"+ParmName,0)
+		Wave DisplayWave = InitOrDefaultWave(DataFolder+ParmName,0)
+		nop = ItemsInList(ForceChannels[i][0],";")
+		Units = Get3DScaling(ParmName,InfoStruct=DataTypeParms)
+		HaveChannel = IsForceChannel(ForceChannelParms,ParmName)		//IsForceChannel works
+		//HaveChannel = WhichListItem(ParmName,ForceChannelParms.FullDataList,";",0,0) >= 0	//this does not, FullDataList is funky if the channel is displayed but not saved
+		if (HaveChannel)
+			if (!triggerChannel)
+				Redimension/N=(displayPoints) DisplayWave
+//				Redimension/N=(rampPoints0+rampPoints1+dwellPointsInput0+dwellPointsInput1) FilteredWave
+				Redimension/N=(inputPoints/2) FilteredWave
+			endif
+			Redimension/N=(inputPoints) InputWave
+		else
+			Redimension/N=(DontHaveSize) DisplayWave
+			Redimension/N=(DontHaveSize) FilteredWave
+			Redimension/N=(DontHaveSize*2) InputWave
+		endif
+		SetScale/P x,0,DeltaTime,"s",DisplayWave
+		SetScale d,0,0,units,DisplayWave
+
+
+			
+		for (A = 0;A < nop;A += 1)
+			Wave/Z DisplayWave = $DataFolder+StringFromList(A,ForceChannels[i][0],";")
+			if (!WaveExists(DisplayWave))
+				continue
+			endif
+			Units = Get3DScaling(NameOfWave(DisplayWave),InfoStruct=DataTypeParms)
+			SetScale/P x,0,DeltaTime,"s",DisplayWave
+			SetScale d,0,0,units,DisplayWave
+			if (!TriggerChannel && HaveChannel)
+				Redimension/N=(displayPoints) DisplayWave
+			elseif (!HaveChannel)
+				Redimension/N=(DontHaveSize) DisplayWave
+			endif
+			
+		endfor
+		
+	endfor
+	Wave UserCalc = $DataFolder+"UserCalc"
+	if (WhichListItem("UserCalc",ForceChannelParms.FullDataList,";",0,0) >= 0)
+		if (!TriggerChannel)
+			Redimension/N=(DisplayPoints) UserCalc
+		else
+			Redimension/N=(inputPoints) UserCalc
+		endif
+	else
+		Redimension/N=(DontHaveSize) UserCalc
+	endif
+	Wave UserCalcB = $DataFolder+"UserCalcB"
+	if (WhichListItem("UserCalcB",ForceChannelParms.FullDataList,";",0,0) >= 0)
+		if (!TriggerChannel)
+			Redimension/N=(DisplayPoints) UserCalcB
+		else
+			Redimension/N=(inputPoints) UserCalcB
+		endif
+	else
+		Redimension/N=(DontHaveSize) UserCalcB
+	endif
+		
+
+//************************************************************************************************************************************************************************************************
+//															End Data Channel Loop.
+//************************************************************************************************************************************************************************************************
+
+
+
+	Wave SaveWave = MakeSaveWave()					//this makes the wave used for saves to disk
+
+	String NoteStr = ARNoteFunc(RawZSensor,"ForcePlot")
+	
+	if (FMapStatus)
+		Variable XScanSize, YScanSize, D
+		Struct ARFMapParms Parms
+		GetARFMapParms(Parms)		//this structure is used elsewhere in this function
+		Struct ARFMapImageData ImageStruct
+		ImageStruct.Init(ImageStruct)
+		ARFMap_SetHeader(ImageStruct.FileRef,"",NoteStr)		//Force Note
+		Wave ImageStruct.ImageWave = InitFMapImage()
+		ImageStruct.DataType = GetDimLabels(ImageStruct.ImageWave,2)
+		
+		//these 2 lines  will proabably be in a loop
+		ImageStruct.SetData(ImageStruct)
+		//UpdateImageCalcList(ImageWave,FuncName,Layer)
+		ARFMap_SetHeader(ImageStruct.FileRef,"Image0",Note(ImageStruct.ImageWave))		//This will need adjustment when Bill finalizes
+		Struct ARFMapDimData DimData
+		DimData.Init(DimData)
+
+		XScanSize = Parms.ScanSize/Max(1/Parms.ScanRatio,1)		//Max(1/Parms.ScanRatio,1) is SlowRatio, since we know one of the values has to be 1
+		YScanSize = Parms.ScanSize/Max(Parms.ScanRatio,1)		//Max(Parms.ScanRatio,1) is FastRatio, since we know one of the values has to be 1
+
+		Struct ARFMapRegionParms FMapRegionParms
+		FMapRegionParms.Init(FMapRegionParms)
+
+		DimData.NumPoints = Parms.nopX
+		DimData.StartPoint = 0
+		DimData.Delta = XScanSize/(DimData.NumPoints-1)
+		DimData.Units = "m"
+		FMapRegionParms.DimData[0] = DimData
+		
+		DimData.NumPoints = Parms.nopY
+		DimData.StartPoint = 0
+		DimData.Delta = YScanSize/(DimData.NumPoints-1)
+		DimData.Units = "m"
+		FMapRegionParms.DimData[1] = DimData
+
+		DimData.NumPoints = 0
+		DimData.StartPoint = 0
+		DimData.Delta = 1/SampleRate
+		DimData.Units = "s"
+		FMapRegionParms.DimData[2] = DimData
+		FMapRegionParms.DimData[3] = DimData		//just in case, this dim does not mean anything, but I do this much, much as well fill them all in.
+		
+		
+		FMapRegionParms.NumOfDims = 3
+		FMapRegionParms.NumberOfDataSets = -1
+		FMapRegionParms.ChannelList = GetDimLabels(SaveWave,1)
+		FMapRegionParms.DataUnitsList = ""
+		Wave DataTypeParms.DataWave = RawZSensor		//I think that now that we have the note, we can work in offline mode
+		DataTypeParms.GraphStr = ""
+		for (D = 0;D < Dimsize(SaveWave,1);D += 1)
+			FMapRegionParms.DataUnitsList += Get3DScaling(StringFromList(D,FMapRegionParms.ChannelList,";"),InfoStruct=DataTypeParms)+";"
+		endfor
+		FMapRegionParms.SparseChannels = 0
+		FMapRegionParms.SegmentList = GetDirectionList(DwellTime0,DwellTime1,FMapStatus,ForceDistSign,StringByKey("DwellRampFunc",NoteStr,":","\r",0),DoIndent)
+		FMapRegionParms.ExtraParmNameList = cExtraParmList
+		
+		ARFMap_InitForceRegion(FMapRegionParms)
+		ErrorStr += DAMSetup("FMap")
+	else
+		ErrorStr += DAMSetup("Force")
+	endif
+	
+	wave DetrendParm = root:Packages:MFP3D:Force:DetrendParm
+	wave OldDetrendParm = root:Packages:MFP3D:Force:OldDetrendParm
+
+	OldDetrendParm = DetrendParm
+	PV("LastUsedVirtDeflSlope",GV("VirtDeflSlope"))
+	PV("LastUsedVirtDeflOffset",GV("VirtDeflOffset"))
+
+	if (!GV("ForceFilter"))		//check to see if the filter panel is in charge
+		SetForceBandwidth(GV("ForceFilterBW"))
+	endif
+	ErrorStr += num2str(td_WriteString("Event."+cForceStartEvent,"Clear"))+","
+	
+
+	Make/O/B/N=(displayPoints) ColorWave			//this is fine as 8bit integer
+	Struct ARFeedbackStruct FB
+	variable contForce = GV("ContForce")
+	Variable NumOfCustomDrive = 0
+	if (triggerChannel)
+		//ErrorStr += IR_StopOutWaveBank(0)
+
+		
+		//td_NewSetSTFC("0", distApproach, distRetract, slopeApproach, slopeRetract,triggerStr,TriggerPoint,IsGreater,"TriggerScale()")
+		
+		ir_WriteCTFC(CTFCParmStruct)
+		PV("UpdateTrigger",0)
+		variable dFRTOn = GV("DFRTOn")
+		Variable WhichLoop
+		if (!ForceMode)
+			WhichLoop = 2		//use the Z loop for the dwells.
+		else
+			WhichLoop = 5
+		endif
+		if (DwellTime)
+			
+			SetupIndenting("Check")
+			Switch (IndentMode)
+				case 0:
+					ARGetFeedbackParms(FB,"Height",ImagingMode=cContactMode)
+					break
+					
+//				case 2:		//indenting
+//					ARGetFeedbackParms(FB,"Height",ImagingMode=cContactMode)
+//					FB.Input = "LinearCombo.Output"
+//					break
+//				
+				case 1:
+					//break
+					
+				case 2:
+				default:
+					ARGetFeedbackParms(FB,"ZSensor")
+					FB.PGain = 0
+					FB.IGain = 10^(GV("ZIGain")-.5)
+					FB.SGain = 0
+					if (IndentMode == 2)
+						FB.Input = "Indent"
+						//FB.Input = "LinearCombo.Output"
+					endif
+					break
+					
+			endswitch
+			FB.Bank = WhichLoop
+			
+			FB.StartEvent = cForceDwellEvent
+			if (!DFRTon && !DwellTime0 && DwellTime1)		//we are not doing fancy Dart loops, and we are only doing the second dwell
+				FB.StartEvent = cFMapStartEvent
+			elseif ((IndentMode == 1) && !DFRTOn && DwellTime0 && DwellTime1 && !DoIndent && !DoIV)		//if we are not doing a ramped dwell
+				//and we have Z loop setup
+				//and we have both dwells on (mostly Fmaps with dwell)
+				//and we are not doing special loops
+				//then this loop can run for both dwells
+				FB.StartEvent += ";"+cFMapStartEvent
+			endif
+			FB.StopEvent = cForceRampEvent
+			FB.Setpoint = NaN
+			FB.DynamicSetpoint = 1
+			FB.LoopName = "DwellLoop"
+			ErrorStr += ir_WritePIDSloop(FB)
+
+			if (dFRTOn)
+				Wave FeedbackCoef = root:Packages:MFP3D:Main:FeedbackCoef
+				FeedbackCoef = {0,-1,1}
+				
+//				wave/T DynamicAlias = $GetDF("Alias")+"DynamicAlias"
+//				DynamicAlias[%Frequency][0] = "$DDSFrequency0"//td_ReadString("Alias:DDSFrequency0")//"Lockin.0.Freq"
+//				WriteAllAliases()
+				errorStr += ir_WriteValue("DDSFrequencyOffset0",0)
+				errorStr += ir_WriteValue("DDSFrequencyOffset1",0)
+				ErrorStr += ir_SetLinearCombo("DartAmp","Amplitude1",FeedbackCoef,"Amplitude")
+				//errorStr += num2str(td_SetLinearCombo("Amplitude1",root:Packages:MFP3D:Main:FeedbackCoef,"Amplitude"))+","
+				
+				ARGetFeedbackParms(FB,"Drive",ImagingMode=cPFMMode)		//PFM
+				FB.StartEvent = cForceDwellEvent
+				FB.StopEvent = cForceRampEvent
+				if (ContForce)
+					FB.StopEvent = "Never"
+				endif
+				ErrorStr += IR_WritePIDSloop(FB)
+				
+				ARGetFeedbackParms(FB,"Frequency",ImagingMode=cPFMMode)		//PFM
+				FB.StartEvent = cForceDwellEvent
+				FB.StopEvent = cForceRampEvent
+				ErrorStr += IR_WritePIDSloop(FB)
+			endif
+			NumOfCustomDrive = ARSetupCustomDwellDrive()		//sets up additional drive waves
+			//for indent and DoIV.  can add user outputs in the future.
+			
+		endif
+	else
+		DoColorWave(ColorWave,displayPoints-(dwellPoints0+dwellPoints1),dwellPoints0,ForceDistSign,DwellSetting,ratio)
+//		CopyScales RawLVDT SmallLVDT
+//		FastOp Drive = (zPiezoSens)*DriveVolts				//calculate a metric version of the DriveVolts for display purposes
+	endif
+
+
+	variable total = 0
+	String DoIVBias = TheDoIVDAC()
+	string channelList = "Deflection;Amplitude;Phase;"+ListMultiply("UserIn",MakeValueStringList(cMaxRealTimeUserChannels-1,0),";")+";Lateral;Frequency;Dissipation;Current;Current2;Count;Count2;InputI;InputQ;Bias;Drive;Potential;TipHeaterDrive;TipHeaterPower;TipTemperature;"//blueThermPower;"//ZThermResistivity;"
+	
+	if (dualACMode)
+		ChannelList = ReplaceString(";Amplitude;",ChannelList,";Amplitude1;Amplitude2;")
+		ChannelList = ReplaceString(";Phase;",ChannelList,";Phase1;Phase2;")
+	endif
+	ChannelList += ListMultiply("BackPackIn",MakeValueStringList(MaxRTBackPackChannels()-1,0),";")
+
+	
+
+	String SelectedChannelList = "", DataWaveList = "", ChannelName, WaveStr = "", DisplayList = "", aliasList = "", aliasName
+//	string chan1Str = "", chan2Str = "", chan3Str = "", chan4Str = "", chanStr = "", waveStr = ""
+	wave/T XPTCurrent = root:Packages:MFP3D:XPT:XPTCurrent
+	Variable haveDeflection, Index
+
+	String DisplayStr = ""
+
+	String Force32BitChannel = "ZSensor"//GTS("Force32BitChannel")
+
+
+	for (i = 0;i < ItemsInList(channelList);i += 1)
+		
+		channelName = StringFromList(i,channelList,";")
+		if (!IsForceChannel(ForceChannelParms,channelName))
+			Continue
+		endif
+		AliasName = LongChannel2Alias(ChannelName)
+		strswitch (channelName)
+			
+			case "Deflection":
+				waveStr = "DeflVolts"
+				DisplayStr = "DeflVolts;Deflection;Force;"
+				break
+				
+			case "Amplitude":
+				waveStr = "AmpVolts"
+				DisplayStr = "Amplitude;AmpVolts;"
+				break
+			
+			case "Amplitude1":
+				waveStr = "Amp1Volts"
+				DisplayStr = "Amplitude1;Amp1Volts;"
+				break
+
+			case "Amplitude2":
+				waveStr = "Amp2Volts"
+				DisplayStr = "Amplitude2;Amp2Volts;"
+				break
+
+			case "Frequency":
+				waveStr = channelName
+				Switch (ImagingMode)
+					case cACMode:
+					case cFMMode:
+					case cACFastMapMode:
+						if (!GV("FreqGainOn"))
+							FMCheckBoxFunc("FreqGainOnBox_0",1)
+						endif
+						break
+
+				endswitch
+				DisplayStr = channelName+";"
+				break
+				
+			case "Dissipation":
+				waveStr = channelName
+				If (!GV("DriveGainOn"))
+					FMCheckBoxFunc("DriveGainOnBox_0",1)
+				endif
+				DisplayStr = channelName+";"
+				break
+				
+			case "Potential":
+				waveStr = channelName
+				ElectricBoxFunc("PotentialGainOnBox",3)
+				DisplayStr = channelName+";"
+				break
+				
+			case "Count2":
+				ErrorStr += CountCheck(ChannelName)
+				//Dont Break
+			case "TipHeaterDrive":
+			case "Phase":						//Single unit data types, only volts or no volts.
+			case "Phase1":
+			case "Phase2":
+			case "Count":
+			case "Count0":
+			case "Count1":
+			case "InputI":
+			case "InputQ":
+			case "Bias":
+				wavestr = channelName
+				DisplayStr = channelName+";"
+				break
+			
+			case "ZThermResistivity":
+				//Placeholder
+				break
+				
+			case "blueThermPower":	
+			case "TipHeaterPower":		//special in that we don't ever show the volts version
+			case "Current":
+			case "Current2":
+				wavestr = channelName
+				DisplayStr = channelName+";"
+				WaveStr += "Volts"
+				break
+
+			case "TipTemperature":
+			case "UserIn0":					//Volts and scaled data types.
+			case "UserIn1":
+			case "UserIn2":
+			case "UserIn2":
+			case "UserIn3":
+			case "UserIn4":
+			case "UserIn5":
+			case "UserIn6":
+			case "UserIn7":
+			case "UserIn8":
+			case "UserIn9":
+			case "BackPackIn0":					//Volts and scaled data types.
+			case "BackPackIn1":
+			case "BackPackIn2":
+			case "BackPackIn2":
+			case "BackPackIn3":
+			case "BackPackIn4":
+			case "BackPackIn5":					//Volts and scaled data types.
+			case "BackPackIn6":
+			case "BackPackIn7":
+			case "BackPackIn8":
+			case "BackPackIn9":
+			case "Lateral":
+			case "Drive":
+			default:
+				waveStr = channelName
+				DisplayStr = WaveStr+";"+WaveStr+"Volts;"
+				WaveStr += "Volts"
+				break
+			
+
+		endswitch
+		
+		waveStr = "Input"+waveStr
+		
+		SelectedChannelList += ChannelName+";"
+//		ADCList += ChanStr+";"
+		DataWaveList += WaveStr+";"
+		aliasList += aliasName+";"
+		Total += 1
+		DisplayList += DisplayStr+","
+		
+			
+		
+	endfor
+	
+
+	variable decimation = ARGetDeci(SampleRate)/ForceDecimation
+
+	Variable FirstBank = 0
+	Variable SecondBank = 1
+	Variable LVDTBank = 0		//the bank the XY LVDTs will be on.
+
+	if ((Total > (fARNumOfChannels(ModeStr="Image")-2)) && DisplayXYLVDT)
+		DoAlert 0,"You can not ask for more than "+num2str(fARNumOfChannels(ModeStr="Image")-2)+" channels And display The XYLVDT\rSo I just turned off the Display LVDT for you"
+		FMapBoxFunc("FMapDisplayLVDTTracesBox_4",0)
+		DisplayXYLVDT = 0
+	elseif (DisplayXYLVDT)		//we will be displaying the XY LVDT
+		//Get our waves.
+		//Figure out our decimation.
+		Wave DistWave = InitOrDefaultWave(Parms.DataFolder+"DistWave",0)
+		Redimension/N=(DimSize(Parms.XPoints,0)-1) DistWave
+		if (Parms.XYClosedLoop)
+			DistWave = sqrt(((Parms.XPoints[P+1]-Parms.XPoints[P])*abs(Parms.XLVDTSens))^2+((Parms.YPoints[P+1]-Parms.YPoints[P])*abs(Parms.YLVDTSens))^2)
+		else
+			DistWave = sqrt(((Parms.XPoints[P+1]-Parms.XPoints[P])*Parms.XPiezoSens)^2+((Parms.YPoints[P+1]-Parms.YPoints[P])*Parms.YPiezoSens)^2)
+		endif
+		Variable MaxTime = WaveMax(DistWave)/Parms.ScanSpeed
+		MaxTime = Max(MaxTime,30e-3)		//at least collect 10 ms
+		Variable LVDTnop = MaxTime*sampleRate
+		LVDTNop += (32-mod(LVDTnop,32))*(!!mod(LVDTnop,32))
+		Variable LVDTDeci = ARGetDeci(LVDTNop/MaxTime)
+		LVDTNop = round(cMasterSampleRate*MaxTime/LVDTDeci)
+		LVDTNop += (32-mod(LVDTnop,32))*(!!mod(LVDTnop,32))
+		Wave XLVDTWave = InitOrDefaultWave(Parms.DataFolder+"XLVDTWave",0)
+		Wave YLVDTWave = InitOrDefaultWave(Parms.DataFolder+"YLVDTWave",0)
+		Redimension/N=(LVDTNop) XLVDTWave, YLVDTWave
+		
+		
+		ErrorStr += IR_XSetInWavePair(LVDTBank,cFMapStartEvent+","+cFMapStartEvent,"XSensor",XLVDTWave,"YSensor",YLVDTWave,"FMapLVDTDisplayCallback()",LVDTDeci)
+	
+	endif
+
+	String EventStr = cForceStartEvent
+	if ((stringmatch(ctrlName,"Many")))// || TriggerChannel)
+		EventStr += ","+cForceKeepGoingEvent
+	endif
+	
+	String Force32ADC = selectstring(GV("IsBipolar"), "ZSensor", "Height") 	//no Z%Input for open loop scanner
+	String Data32WaveStr = "InputZSensorVolts"
+	String Display32 = "ZSensorVolts;RawZSensor;ZSensor;"
+	//AdjustforceChannels(Force32BitChannel,Force32ADC,Data32WaveStr,SelectedChannelList,ADCList,DataWaveList)
+	//AdjustforceChannels(Force32BitChannel,Force32ADC,Data32WaveStr,Display32,SelectedChannelList,aliasList,DataWaveList,DisplayList)
+
+	switch (total)
+		case 1:
+			Wave Data0 = $StringFromList(0,DataWaveList,";")
+			FixDecimation(StringFromList(0,aliasList,";"),"",Decimation)
+			ErrorStr += IR_XSetInWave(SecondBank,EventStr,StringFromList(0,aliasList,";"),Data0,"",decimation)
+			SetupRTForceUpdate2(StringFromList(0,DisplayList,","),Data0,-1)
+
+			break
+
+		case 3:
+			Wave Data0 = $StringFromList(2,DataWaveList,";")
+			FixDecimation(StringFromList(2,aliasList,";"),"",Decimation)
+			ErrorStr += IR_XSetInWave(FirstBank,EventStr,StringFromList(2,aliasList,";"),Data0,"",decimation)
+			SetupRTForceUpdate2(StringFromList(2,DisplayList,","),Data0,-1)
+			//Dont break
+		case 2:
+			Wave Data0 = $StringFromList(0,DataWaveList,";")
+			Wave Data1 = $StringFromList(1,DataWaveList,";")
+			FixDecimation(StringFromList(0,aliasList,";"),StringFromList(1,aliasList,";"),Decimation)
+			ErrorStr += IR_XSetInWavePair(SecondBank,EventStr,StringFromList(0,aliasList,";"),Data0,StringFromList(1,aliasList,";"),Data1,"",decimation)
+			SetupRTForceUpdate2(StringFromList(0,DisplayList,","),Data0,-1+(Total==3)*2)
+			SetupRTForceUpdate2(StringFromList(1,DisplayList,","),Data1,1)
+			break
+	
+		case 5:
+		case 4:
+			Wave Data0 = $StringFromList(0,DataWaveList,";")
+			Wave Data1 = $StringFromList(1,DataWaveList,";")
+			FixDecimation(StringFromList(0,aliasList,";"),StringFromList(1,aliasList,";"),Decimation)
+			ErrorStr += IR_XSetInWavePair(SecondBank,EventStr,StringFromList(0,aliasList,";"),Data0,StringFromList(1,aliasList,";"),Data1,"",decimation)
+			SetupRTForceUpdate2(StringFromList(0,DisplayList,","),Data0,-1)
+			SetupRTForceUpdate2(StringFromList(1,DisplayList,","),Data1,1)
+			
+			Wave Data0 = $StringFromList(2,DataWaveList,";")
+			Wave Data1 = $StringFromList(3,DataWaveList,";")
+			FixDecimation(StringFromList(2,aliasList,";"),StringFromList(3,aliasList,";"),Decimation)
+			ErrorStr += IR_XSetInWavePair(FirstBank,EventStr,StringFromList(2,aliasList,";"),Data0,StringFromList(3,aliasList,";"),Data1,"",decimation)
+			SetupRTForceUpdate2(StringFromList(3,DisplayList,","),Data1,1)
+			SetupRTForceUpdate2(StringFromList(2,DisplayList,","),Data0,1)
+			break
+			
+	endswitch
+	
+	string Callback, driveAmpStr = "Amplitude*;Phase*;InputI;InputQ;Frequency;Dissipation;"
+	variable stopDrive = 1
+	stop = ItemsInList(driveAmpStr)
+	for (i = 0;i < stop;i += 1)
+		if (GrepString(selectedChannelList,StringFromList(i,driveAmpStr)))
+			stopDrive = 0
+			Break
+		endif
+	endfor
+	if (stopDrive)
+		errorStr += ir_WriteValue("DDSAmplitude0",0)
+	endif
+	
+	
+//PV("InputTime",rightx(InputLVDTVolts))	
+	
+	Wave Data32 = $Data32WaveStr
+	FixDecimation(Force32ADC,"",Decimation)
+	if (Total == 5)
+		ErrorStr += ir_xSetInWavePair(2,EventStr,Force32ADC,Data32,StringFromList(4,aliasList,";"),$StringFromList(4,DataWaveList,";"),"",decimation)
+	else
+		ErrorStr += ir_xSetInWave(2,EventStr,Force32ADC,Data32,"",decimation)
+	endif
+	if (!triggerChannel)
+		ErrorStr += num2str(td_WriteString("OutWave0StatusCallback","ForceScale()"))+","
+	endif
+	SetupRTForceUpdate2(Display32,Data32,1)
+	if (Total >= 5)
+		SetupRTForceUpdate2(StringFromList(4,DisplayList,","),$StringFromList(4,DataWaveList,";"),1)
+	endif
+	
+	SetupRTForceUpdate2("TimeWave",ColorWave,1)
+
+
+	//***********************************
+	//RTUpdates
+	Variable DoUpdates = GV("DoRTForceUpdate")
+	if (DoUpdates == 1)		//auto
+		if (FMapStatus)
+			DoUpdates = 0
+		elseif (displayPoints >= 1e6)
+			DoUpdates = 0
+		elseif (TriggerChannel)
+			DoUpdates = DwellTime >= 2
+		else
+			DoUpdates = (DwellTime+(rampPoints0+rampPoints1)/sampleRate) >= 5
+		endif
+	endif
+	if ((ImagingMode == cPFMMode) && FMapStatus)
+		DoUpdates = 0		//we are too close to the DSP cycle overflow
+		//we don't have enough DSP cycles to run RTUpdates
+	elseif (NumOfCustomDrive >= 2)
+		DoUpdates = 0		//we are using both out wave banks to get this done
+		//So we can't do updates
+	endif
+	if (DoUpdates)
+		//2 points wave at 4 Hz, even though the wave only goes to .125 seconds, the callback happens when 
+		//the outwave *Really* ends, which is 1 points after the last point.
+		Make/N=(2)/O RTUpdateWave
+		Wave RTUpdateWave = RTUpdateWave
+		Callback = ""
+		if (triggerChannel)
+			Callback = "RTForceTimerFunc(\"CTFC\")"
+		else
+			Callback = "RTForceTimerFunc(\"Normal\")"
+		endif
+		ErrorStr += IR_XSetOutWave(1,cForceStartEvent+","+cForceKeepGoingEvent,"output.Dummy",RTUpdateWave,Callback,ARGetDeci(8))
+		
+		
+		PV("RTForceStartIndex;UpdateWrittenPoints;",0)
+	endif
+	
+	if (Exists("UserFinishForceFunc"))
+		FuncRef DoNothing UserFunc=$"UserFinishForceFunc"
+		UserFunc()
+	endif
+	
+	//End RTUpdates
+
+	Variable Event2Start = 2^str2num(cForceStartEvent)+2^str2num(cFrameEvent)		//we need to hit the frame event once for the DAM
+	ErrorStr += num2str(td_WriteString("Event."+cForceKeepGoingEvent,"Set"))+","
+	if (stringmatch(ctrlName,"Many"))
+		//do bunches and bunches
+		ErrorStr += ir_WriteValue("Events.Set",Event2Start)
+		//ErrorStr += num2str(td_WriteString("Event."+cForceStartEvent,"Set"))+","
+		if ((GV("MaxContinuousForce") == 1) && (ContForce != 2))
+			ErrorStr += ir_WriteValue("Events.Clear",Event2Start)
+			//ErrorStr += num2str(td_WriteString("Event."+cForceStartEvent,"Clear"))+","
+			PV("ContForce",0)
+		else
+			ErrorStr += num2str(td_WriteString("Events.Clear",cFrameEvent))+","
+		endif
+	else
+		//single means just do one
+		//ErrorStr += num2str(td_WriteString("Event."+cForceStartEvent,"Once"))+","
+		ErrorStr += ir_WriteValue("Events.Once",Event2Start)
+	endif
+	
+	
+	ARReportError(ErrorStr)
+
+	SetDataFolder(SavedDataFolder)
+end Function //prh_FinishForceFunc
