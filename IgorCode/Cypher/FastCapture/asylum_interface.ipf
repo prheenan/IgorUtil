@@ -88,3 +88,33 @@ Static Function save_to_disk(zsnsr_wave,defl_wave,[note_to_use])
 	//	11: CustomNote: the note we are using toe save eveything
 	ARSaveAsForce(save_to_disk,"SaveForce","ZSnsr,Defl",wave_raw,zsnsr_wave,defl_wave,$"",$"",$"",$"",CustomNote=note_to_use)
 End Function
+
+
+Static Function assert_infastb_correct([input_needed,msg_on_fail])
+	// asserts that infastb on the cross point panel matches the needed input
+	//
+	// Args:
+	//	input_needed: string (ADC name) we wand connected to infastb. Default: "Defl"
+	//	msg_on_fail: what to do if we fail
+	// Returns:
+	//	Nothing, throws an error if things go wrong
+	String input_needed,msg_on_fail
+	String in_fast_a = ModAsylumInterface#get_InFastA() 
+	// Determine the faillure method based on what we want to connect	
+	if (ParamIsDefault(input_needed))
+		input_needed = "Defl"
+	endif
+	if (ParamIsDefault(msg_on_fail))
+		msg_on_fail = "InFastB must be connected to " + input_needed + ", not " + in_fast_a
+	EndIf		
+	Variable correct_input = ModIoUtil#strings_equal(in_fast_a,input_needed)
+	ModErrorUtil#assert(correct_input,msg=msg_on_fail)	
+End Function
+
+Static Function /S get_InFastA()
+	// Returns: 
+	//	the name of the ADC connected to InFastA
+	ControlInfo /W=$("CrosspointPanel") CypherInFastBPopup
+	// S_Value is 'set to text of the current item'
+	return S_Value
+End Function

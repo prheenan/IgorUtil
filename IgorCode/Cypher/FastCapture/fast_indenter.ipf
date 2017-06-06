@@ -14,7 +14,7 @@ End Function
 
 Static Function default_timespan()
 	// Returns:  the default time for the indenter capture
-	return 5
+	return 10
 End Function
 
 Static Function /S default_wave_base_suffix()
@@ -40,6 +40,7 @@ Static Function capture_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	//	Starts the fast capture routine using the indenter panel, 
 	//	accounting for the parameters and notes appropriately.
 	//
+	//	PRE: Defl must be connected to InFastB
 	//Args:
 	//		see ModFastIndenter#fast_capture_setup
 	// Returns
@@ -70,30 +71,35 @@ Static Function capture_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	String review_name = ModAsylumInterface#force_review_graph_name()
 	// before anything else, make sure the review exists
 	ModPlotUtil#assert_window_exists(review_name)
+	// POST: review window exists. Make sure that defl is set up for InFastB
+	ModAsylumInterface#assert_infastb_correct()
+	// POST: inputs are correct, set up the fast capture
 	Variable to_ret = ModFastCapture#fast_capture_setup(speed,timespan,defl_wave,zsnsr_wave)
 	// POST: fast capture is setup 
 	// Call Fast Capture
 	ModFastCapture#fast_capture_start()
 	// Call the single force curve
 	DoForceFunc("Single")
+	// Make sure we are still correctly connected after the force input (it changes the cross point)
+	ModAsylumInterface#assert_infastb_correct()
 	// XXX kludge; just busy-wait until the force plot comes back
-	Sleep /C=6  /S (2*timespan)
+	//Sleep /C=6  /S (2*timespan)
 	// POST: data is saved into the waves we want
 	// Get the *reference* to the wave we want
-	Variable current_suffix = ModAsylumInterface#current_image_suffix()+1
-	String base_name = ModAsylumInterface#master_base_name()
-	String trace_name = ModAsylumInterface#formatted_wave_name(base_name,current_suffix,type="Defl")
+	//Variable current_suffix = ModAsylumInterface#current_image_suffix()+1
+	//String base_name = ModAsylumInterface#master_base_name()
+	//String trace_name = ModAsylumInterface#formatted_wave_name(base_name,current_suffix,type="Defl")
 	// set the current graph to the force review panel
-	ModPlotUtil#scf(review_name)
+	//ModPlotUtil#scf(review_name)
 	// get the note of DeflV on the force review graph
-	String low_res_note = ModPlotUtil#top_graph_wave_note(trace_name,fig=(review_name))
+	//String low_res_note = ModPlotUtil#top_graph_wave_note(trace_name,fig=(review_name))
 	// Add the note to the higher-res waves
 	// XXX fix deltax, etc?
-	Note zsnsr_wave, low_res_note
-	Note defl_wave, low_res_note
+	//Note zsnsr_wave, low_res_note
+	//Note defl_wave, low_res_note
 	// save out the high resolution wave to *disk*
 	// XXX delete the high resolution wave (in memory only)?
-	ModAsylumInterface#save_to_disk(zsnsr_wave,defl_wave,note_to_use=low_res_note)
+	//ModAsylumInterface#save_to_disk(zsnsr_wave,defl_wave,note_to_use=low_res_note)
 	return to_ret
 End Function
 
