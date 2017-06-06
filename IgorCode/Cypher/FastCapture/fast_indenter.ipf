@@ -36,9 +36,10 @@ Static Function setup_directory_sturcture()
 	NewDataFolder /O root:prh:fast_indenter:data
 End Function
 
-Static Function prh_callback()
+Static Function prh_callback(ctrl_name)
+	String ctrl_name
 	// Immediately call the 'normal' Asylum trigger
-	TriggerScale()
+	FinishForceFunc(ctrl_name)
 	// Now do our stuff 
 End Function
 
