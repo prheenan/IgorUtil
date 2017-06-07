@@ -127,7 +127,7 @@ End Function
 Function prh_indenter_final()
 	// Call the 'normal' asylum callback, then saves out the normal data
 	// Args/Returns: None
-	//TriggerScale()
+	TriggerScale()
 	// POST: data is saved into the waves we want
 	// get the *x* waves (used to align the high resolution to the low
 	Wave low_res_approach = get_force_review_wave("Defl_Ext",return_x=1)	
