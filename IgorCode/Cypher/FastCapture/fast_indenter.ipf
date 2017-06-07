@@ -11,7 +11,9 @@
 
 static constant max_info_chars = 100
 
-// XXX TODO: for this to work properly, Force Review must be open, and 'last' wave must be selected.
+// XXX TODO: for this to work properly, as of 2017-6-7:
+// (1) Force Review must be open, and 'last' wave must be selected.
+// (2) Defl must be plotted against ZSnsr 
 
 structure indenter_info
 	// Struct to use to communicate with the call back
@@ -79,20 +81,23 @@ Static Function get_info_struct(ind_inf)
 End Function
 
 
-Static Function /Wave get_force_review_wave(type,[return_x])
+Static Function /Wave get_force_review_wave(type,[return_x,suffix])
 	// Gets the just-saved Wave, assuming it is displayed on the force review graph
 	//
 	// Args:
 	//	type: the extension we want to use (e.g. 'ZSnsr_Ext')
 	//	return_x: if true, return the *x* wave reference, instead of the y wave
+	//	suffix: the suffix to look for. defaults to the last saved plot
 	//
 	// Returns: 
 	//	reference to the last-saved wave (assuming it is plotted in the ForceReviewGraph)
 	String type
-	Variable return_x
-	Variable current_suffix = ModAsylumInterface#current_image_suffix()-1
+	Variable return_x,suffix
+	if (ParamIsDefault(suffix))
+		suffix = ModAsylumInterface#current_image_suffix()-1
+	endif
 	String base_name = ModAsylumInterface#master_base_name()
-	String trace_name = ModAsylumInterface#formatted_wave_name(base_name,current_suffix,type=type)
+	String trace_name = ModAsylumInterface#formatted_wave_name(base_name,suffix,type=type)
 	// set the current graph to the force review panel
 	String review_name = ModAsylumInterface#force_review_graph_name()	
 	// get the note of DeflV on the force review graph
@@ -127,11 +132,22 @@ End Function
 Function prh_indenter_final()
 	// Call the 'normal' asylum callback, then saves out the normal data
 	// Args/Returns: None
-	TriggerScale()
+	//TriggerScale()
 	// POST: data is saved into the waves we want
+	// get the previously-setup information by reference
+	struct indenter_info indenter_info
+	get_info_struct(indenter_info)
+	String suffix_string = ""
+	// pattern is: <start,possble non digits, four digits, possible non digits, end>
+	String pattern = "^\D*([\d]{4})\D*$"
+	Variable matched = ModIoUtil#set_and_return_if_match(indenter_info.x_wave_high_res,pattern,suffix_string)
+	ModErrorUtil#Assert(matched,msg="Wave name should be formatted like <Non Digits>0123<Non digits>")
+	Variable suffix = str2num(suffix_string)
+	// low resolution is always saved first (the whole point of the callbacks)
+	Variable suffix_low_res = suffix-1
 	// get the *x* waves (used to align the high resolution to the low
-	Wave low_res_approach = get_force_review_wave("Defl_Ext",return_x=1)	
-	Wave low_res_dwell = get_force_review_wave("Defl_Towd",return_x=1)	
+	Wave low_res_approach = get_force_review_wave("Defl_Ext",return_x=1,suffix=suffix_low_res)	
+	Wave low_res_dwell = get_force_review_wave("Defl_Towd",return_x=1,suffix=suffix_low_res)	
 	// align waves by maximum in (hopefully less noisy) z sensor
 	String msg_z = "Must display Defl vs ZSnsr on Force Review for high resolution data to function properly"
 	String low_res_approach_x_name = NameOfWave(low_res_approach)
@@ -147,9 +163,6 @@ Function prh_indenter_final()
 	// Before we do *anything* else, get the low resolution sampling rate
 	// (this allows us to determine the indices to split the wave later )
 	Variable freq_low = ModAsylumInterface#note_variable(low_res_note,"NumPtsPerSec")
-	// pass the information by reference
-	struct indenter_info indenter_info
-	get_info_struct(indenter_info)
 	// Make sure we are still correctly connected after the force input (it changes the cross point)
 	ModAsylumInterface#assert_infastb_correct()
 	// Add the note to the higher-res waves
@@ -173,17 +186,18 @@ Function prh_indenter_final()
 	Variable low_res_dwell_end = str2num(ModIoUtil#string_element(indices,2,sep=index_sep))
 	// get the conversion from low to high res, just the ratio of the sampling frequencies
 	Variable conversion = freq/freq_low
-	// XXX determine the first time either of them is within epsilon of the max 
-	// XXX need to get the lower resolution wave 
+	// get the index of the max in the low and high resolution
 	Variable idx_max_low_resolution = get_wave_crossing_index(low_res_approach_and_dwell)
 	Variable idx_max_high_resolution = get_wave_crossing_index(zsnsr_wave)
+	// convert the low resolution into what it *would* be, in high resolution points 
 	Variable idx_effective_low_resolution = (idx_max_low_resolution * conversion)
 	// when we add in the offset, the difference between the maxima should be zero. 
 	Variable offset = ceil(idx_max_high_resolution-idx_effective_low_resolution)
+	// determine the 'real' offset indices into the higher-resolution data
 	Variable idx_start_dwell = ceil(low_res_dwell_start*conversion) + offset
 	Variable idx_end_dwell = ceil(low_res_dwell_end*conversion) + offset
 	Variable last_idx = n-1
-	// XXX fix trigger point 
+	// fix the trigger point and dwell time (later code use these)
 	Variable updated_trigger_time = pnt2x(zsnsr_wave,idx_start_dwell)
 	Variable updated_dwell_time = pnt2x(zsnsr_wave,idx_end_dwell) - updated_trigger_time
 	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"TriggerTime",updated_trigger_time)

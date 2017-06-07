@@ -1325,11 +1325,20 @@ Static Function GetMaxX(mWave)
 End Function
 
 // returns if it matches, sets if so (strToSet is pass by reference)
-Static Function SetandReturnIfMatch(strToMatchAgainstRegex,mRegex,strToSet)
-	String strToMatchAgainstRegex,mRegex,&strToSet
-	if (GrepString(strToMatchAgainstRegex,mRegex))
+Static Function set_and_return_if_match(haystack,pattern,set_on_match)
+	// attempts to match a string; returns the matching result and sets 
+	// a pass-by-reference string if it suceeeds
+	//
+	// Args:
+	//	haystack: the needle to search in
+	// 	pattern: the regeular expression to use 
+	// 	set_on_match: the string which is set on a expression match
+	// Returns:
+	//	True if we have a match
+	String haystack,pattern,&set_on_match
+	if (GrepString(haystack,pattern))
 		// Our experiment exists
-		SplitString /E=(mRegex) strToMatchAgainstRegex, strToSet
+		SplitString /E=(pattern) haystack, set_on_match
 		return ModDefine#True()
 	EndIf
 	return ModDefine#False()
