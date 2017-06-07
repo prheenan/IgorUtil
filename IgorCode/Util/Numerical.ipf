@@ -15,13 +15,13 @@ Static Function first_index_greater(wave_x,level)
 	
 	// Arguments to FindLevel:
 	// /B=1: do no averaging
-	// /E=1: only where levels are increasing
+	// /EDGE=1: only where levels are increasing
 	// /Q: quit run 
 	// /P: return value as points (instead of as x value)
 	Wave wave_x
 	Variable level
-	FindLevel /B=1 /EDGE=1 /Q wave_x, level
+	FindLevel /B=1 /EDGE=1 /Q /P wave_x, level
 	ModErrorUtil#assert(V_flag == 0,msg="wave never crossed given level")
 	// POST: found a crossing.
-	return V_LevelX
+	return round(V_LevelX)
 End Function

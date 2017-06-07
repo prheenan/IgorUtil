@@ -79,18 +79,29 @@ Static Function get_info_struct(ind_inf)
 End Function
 
 
-Static Function /S get_force_review_wave_note()
+Static Function /Wave get_force_review_wave(type,[return_x])
+	// Gets the just-saved Wave, assuming it is displayed on the force review graph
+	//
+	// Args:
+	//	type: the extension we want to use (e.g. 'ZSnsr_Ext')
+	//	return_x: if true, return the *x* wave reference, instead of the y wave
+	//
 	// Returns: 
-	//	the current note associated with the last-saved wave (assuming it is p
-	//     plotted in the ForceReviewGraph
+	//	reference to the last-saved wave (assuming it is plotted in the ForceReviewGraph)
+	String type
+	Variable return_x
 	Variable current_suffix = ModAsylumInterface#current_image_suffix()-1
 	String base_name = ModAsylumInterface#master_base_name()
-	String trace_name = ModAsylumInterface#formatted_wave_name(base_name,current_suffix,type="Defl_Ret")
+	String trace_name = ModAsylumInterface#formatted_wave_name(base_name,current_suffix,type=type)
 	// set the current graph to the force review panel
 	String review_name = ModAsylumInterface#force_review_graph_name()	
 	// get the note of DeflV on the force review graph
-	String low_res = ModPlotUtil#graph_wave_note(trace_name,fig=(review_name))	
-	return low_res
+	if (return_x)
+		Wave to_ret = ModPlotUtil#graph_wave_x(review_name,trace_name)
+	else
+		Wave to_ret = ModPlotUtil#graph_wave(review_name,trace_name)		
+	endif
+	return to_ret
 End Function
 
 Static Function get_wave_crossing_index(wave_to_get,[epsilon_f])
@@ -116,9 +127,16 @@ End Function
 Function prh_indenter_final()
 	// Call the 'normal' asylum callback, then saves out the normal data
 	// Args/Returns: None
-	TriggerScale()
+	//TriggerScale()
 	// POST: data is saved into the waves we want
-	String low_res_note = get_force_review_wave_note()	
+	// get the *x* waves (used to align the high resolution to the low
+	Wave low_res_approach = get_force_review_wave("Defl_Ext",return_x=1)	
+	Wave low_res_dwell = get_force_review_wave("Defl_Towd",return_x=1)	
+	String low_res_note = note(low_res_approach)
+	// Concatenate the low resolution approach and retract
+	Make/FREE/N=0 low_res_approach_and_dwell
+	// /NP: no promotion allowed
+	Concatenate /NP {low_res_approach,low_res_dwell}, low_res_approach_and_dwell
 	// Before we do *anything* else, get the low resolution sampling rate
 	// (this allows us to determine the indices to split the wave later )
 	Variable freq_low = ModAsylumInterface#note_variable(low_res_note,"NumPtsPerSec")
@@ -150,17 +168,22 @@ Function prh_indenter_final()
 	Variable conversion = freq/freq_low
 	// XXX determine the first time either of them is within epsilon of the max 
 	// XXX need to get the lower resolution wave 
-	Wave low_res_z = zsnsr_wave
-	Variable idx_max_low_resolution = get_wave_crossing_index(low_res_z)
+	Variable idx_max_low_resolution = get_wave_crossing_index(low_res_approach_and_dwell)
 	Variable idx_max_high_resolution = get_wave_crossing_index(zsnsr_wave)
-	// determine the different in high resolution points between the two; this is the offset
-	Variable offset = ceil((idx_max_low_resolution * conversion) - idx_max_high_resolution)
+	Variable idx_effective_low_resolution = (idx_max_low_resolution * conversion)
+	// when we add in the offset, the difference between the maxima should be zero. 
+	Variable offset = ceil(idx_max_high_resolution-idx_effective_low_resolution)
 	Variable idx_start_dwell = ceil(low_res_dwell_start*conversion) + offset
 	Variable idx_end_dwell = ceil(low_res_dwell_end*conversion) + offset
 	Variable last_idx = n-1
+	// XXX fix trigger point 
+	Variable updated_trigger_time = pnt2x(zsnsr_wave,idx_start_dwell)
+	Variable updated_dwell_time = pnt2x(zsnsr_wave,idx_end_dwell) - updated_trigger_time
+	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"TriggerTime",updated_trigger_time)
+	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"DwellTime",updated_dwell_time)	
 	// replace the indices; they are just CSV
 	String indexes_for_note 
-	sprintf indexes_for_note, "%s,%s,%s,%s",offset,idx_start_dwell,idx_end_dwell,last_idx
+	sprintf indexes_for_note, "%d,%d,%d,%d",offset,idx_start_dwell,idx_end_dwell,last_idx
 	low_res_note = ModAsylumInterface#replace_note_string(low_res_note,"Indexes",indexes_for_note)
 	// everything is set up; go ahead and set the notes 
 	Note zsnsr_wave, low_res_note

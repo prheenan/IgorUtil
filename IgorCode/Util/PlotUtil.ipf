@@ -1004,7 +1004,31 @@ Static Function scf(figure)
 	DoWindow /F $(figure)
 End Function
 
-Static Function /Wave graph_wave(trace_name,fig)
+Static Function trace_on_graph(fig,trace_name)
+	// Retuns: True iff trace_name is plotted as a y value on fig
+	String fig,trace_name
+	String traces = TraceNameList(fig,",",1)
+	return (WhichListItem(trace_name,traces,",") > -1 )
+End Function
+	
+Static Function assert_trace_on_graph(fig,trace_name)
+	// Asserts that trace_on_graph is true
+	String fig,trace_name
+	String error
+	sprintf error, "Couldn't find trace '%s' on graph '%s'",trace_name,fig
+	ModErrorUtil#assert( trace_on_graph(fig,trace_name),msg=error)
+End Function
+
+Static Function /WAVE graph_wave_x(fig,trace_name)
+	// See: graph_wave, except returns the x wave reference
+	String fig,trace_name
+	assert_window_exists(fig)
+	assert_trace_on_graph(fig,trace_name)
+	Wave low_res_wave = XWaveRefFromTrace(fig,trace_name)
+	return low_res_wave
+End Function
+
+Static Function /Wave graph_wave(fig,trace_name)
 	// Returns the *reference* to the given trace on the figurre 
 	//
 	// Args:
@@ -1013,27 +1037,9 @@ Static Function /Wave graph_wave(trace_name,fig)
 	//	Reference to the relvant wave
 	String trace_name,fig
 	assert_window_exists(fig)
+	assert_trace_on_graph(fig,trace_name)
 	Wave low_res_wave = TraceNameToWaveRef(fig,trace_name)
 	return low_res_wave
-End Function
-
-Static Function /S graph_wave_note(trace_name,[fig])
-	// returns the note of the given trace in the top graph
-	//
-	// Args:
-	//	trace_name: name of the trace; should be in the figure
-	//	fig: figure name. defaults to ModPlotUtil#gcf()
-	// Returns
-	//	Wave note associated with the trace
-	// get the current figure, assuming it is the force review, etc..
-	String trace_name,fig
-	If (ParamIsDefault(fig))
-		fig = ModPlotUtil#gcf()	
-	EndIf
-	Wave low_res_wave = graph_wave(trace_name,fig)
-	// get the note of the wave we want (want them to be consistent)
-	String low_res_note = note(low_res_wave)	
-	return low_res_note
 End Function
 
 Static Function InitPlotDef(ToInit)
