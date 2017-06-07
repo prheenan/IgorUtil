@@ -478,61 +478,68 @@ Static Function /Wave GetUniTxtWaveIndex(StringWave)
 	return UniIdx
 End Function
 
-Static Function GetLastIndex(Str,Sep)
-	// start at infinity, searc backwards: 
-	String str,Sep
-	Variable optSearchBackwards = 1
-	Variable colonIndex = strsearch(str,Sep,Inf,optSearchBackwards)
-	return colonIndex
-End Function
-
 Static Function /S GetFileName(Str,[DirSep,RemoveExt])
-	String Str,DirSep
-	Variable RemoveExt
-	// Get a file name from a <DirSep>-separated string, assumign the file name
-	// is everything from the last colon onwards
-	if (ParamIsDefault(DirSep))
-		DirSep = ModDefine#DefDirSep()
-	endIf
-	RemoveExt = ParamIsDefault(RemoveExt) ? ModDefine#False() : RemoveExt
-	if (RemoveExt)
-		// Remove the extension of the string before returning it
-		str = RemoveExt(str)
-	EndIf
-	Variable colonIndex = GetLastIndex(str,DirSep)	
-	if (colonIndex > 0)
-		// found a colon! Get the string from here to the end.
-		return str[colonIndex+1,Inf]
-	else
-		// just return the whole thing, no colon found, no path/
-		// XXX warning?
-		return str
-	EndIf
+       String Str,DirSep
+       Variable RemoveExt
+       // Get a file name from a <DirSep>-separated string, assumign the file name
+       // is everything from the last colon onwards
+       if (ParamIsDefault(DirSep))
+               DirSep = ModDefine#DefDirSep()
+       endIf
+       RemoveExt = ParamIsDefault(RemoveExt) ? ModDefine#False() : RemoveExt
+       if (RemoveExt)
+               // Remove the extension of the string before returning it
+               str = RemoveExt(str)
+       EndIf
+       Variable colonIndex = GetLastIndex(str,DirSep)
+       if (colonIndex > 0)
+               // found a colon! Get the string from here to the end.
+               return str[colonIndex+1,Inf]
+       else
+               // just return the whole thing, no colon found, no path/
+               // XXX warning?
+               return str
+       EndIf
 End Function
 
 Static Function /S RemoveAfterLast(toMod,strToLookForLast)
-	String toMod,strToLookForLast
-	Variable colonIndex = GetLastIndex(toMod,strToLookForLast)
-	if (colonIndex > 0)
-		return toMod[0,colonIndex-1]
-	else
-		return toMod
-	EndIf
+       String toMod,strToLookForLast
+       Variable colonIndex = GetLastIndex(toMod,strToLookForLast)
+       if (colonIndex > 0)
+               return toMod[0,colonIndex-1]
+       else
+               return toMod
+       EndIf
 End Function
 
 Static Function /S RemoveExt(filePath)
-	String filePath
-	return RemoveAfterLast(filePath,EXT_START)
+       String filePath
+       return RemoveAfterLast(filePath,EXT_START)
 End Function
 
 Static Function /S GetFileExt(filePath)
-	String filePath
-	Variable colonIndex = GetLastIndex(filePath,EXT_START)
-	if (colonIndex > 0)
-		return filePath[colonIndex,Inf]
-	else
-		return filePath
-	EndIf
+       String filePath
+       Variable colonIndex = GetLastIndex(filePath,EXT_START)
+       if (colonIndex > 0)
+               return filePath[colonIndex,Inf]
+       else
+               return filePath
+       EndIf
+End Function
+
+Static Function substring_exists(needle,haystack)
+	// Returns: 1 if needle in haystack, false otherwise
+	String needle,haystack
+	// strsearch returns -1 if the substring exists; otherwise just the index 
+	return strsearch(haystack,needle,0) > -1
+End Function 
+
+Static Function GetLastIndex(Str,Sep)
+	// Returns: the last index of sep in string
+       String str,Sep
+       Variable optSearchBackwards = 1
+       Variable colonIndex = strsearch(str,Sep,Inf,optSearchBackwards)
+       return colonIndex
 End Function
 
 // gets the directory of a file name (everything before  the first colon)

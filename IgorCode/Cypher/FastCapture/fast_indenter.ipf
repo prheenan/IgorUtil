@@ -132,6 +132,13 @@ Function prh_indenter_final()
 	// get the *x* waves (used to align the high resolution to the low
 	Wave low_res_approach = get_force_review_wave("Defl_Ext",return_x=1)	
 	Wave low_res_dwell = get_force_review_wave("Defl_Towd",return_x=1)	
+	// align waves by maximum in (hopefully less noisy) z sensor
+	String msg_z = "Must display Defl vs ZSnsr on Force Review for high resolution data to function properly"
+	String low_res_approach_x_name = NameOfWave(low_res_approach)
+	String high_res_approach_x_name = NameOfWave(low_res_approach)
+	ModErrorUtil#Assert(ModIoUtil#substring_exists("ZSnsr",low_res_approach_x_name),msg=msg_z)
+	ModErrorUtil#Assert(ModIoUtil#substring_exists("ZSnsr",high_res_approach_x_name),msg=msg_z)	
+	// POST: using Defl, ZSnsr
 	String low_res_note = note(low_res_approach)
 	// Concatenate the low resolution approach and retract
 	Make/FREE/N=0 low_res_approach_and_dwell
