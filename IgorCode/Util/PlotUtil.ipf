@@ -1004,8 +1004,20 @@ Static Function scf(figure)
 	DoWindow /F $(figure)
 End Function
 
+Static Function /Wave graph_wave(trace_name,fig)
+	// Returns the *reference* to the given trace on the figurre 
+	//
+	// Args:
+	//	See graph_wave_note
+	// Returns:
+	//	Reference to the relvant wave
+	String trace_name,fig
+	assert_window_exists(fig)
+	Wave low_res_wave = TraceNameToWaveRef(fig,trace_name)
+	return low_res_wave
+End Function
 
-Static Function /S top_graph_wave_note(trace_name,[fig])
+Static Function /S graph_wave_note(trace_name,[fig])
 	// returns the note of the given trace in the top graph
 	//
 	// Args:
@@ -1018,8 +1030,7 @@ Static Function /S top_graph_wave_note(trace_name,[fig])
 	If (ParamIsDefault(fig))
 		fig = ModPlotUtil#gcf()	
 	EndIf
-	assert_window_exists(fig)
-	Wave low_res_wave = TraceNameToWaveRef(fig,trace_name)
+	Wave low_res_wave = graph_wave(trace_name,fig)
 	// get the note of the wave we want (want them to be consistent)
 	String low_res_note = note(low_res_wave)	
 	return low_res_note

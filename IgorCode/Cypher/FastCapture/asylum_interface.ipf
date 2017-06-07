@@ -47,6 +47,39 @@ Static Function /S formatted_wave_name(base,suffix,[type])
 	return to_ret
 End Function
 
+Static Function /S note_string(note_v,key_to_get)
+	// Gets an asylum-style value from its key in a note
+	
+	// Args:
+	//	See replace_note_variable
+	// Returns:
+	//	The value of sotred in the note of the key
+	String note_v,key_to_get
+	return StringByKey(key_to_get,note_v,":","\r")
+End function
+
+Static Function note_variable(note_v,key_to_get)
+	// Returns a note variable as a number
+	//
+	// Args: 
+	//	see   replace_note_variable
+	// Returns
+	//    The variable (numeric) representation of the note value at the given key
+	String note_v,key_to_get
+	return str2num(note_string(note_v,key_to_get))
+End Function
+
+Static Function /S replace_note_string(note_v,key_to_replace,new_string)
+	// replaces an asylum-style string value associated with a key
+	//
+	// Args:
+	//	see replace_note_variable
+	// Returns
+	//	updated note
+	String note_v,key_to_replace,new_string
+	return ReplaceStringbyKey(key_to_replace,note_v,new_string,":","\r")
+End Function
+
 Static Function /S replace_note_variable(note_v,key_to_replace,new_value)
 	// replaces an asylum-style string variable
 	// 
@@ -60,7 +93,7 @@ Static Function /S replace_note_variable(note_v,key_to_replace,new_value)
 	Variable new_value
 	String value_as_string
 	sprintf value_as_string,"%.10g",new_value
-	return ReplaceStringbyKey(key_to_replace,note_v,value_as_string,":","\r")
+	return replace_note_string(note_v,key_to_replace,value_as_string)
 End Function
 
 Static Function /S default_wave_base_name()

@@ -88,7 +88,7 @@ Static Function /S get_force_review_wave_note()
 	// set the current graph to the force review panel
 	String review_name = ModAsylumInterface#force_review_graph_name()	
 	// get the note of DeflV on the force review graph
-	String low_res_note = ModPlotUtil#top_graph_wave_note(trace_name,fig=(review_name))	
+	String low_res_note = ModPlotUtil#graph_wave_note(trace_name,fig=(review_name))	
 	return low_res_note
 End Function
 
@@ -98,6 +98,9 @@ Function prh_indenter_final()
 	TriggerScale()
 	// POST: data is saved into the waves we want
 	String low_res_note = get_force_review_wave_note()	
+	// Before we do *anything* else, get the low resolution sampling rate
+	// (this allows us to determine the indices to split the wave later )
+	Variable freq_low = ModAsylumInterface#note_variable(low_res_note,"NumPtsPerSec")
 	// pass the information by reference
 	struct indenter_info indenter_info
 	get_info_struct(indenter_info)
@@ -108,7 +111,31 @@ Function prh_indenter_final()
 	Wave defl_wave = $(indenter_info.y_wave_high_res)
 	// update the frequency (all other information is the same)
 	Variable freq = indenter_info.points_per_second
+	Variable n = DimSize(defl_wave,0)
+	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"ForceFilterBW",freq/2)
 	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"NumPtsPerSec",freq)
+	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"MaxPtsPerSec",freq)
+	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"NumPtsPerWave",n)
+	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"TarPtsPerWave",n)
+	// fix the indices for the high resolution wave; these will only be approximately correct, since 
+	// there will probably be an offset. This is helpful for graphing everything (asylum splits by Indexes
+	// in the force review panel)
+	String indices = ModAsylumInterface#note_string(low_res_note,"Indexes")
+	// The order of the indices is <0,start of dwell, end of dwell, end of wave>
+	String index_sep = ","
+	Variable low_res_dwell_start = str2num(ModIoUtil#string_element(indices,1,sep=index_sep))
+	Variable low_res_dwell_end = str2num(ModIoUtil#string_element(indices,2,sep=index_sep))
+	// get the conversion from low to high res, just the ratio of the sampling frequencies
+	Variable conversion = freq/freq_low
+	// determine the indixes we need (first is zero..)
+	Variable idx_start_dwell = ceil(low_res_dwell_start*conversion)
+	Variable idx_end_dwell = ceil(low_res_dwell_end*conversion)
+	Variable last_idx = n-1
+	// replace the indices; they are just CSV
+	String indexes_for_note 
+	sprintf indexes_for_note, "%s,%s,%s,%s",0,idx_start_dwell,idx_end_dwell,last_idx
+	low_res_note = ModAsylumInterface#replace_note_string(low_res_note,"Indexes",indexes_for_note)
+	// everything is set up; go ahead and set the notes 
 	Note zsnsr_wave, low_res_note
 	Note defl_wave, low_res_note
 	// save out the high resolution wave to *disk*

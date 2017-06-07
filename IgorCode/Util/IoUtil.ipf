@@ -158,6 +158,7 @@ Static Function CountWaves(path)
 	return CountObjects(path,COUNT_WAVES)
 End Function
 
+
 Static Function /S GetWaveAtIndex(path,index,[fullPath])
 	String path
 	Variable index,fullPath
@@ -740,6 +741,23 @@ Static Function /S GetPathFromString(StrV)
 		ModErrorUtil#Assert(FileExists(mPath),msg="Couldn't find path")
 	EndIf
 	return mPath
+End Function
+
+Static Function /S string_element(list,index,[sep])
+	// convenience wrapper for using igor-style string lists
+	//
+	// Args;
+	//	list: the <separator> separated list
+	//	index: which 0-based element is wanted
+	//	sep: third argument to stringfromlist; separator in list 
+	// Returns
+	//	Relevant element, assuming index is in bounds. Else, see StringFromList
+	String list,sep
+	Variable index
+	If (ParamIsDefault(sep))
+		sep = ";"
+	EndIf
+	return StringFromList(index,list,sep)
 End Function
 
 Static Function FileExists(mFile)
