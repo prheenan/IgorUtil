@@ -6,6 +6,7 @@
 #include ":ForceModifications"
 #include ":::Util:IoUtil"
 #include ":::Util:PlotUtil"
+#include ":::Util:Numerical"
 #include ":asylum_interface"
 
 static constant max_info_chars = 100
@@ -88,8 +89,28 @@ Static Function /S get_force_review_wave_note()
 	// set the current graph to the force review panel
 	String review_name = ModAsylumInterface#force_review_graph_name()	
 	// get the note of DeflV on the force review graph
-	String low_res_note = ModPlotUtil#graph_wave_note(trace_name,fig=(review_name))	
-	return low_res_note
+	String low_res = ModPlotUtil#graph_wave_note(trace_name,fig=(review_name))	
+	return low_res
+End Function
+
+Static Function get_wave_crossing_index(wave_to_get,[epsilon_f])
+	// Gets when the wave crosses Max-epsilon_f * range.
+	// Useful for aligning two nominally identical curves at different resolution
+	//
+	// Args:
+	//	wave_to_get: wave of interest
+	//	epsilon_f: how much of the range should be used
+	Wave wave_to_get
+	Variable epsilon_f
+	epsilon_f = ParamIsDefault(epsilon_f) ? 0.01 : epsilon_f
+	// POST: parameters set up 
+	Variable max_z = WaveMax(wave_to_get)
+	Variable min_z = WaveMin(wave_to_get)
+	Variable range_z = max_z-min_z
+	// epsilon is defined in terms of the range...
+	Variable level_to_cross = max_z - epsilon_f * abs(range_z)
+	// return the first time we are above the level.
+	return ModNumerical#first_index_greater(wave_to_get,level_to_cross)
 End Function
 
 Function prh_indenter_final()
@@ -127,13 +148,19 @@ Function prh_indenter_final()
 	Variable low_res_dwell_end = str2num(ModIoUtil#string_element(indices,2,sep=index_sep))
 	// get the conversion from low to high res, just the ratio of the sampling frequencies
 	Variable conversion = freq/freq_low
-	// determine the indixes we need (first is zero..)
-	Variable idx_start_dwell = ceil(low_res_dwell_start*conversion)
-	Variable idx_end_dwell = ceil(low_res_dwell_end*conversion)
+	// XXX determine the first time either of them is within epsilon of the max 
+	// XXX need to get the lower resolution wave 
+	Wave low_res_z = zsnsr_wave
+	Variable idx_max_low_resolution = get_wave_crossing_index(low_res_z)
+	Variable idx_max_high_resolution = get_wave_crossing_index(zsnsr_wave)
+	// determine the different in high resolution points between the two; this is the offset
+	Variable offset = ceil((idx_max_low_resolution * conversion) - idx_max_high_resolution)
+	Variable idx_start_dwell = ceil(low_res_dwell_start*conversion) + offset
+	Variable idx_end_dwell = ceil(low_res_dwell_end*conversion) + offset
 	Variable last_idx = n-1
 	// replace the indices; they are just CSV
 	String indexes_for_note 
-	sprintf indexes_for_note, "%s,%s,%s,%s",0,idx_start_dwell,idx_end_dwell,last_idx
+	sprintf indexes_for_note, "%s,%s,%s,%s",offset,idx_start_dwell,idx_end_dwell,last_idx
 	low_res_note = ModAsylumInterface#replace_note_string(low_res_note,"Indexes",indexes_for_note)
 	// everything is set up; go ahead and set the notes 
 	Note zsnsr_wave, low_res_note
