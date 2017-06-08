@@ -85,135 +85,84 @@ Static Function get_info_struct(ind_inf)
 End Function
 
 
-Static Function /Wave get_force_review_wave(type,[return_x,suffix])
-	// Gets the just-saved Wave, assuming it is displayed on the force review graph
+Static Function select_index(select_wave,index)
+	// Selects a given index at a wave
+	// From igor manual:
+	// 	Bit 0 (0x01):	Cell is selected.
 	//
 	// Args:
-	//	type: the extension we want to use (e.g. 'ZSnsr_Ext')
-	//	return_x: if true, return the *x* wave reference, instead of the y wave
-	//	suffix: the suffix to look for. defaults to the last saved plot
-	//
-	// Returns: 
-	//	reference to the last-saved wave (assuming it is plotted in the ForceReviewGraph)
-	String type
-	Variable return_x,suffix
-	if (ParamIsDefault(suffix))
-		suffix = ModAsylumInterface#current_image_suffix()-1
-	endif
-	String base_name = ModAsylumInterface#master_base_name()
-	String trace_name = ModAsylumInterface#formatted_wave_name(base_name,suffix,type=type)
-	// set the current graph to the force review panel
-	String review_name = ModAsylumInterface#force_review_graph_name()	
-	// get the note of DeflV on the force review graph
-	if (return_x)
-		Wave to_ret = ModPlotUtil#graph_wave_x(review_name,trace_name)
-	else
-		Wave to_ret = ModPlotUtil#graph_wave(review_name,trace_name)		
-	endif
-	return to_ret
-End Function
-
-Static Function get_wave_crossing_index(wave_to_get,[epsilon_f])
-	// Gets when the wave crosses Max-epsilon_f * range.
-	// Useful for aligning two nominally identical curves at different resolution
-	//
-	// Args:
-	//	wave_to_get: wave of interest
-	//	epsilon_f: how much of the range should be used
-	Wave wave_to_get
-	Variable epsilon_f
-	epsilon_f = ParamIsDefault(epsilon_f) ? 0.01 : epsilon_f
-	// POST: parameters set up 
-	Variable max_z = WaveMax(wave_to_get)
-	Variable min_z = WaveMin(wave_to_get)
-	Variable range_z = max_z-min_z
-	// epsilon is defined in terms of the range...
-	Variable level_to_cross = max_z - epsilon_f * abs(range_z)
-	// return the first time we are above the level.
-	return ModNumerical#first_index_greater(wave_to_get,level_to_cross)
-End Function
-
-Static Function get_wave_suffix_number(wave_name)
-	// Given a wave name, returns its suffix
-	//
-	// Args:
-	//	wave_name: full name, formatted somethine like Image0010_DeflV
-	// Returns;
-	//	numeric suffix
-	String wave_name
-	String suffix_string = ""
-	// pattern is: <start,anything non-greedy, four digits, possible non digits, end>
-	String pattern = "^.*?([\d]{4})\D*$"
-	Variable matched = ModIoUtil#set_and_return_if_match(wave_name,pattern,suffix_string)
-	ModErrorUtil#Assert(matched,msg="Wave name should be formatted like <Non Digits>0123<Non digits>")
-	Variable suffix = str2num(suffix_string)
-	return suffix
-End Function	
-
-Static Function /S update_note_resolution(original_note,freq,n)
-	// updates a given note for a higher-resolution wave
-	//
-	// Args:
-	//	original_note: the original source
-	//	freq: the sampling frequency
-	//	n: the new size of the wave
+	//	select_wave: which wave to use 
+	// 	index: what index to select
 	// Returns:
-	//	The updated note
-	String original_note
-	Variable freq,n
-	String new_note
-	new_note = ModAsylumInterface#replace_note_variable(original_note,"ForceFilterBW",freq/2)
-	new_note = ModAsylumInterface#replace_note_variable(original_note,"NumPtsPerSec",freq)
-	new_note = ModAsylumInterface#replace_note_variable(original_note,"MaxPtsPerSec",freq)
-	new_note = ModAsylumInterface#replace_note_variable(original_note,"NumPtsPerWave",n)
-	new_note = ModAsylumInterface#replace_note_variable(original_note,"TarPtsPerWave",n)
-	return new_note
+	//	nothing
+	Wave select_wave
+	Variable index
+	// For listbox in mode 4 (multiple selections possible),
+	// SelWave bits have different meanings: 
+	//Bit 0 (0x01):	Cell is selected.
+	// ...
+	///Bit 3 (0x08):	Current shift selection.
+	//Bit 4 (0x10):	Current state of a checkbox cell.
+	//Bit 5 (0x20):	Cell is a checkbox.
+	
+	// 0x9 should be enough for non-checkboxes
+	variable bit_or =  0x9
+	// 0x20 means we are a check box, 0x10 is the checked status  
+	if (select_wave[index][0][0]  & 0x20)
+		bit_or = bit_or |  0x10
+	endIf
+	select_wave[index][0][0] = select_wave[index][0][0] | bit_or
 End Function
 
-Static Function /S update_note_triggering(low_res_note,low_res_z_wave,high_res_z_wave,freq_low,freq)
-	// fix the indices for the high resolution wave; these will only be approximately correct, since 
-	// there will probably be an offset. This is helpful for graphing everything (asylum splits by Indexes
-	// in the force review panel)
+Static Function setup_gui_for_fast_capture()
+	// fast capture relies on having the Force Review graph open and accessible. This 
+	// function ensures that those conditions are met
 	//
-	// Args:
-	//	low_res_note: the note we are updating
-	//	low_res_z_wave: the original ZSnsr wave, should contain the approach and dwell
-	//	high_res_z_wave: the new ZSnsr wave we want. should contain (at least) the approach and dwell
-	//	freq_low/freq: the sampling frequencies of the low and high resolution waves
-	// Returns;
-	//	note with updated triggering times and indices
-	String low_res_note
-	Wave low_res_z_wave,high_res_z_wave
-	Variable freq_low,freq
-	String indices = ModAsylumInterface#note_string(low_res_note,"Indexes")
-	// The order of the indices is <0,start of dwell, end of dwell, end of wave>
-	String index_sep = ","
-	Variable low_res_dwell_start = str2num(ModIoUtil#string_element(indices,1,sep=index_sep))
-	Variable low_res_dwell_end = str2num(ModIoUtil#string_element(indices,2,sep=index_sep))
-	// get the conversion from low to high res, just the ratio of the sampling frequencies
-	Variable conversion = freq/freq_low
-	// get the index of the max in the low and high resolution
-	Variable idx_max_low_resolution = get_wave_crossing_index(low_res_z_wave)
-	Variable idx_max_high_resolution = get_wave_crossing_index(high_res_z_wave)
-	// convert the low resolution into what it *would* be, in high resolution points 
-	Variable idx_effective_low_resolution = (idx_max_low_resolution * conversion)
-	// when we add in the offset, the difference between the maxima should be zero. 
-	Variable offset = ceil(idx_max_high_resolution-idx_effective_low_resolution)
-	// determine the 'real' offset indices into the higher-resolution data
-	Variable idx_start_dwell = ceil(low_res_dwell_start*conversion) + offset
-	Variable idx_end_dwell = ceil(low_res_dwell_end*conversion) + offset
-	Variable n = DimSize(low_res_z_wave,0)
-	Variable last_idx = n-1
-	// fix the trigger point and dwell time (later code use these)
-	Variable updated_trigger_time = pnt2x(high_res_z_wave,idx_start_dwell)
-	Variable updated_dwell_time = pnt2x(high_res_z_wave,idx_end_dwell) - updated_trigger_time
-	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"TriggerTime",updated_trigger_time)
-	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"DwellTime",updated_dwell_time)	
-	// replace the indices; they are just CSV
-	String indexes_for_note 
-	sprintf indexes_for_note, "%d,%d,%d,%d",offset,idx_start_dwell,idx_end_dwell,last_idx
-	low_res_note = ModAsylumInterface#replace_note_string(low_res_note,"Indexes",indexes_for_note)
-	return low_res_note
+	// Args: 
+	//	None
+	// Returns:
+	// 	None, but thows errors if problem (e.g. Force Review isn't open)
+	String force_review = ModAsylumInterface#force_review_graph_name()
+	String master_force_name = "MasterForcePanel"
+	ModErrorUtil#Assert(ModIoUtil#WindowExists(master_force_name),msg="Must have Review panel open")
+	// POST: force review panel exists
+	String y_axis_selector = "ForceAxesList0_0"
+	ControlInfo /W=$(master_force_name) $(y_axis_selector)
+	String list_wave_path = S_DataFolder + S_Value
+	Wave list_wave = $(list_wave_path)
+	Variable defl_exists = ModDataStructures#text_in_wave("Defl",list_wave)
+	ModErrorUtil#assert(defl_exists,msg="Couldn't find Defl in Force Review Options")
+	// POST: defl exists, get its index
+	Variable defl_idx = ModDataStructures#element_index("Defl",list_wave)
+	// Call the swapping procedure 
+	Variable valid_event = 1
+	Variable col = 0 
+	Wave selector_wave_y_axis = $("root:ForceCurves:Parameters:AxesListBuddy0") 
+	ModErrorUtil#assert_wave_exists(selector_wave_y_axis)
+	select_index(selector_wave_y_axis,defl_idx)
+	HotSwapForceData(y_axis_selector,defl_idx,col,valid_event)
+	// Ensure that ZSnsr is selected as the x
+	String x_axis_selector = "ForceXaxisPop_0"
+	PopupMenu $(x_axis_selector) mode=5,popvalue="ZSnsr", win=$(master_force_name) 
+	ChangeForceXAxis(x_axis_selector,5,"ZSnsr")
+	// Ensure that the most revent force wave is selected 
+	Struct WMListBoxAction InfoStruct	
+	Wave /T InfoStruct.listWave=$("root:ForceCurves:Parameters:SlaveFPList")
+	InfoStruct.Row = DimSize(InfoStruct.listWave,0)-1
+	Wave InfoStruct.selWave=$("root:ForceCurves:Parameters:SlaveFPBuddy")
+	Wave InfoStruct.colorWave=$("root:packages:MFP3D:TOC:ListColorWave")
+	InfoStruct.CtrlName = "ForceList_0"
+	InfoStruct.Win = master_force_name
+	InfoStruct.EventCode = 2
+	InfoStruct.CtrlRect.Left = 14
+	InfoStruct.EventMod = 0
+	// Make sure the waves we need exist
+	ModErrorUtil#assert_wave_exists(InfoStruct.listWave)
+	ModErrorUtil#assert_wave_exists(InfoStruct.selWave)
+	ModErrorUtil#assert_wave_exists(InfoStruct.colorWave)
+	// POST: all the waves exist, save to set . 
+	select_index(InfoStruct.selWave,InfoStruct.Row)
+	SelectFPByFolderProc(InfoStruct)
 End Function
 
 Function prh_indenter_final()
@@ -238,13 +187,13 @@ Static Function align_and_save_fast_capture()
 	// get the previously-setup information by reference
 	struct indenter_info indenter_info
 	get_info_struct(indenter_info)
-	Variable suffix = get_wave_suffix_number(indenter_info.x_wave_high_res)
+	Variable suffix =  ModAsylumInterface#get_wave_suffix_number(indenter_info.x_wave_high_res)
 	// low resolution is always saved first (the whole point of the callbacks)
 	// so its suffix is assumed one lower
-	Variable suffix_low_res = suffix-1
+	Variable suffix_low_res = suffix
 	// get the *x* waves (used to align the high resolution to the low
-	Wave low_res_approach = get_force_review_wave("Defl_Ext",return_x=1,suffix=suffix_low_res)	
-	Wave low_res_dwell = get_force_review_wave("Defl_Towd",return_x=1,suffix=suffix_low_res)	
+	Wave low_res_approach = ModAsylumInterface#get_force_review_wave("Defl_Ext",return_x=1,suffix=suffix_low_res)	
+	Wave low_res_dwell = ModAsylumInterface#get_force_review_wave("Defl_Towd",return_x=1,suffix=suffix_low_res)	
 	// align waves by maximum in (hopefully less noisy) z sensor
 	String msg_z = "Must display Defl vs ZSnsr on Force Review for high resolution data to function properly"
 	String low_res_approach_x_name = NameOfWave(low_res_approach)
@@ -269,9 +218,9 @@ Static Function align_and_save_fast_capture()
 	// (this allows us to determine the indices to split the wave later )
 	Variable freq_low = ModAsylumInterface#note_variable(low_res_note,"NumPtsPerSec")
 	// update the triggering parameters
-	low_res_note = update_note_triggering(low_res_note,low_res_approach_and_dwell,zsnsr_wave,freq_low,freq)
+	low_res_note = ModAsylumInterface#update_note_triggering(low_res_note,low_res_approach_and_dwell,zsnsr_wave,freq_low,freq)
 	// update the resolution variables 
-	low_res_note = update_note_resolution(low_res_note,freq,n)
+	low_res_note = ModAsylumInterface#update_note_resolution(low_res_note,freq,n)
 	// everything is set up; go ahead and set the notes 
 	Note zsnsr_wave, low_res_note
 	Note defl_wave, low_res_note
@@ -339,6 +288,9 @@ Static Function capture_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	// before anything else, make sure the review exists
 	String review_name = ModAsylumInterface#force_review_graph_name()
 	ModPlotUtil#assert_window_exists(review_name)
+	// POST: review exists, set up the gui (e.g. pick Defl and ZSnsr as what
+	// to display)
+	setup_gui_for_fast_capture()
 	// POST: review window exists. Make sure that defl is set up for InFastB
 	ModAsylumInterface#assert_infastb_correct()
 	// POST: inputs are correct, set up the fast capture
