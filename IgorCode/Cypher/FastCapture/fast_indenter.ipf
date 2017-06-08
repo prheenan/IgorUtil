@@ -14,6 +14,8 @@ static constant max_info_chars = 100
 // XXX TODO: for this to work properly, as of 2017-6-7:
 // (1) Force Review must be open, and 'last' wave must be selected.
 // (2) Defl must be plotted against ZSnsr 
+// (3) As a note, the saving routine closes all open  files before it starts
+// So, you shouldn't open any files, call this routine, then expect them to be opened
 
 // XXX should select last element, Delf, and Zsnsr (that was it always saves out...)
 
@@ -131,10 +133,6 @@ Static Function get_wave_crossing_index(wave_to_get,[epsilon_f])
 	return ModNumerical#first_index_greater(wave_to_get,level_to_cross)
 End Function
 
-Static Function setup_gui_for_indenter()
-	
-End Function
-
 Static Function get_wave_suffix_number(wave_name)
 	// Given a wave name, returns its suffix
 	//
@@ -221,8 +219,22 @@ End Function
 Function prh_indenter_final()
 	// Call the 'normal' asylum callback, then saves out the normal data
 	// Args/Returns: None
-	//TriggerScale()
+	TriggerScale()
 	// POST: data is saved into the waves we want
+	align_and_save_fast_capture()
+End Function
+
+Static Function align_and_save_fast_capture()
+	// Assuming that fast capture data has been taken, aligns it to the 
+	// low resolution data and saves it as a 'normal' asylum wave 
+	//
+	// PRE: capture_indenter has been called, and the global indenter_info
+	// struct has been saved out 
+	//
+	// Args:
+	//	None
+	// Returns:
+	//	None
 	// get the previously-setup information by reference
 	struct indenter_info indenter_info
 	get_info_struct(indenter_info)
@@ -263,8 +275,12 @@ Function prh_indenter_final()
 	// everything is set up; go ahead and set the notes 
 	Note zsnsr_wave, low_res_note
 	Note defl_wave, low_res_note
-	// save out the high resolution wave to *disk*
 	// XXX delete the high resolution wave (in memory only)?
+	// TODO: once software is safer, probably OK to save only to disk. Right
+	// now, too volatile
+	// Close all open files; useful in case of errors
+	Close /A
+	// save out the high resolution wave to *disk*	
 	ModAsylumInterface#save_to_disk_volts(zsnsr_wave,defl_wave,note_to_use=low_res_note)	
 End Function
 
