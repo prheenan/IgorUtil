@@ -6,6 +6,7 @@
 #include ":::Util:IoUtil"
 
 Static Function /S force_review_graph_name()
+	// Returns: the name of the graph Asylum uses for ForceReview stuff 
 	return "ForceReviewGraph"
 End Function
 
@@ -147,8 +148,8 @@ Static Function /S update_note_triggering(low_res_note,low_res_z_wave,high_res_z
 	// determine the 'real' offset indices into the higher-resolution data
 	Variable idx_start_dwell = ceil(low_res_dwell_start*conversion) + offset
 	Variable idx_end_dwell = ceil(low_res_dwell_end*conversion) + offset
-	Variable n = DimSize(low_res_z_wave,0)
-	Variable last_idx = n-1
+	Variable n = DimSize(high_res_z_wave,0)
+	Variable end_point = n-1
 	// fix the trigger point and dwell time (later code use these)
 	Variable updated_trigger_time = pnt2x(high_res_z_wave,idx_start_dwell)
 	Variable updated_dwell_time = pnt2x(high_res_z_wave,idx_end_dwell) - updated_trigger_time
@@ -156,7 +157,7 @@ Static Function /S update_note_triggering(low_res_note,low_res_z_wave,high_res_z
 	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"DwellTime",updated_dwell_time)	
 	// replace the indices; they are just CSV
 	String indexes_for_note 
-	sprintf indexes_for_note, "%d,%d,%d,%d",offset,idx_start_dwell,idx_end_dwell,last_idx
+	sprintf indexes_for_note, "%d,%d,%d,%d",offset,idx_start_dwell,idx_end_dwell,end_point
 	low_res_note = ModAsylumInterface#replace_note_string(low_res_note,"Indexes",indexes_for_note)
 	return low_res_note
 End Function

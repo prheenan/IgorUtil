@@ -39,17 +39,19 @@ Static Function Main([input_base])
 	if (ParamIsDefault(input_base))
 		input_base = "Image0108"
 	endIf
-	// // make sure the GUI-handling works
-	ModFastIndenter#setup_gui_for_fast_capture()
-	// POST: GUI-handling works as desired. 
+
+	// POST: setup is also fine; only potential problem is the actual run-code, 
+	// which can be unit tested by attempting to take data. 
 	// go ahead and manually save out the struct we want..
 	struct indenter_info inf_tmp
 	setup(input_base,inf_tmp)
-	// // do everything except the data capture (ie: the aligning and such) 
-	ModFastIndenter#align_and_save_fast_capture()
-	// POST: assuming no error, saving everything works
+	// // check saving out the data (test this before the gui-changing functions, below
+	ModFastIndenter#align_and_save_struct(inf_tmp,suffix_low_res=105)
+	// POST: saving everything works
+	// // make sure the GUI-handling works
+	ModFastIndenter#setup_gui_for_fast_capture()
+	// POST: GUI-handling works as desired. 
 	// // Check the the setup is OK
-	ModFastIndenter#setup_indenter()
-	// POST: setup is also fine; only potential problem is the actual run-code, 
-	// which can be unit tested by attempting to take data. 
+	ModFastIndenter#setup_indenter()	
+	// XXX TODO: read back in the file, make sure the data wasn't corrupted 
 End Function

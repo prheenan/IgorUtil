@@ -153,8 +153,10 @@ Static Function setup_gui_for_fast_capture()
 	Wave InfoStruct.colorWave=$("root:packages:MFP3D:TOC:ListColorWave")
 	InfoStruct.CtrlName = "ForceList_0"
 	InfoStruct.Win = master_force_name
+	// these two are chosen to run properly in SelectFPByFolderProc
 	InfoStruct.EventCode = 2
 	InfoStruct.CtrlRect.Left = 14
+	// EventMod is if there was a shift or control (we are 'faking' an event)	
 	InfoStruct.EventMod = 0
 	// Make sure the waves we need exist
 	ModErrorUtil#assert_wave_exists(InfoStruct.listWave)
@@ -187,10 +189,27 @@ Static Function align_and_save_fast_capture()
 	// get the previously-setup information by reference
 	struct indenter_info indenter_info
 	get_info_struct(indenter_info)
+	// align by the structure
+	align_and_save_struct(indenter_info)
+End Function
+	
+Static Function align_and_save_struct(indenter_info,[suffix_low_res])
+	// Align and save, given a structure and suffix for the low resolution data
+	// useful for (e.g.) saving an in-memory wave later on
+	//
+	// Args:
+	//	indenter_info:  see arugment to get_info_struct
+	//	suffix_low_res: Asylum-style number suffix (e.g. 0111 in Image0111)
+	// Returns
+	//	Nothing, saves out the wave
+	struct indenter_info & indenter_info
+	Variable suffix_low_res
 	Variable suffix =  ModAsylumInterface#get_wave_suffix_number(indenter_info.x_wave_high_res)
 	// low resolution is always saved first (the whole point of the callbacks)
 	// so its suffix is assumed one lower
-	Variable suffix_low_res = suffix-1
+	if (ParamIsDefault(suffix_low_res))
+		suffix_low_res = suffix-1
+	EndIf
 	// get the *x* waves (used to align the high resolution to the low
 	Wave low_res_approach = ModAsylumInterface#get_force_review_wave("Defl_Ext",return_x=1,suffix=suffix_low_res)	
 	Wave low_res_dwell = ModAsylumInterface#get_force_review_wave("Defl_Towd",return_x=1,suffix=suffix_low_res)	
