@@ -15,6 +15,8 @@ static constant max_info_chars = 100
 // (1) Force Review must be open, and 'last' wave must be selected.
 // (2) Defl must be plotted against ZSnsr 
 
+// XXX should select last element, Delf, and Zsnsr (that was it always saves out...)
+
 structure indenter_info
 	// Struct to use to communicate with the call back
 	// <x/y_wave_high_res>: the string name of the high resolution wave
@@ -129,6 +131,27 @@ Static Function get_wave_crossing_index(wave_to_get,[epsilon_f])
 	return ModNumerical#first_index_greater(wave_to_get,level_to_cross)
 End Function
 
+Static Function setup_gui_for_indenter()
+	
+End Function
+
+Static Function get_wave_suffix_number(wave_name)
+	// Given a wave name, returns its suffix
+	//
+	// Args:
+	//	wave_name: full name, formatted somethine like Image0010_DeflV
+	// Returns;
+	//	numeric suffix
+	String wave_name
+	String suffix_string = ""
+	// pattern is: <start,anything non-greedy, four digits, possible non digits, end>
+	String pattern = "^.*?([\d]{4})\D*$"
+	Variable matched = ModIoUtil#set_and_return_if_match(wave_name,pattern,suffix_string)
+	ModErrorUtil#Assert(matched,msg="Wave name should be formatted like <Non Digits>0123<Non digits>")
+	Variable suffix = str2num(suffix_string)
+	return suffix
+End Function	
+
 Function prh_indenter_final()
 	// Call the 'normal' asylum callback, then saves out the normal data
 	// Args/Returns: None
@@ -137,13 +160,9 @@ Function prh_indenter_final()
 	// get the previously-setup information by reference
 	struct indenter_info indenter_info
 	get_info_struct(indenter_info)
-	String suffix_string = ""
-	// pattern is: <start,possble non digits, four digits, possible non digits, end>
-	String pattern = "^\D*([\d]{4})\D*$"
-	Variable matched = ModIoUtil#set_and_return_if_match(indenter_info.x_wave_high_res,pattern,suffix_string)
-	ModErrorUtil#Assert(matched,msg="Wave name should be formatted like <Non Digits>0123<Non digits>")
-	Variable suffix = str2num(suffix_string)
+	Variable suffix = get_wave_suffix_number(indenter_info.x_wave_high_res)
 	// low resolution is always saved first (the whole point of the callbacks)
+	// so its suffix is assumed one lower
 	Variable suffix_low_res = suffix-1
 	// get the *x* waves (used to align the high resolution to the low
 	Wave low_res_approach = get_force_review_wave("Defl_Ext",return_x=1,suffix=suffix_low_res)	
