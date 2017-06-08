@@ -152,6 +152,72 @@ Static Function get_wave_suffix_number(wave_name)
 	return suffix
 End Function	
 
+Static Function /S update_note_resolution(original_note,freq,n)
+	// updates a given note for a higher-resolution wave
+	//
+	// Args:
+	//	original_note: the original source
+	//	freq: the sampling frequency
+	//	n: the new size of the wave
+	// Returns:
+	//	The updated note
+	String original_note
+	Variable freq,n
+	String new_note
+	new_note = ModAsylumInterface#replace_note_variable(original_note,"ForceFilterBW",freq/2)
+	new_note = ModAsylumInterface#replace_note_variable(original_note,"NumPtsPerSec",freq)
+	new_note = ModAsylumInterface#replace_note_variable(original_note,"MaxPtsPerSec",freq)
+	new_note = ModAsylumInterface#replace_note_variable(original_note,"NumPtsPerWave",n)
+	new_note = ModAsylumInterface#replace_note_variable(original_note,"TarPtsPerWave",n)
+	return new_note
+End Function
+
+Static Function /S update_note_triggering(low_res_note,low_res_z_wave,high_res_z_wave,freq_low,freq)
+	// fix the indices for the high resolution wave; these will only be approximately correct, since 
+	// there will probably be an offset. This is helpful for graphing everything (asylum splits by Indexes
+	// in the force review panel)
+	//
+	// Args:
+	//	low_res_note: the note we are updating
+	//	low_res_z_wave: the original ZSnsr wave, should contain the approach and dwell
+	//	high_res_z_wave: the new ZSnsr wave we want. should contain (at least) the approach and dwell
+	//	freq_low/freq: the sampling frequencies of the low and high resolution waves
+	// Returns;
+	//	note with updated triggering times and indices
+	String low_res_note
+	Wave low_res_z_wave,high_res_z_wave
+	Variable freq_low,freq
+	String indices = ModAsylumInterface#note_string(low_res_note,"Indexes")
+	// The order of the indices is <0,start of dwell, end of dwell, end of wave>
+	String index_sep = ","
+	Variable low_res_dwell_start = str2num(ModIoUtil#string_element(indices,1,sep=index_sep))
+	Variable low_res_dwell_end = str2num(ModIoUtil#string_element(indices,2,sep=index_sep))
+	// get the conversion from low to high res, just the ratio of the sampling frequencies
+	Variable conversion = freq/freq_low
+	// get the index of the max in the low and high resolution
+	Variable idx_max_low_resolution = get_wave_crossing_index(low_res_z_wave)
+	Variable idx_max_high_resolution = get_wave_crossing_index(high_res_z_wave)
+	// convert the low resolution into what it *would* be, in high resolution points 
+	Variable idx_effective_low_resolution = (idx_max_low_resolution * conversion)
+	// when we add in the offset, the difference between the maxima should be zero. 
+	Variable offset = ceil(idx_max_high_resolution-idx_effective_low_resolution)
+	// determine the 'real' offset indices into the higher-resolution data
+	Variable idx_start_dwell = ceil(low_res_dwell_start*conversion) + offset
+	Variable idx_end_dwell = ceil(low_res_dwell_end*conversion) + offset
+	Variable n = DimSize(low_res_z_wave,0)
+	Variable last_idx = n-1
+	// fix the trigger point and dwell time (later code use these)
+	Variable updated_trigger_time = pnt2x(high_res_z_wave,idx_start_dwell)
+	Variable updated_dwell_time = pnt2x(high_res_z_wave,idx_end_dwell) - updated_trigger_time
+	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"TriggerTime",updated_trigger_time)
+	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"DwellTime",updated_dwell_time)	
+	// replace the indices; they are just CSV
+	String indexes_for_note 
+	sprintf indexes_for_note, "%d,%d,%d,%d",offset,idx_start_dwell,idx_end_dwell,last_idx
+	low_res_note = ModAsylumInterface#replace_note_string(low_res_note,"Indexes",indexes_for_note)
+	return low_res_note
+End Function
+
 Function prh_indenter_final()
 	// Call the 'normal' asylum callback, then saves out the normal data
 	// Args/Returns: None
@@ -179,9 +245,6 @@ Function prh_indenter_final()
 	Make/FREE/N=0 low_res_approach_and_dwell
 	// /NP: no promotion allowed
 	Concatenate /NP {low_res_approach,low_res_dwell}, low_res_approach_and_dwell
-	// Before we do *anything* else, get the low resolution sampling rate
-	// (this allows us to determine the indices to split the wave later )
-	Variable freq_low = ModAsylumInterface#note_variable(low_res_note,"NumPtsPerSec")
 	// Make sure we are still correctly connected after the force input (it changes the cross point)
 	ModAsylumInterface#assert_infastb_correct()
 	// Add the note to the higher-res waves
@@ -190,41 +253,13 @@ Function prh_indenter_final()
 	// update the frequency (all other information is the same)
 	Variable freq = indenter_info.points_per_second
 	Variable n = DimSize(defl_wave,0)
-	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"ForceFilterBW",freq/2)
-	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"NumPtsPerSec",freq)
-	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"MaxPtsPerSec",freq)
-	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"NumPtsPerWave",n)
-	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"TarPtsPerWave",n)
-	// fix the indices for the high resolution wave; these will only be approximately correct, since 
-	// there will probably be an offset. This is helpful for graphing everything (asylum splits by Indexes
-	// in the force review panel)
-	String indices = ModAsylumInterface#note_string(low_res_note,"Indexes")
-	// The order of the indices is <0,start of dwell, end of dwell, end of wave>
-	String index_sep = ","
-	Variable low_res_dwell_start = str2num(ModIoUtil#string_element(indices,1,sep=index_sep))
-	Variable low_res_dwell_end = str2num(ModIoUtil#string_element(indices,2,sep=index_sep))
-	// get the conversion from low to high res, just the ratio of the sampling frequencies
-	Variable conversion = freq/freq_low
-	// get the index of the max in the low and high resolution
-	Variable idx_max_low_resolution = get_wave_crossing_index(low_res_approach_and_dwell)
-	Variable idx_max_high_resolution = get_wave_crossing_index(zsnsr_wave)
-	// convert the low resolution into what it *would* be, in high resolution points 
-	Variable idx_effective_low_resolution = (idx_max_low_resolution * conversion)
-	// when we add in the offset, the difference between the maxima should be zero. 
-	Variable offset = ceil(idx_max_high_resolution-idx_effective_low_resolution)
-	// determine the 'real' offset indices into the higher-resolution data
-	Variable idx_start_dwell = ceil(low_res_dwell_start*conversion) + offset
-	Variable idx_end_dwell = ceil(low_res_dwell_end*conversion) + offset
-	Variable last_idx = n-1
-	// fix the trigger point and dwell time (later code use these)
-	Variable updated_trigger_time = pnt2x(zsnsr_wave,idx_start_dwell)
-	Variable updated_dwell_time = pnt2x(zsnsr_wave,idx_end_dwell) - updated_trigger_time
-	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"TriggerTime",updated_trigger_time)
-	low_res_note = ModAsylumInterface#replace_note_variable(low_res_note,"DwellTime",updated_dwell_time)	
-	// replace the indices; they are just CSV
-	String indexes_for_note 
-	sprintf indexes_for_note, "%d,%d,%d,%d",offset,idx_start_dwell,idx_end_dwell,last_idx
-	low_res_note = ModAsylumInterface#replace_note_string(low_res_note,"Indexes",indexes_for_note)
+	// Before we do *anything* else, get the low resolution sampling rate
+	// (this allows us to determine the indices to split the wave later )
+	Variable freq_low = ModAsylumInterface#note_variable(low_res_note,"NumPtsPerSec")
+	// update the triggering parameters
+	low_res_note = update_note_triggering(low_res_note,low_res_approach_and_dwell,zsnsr_wave,freq_low,freq)
+	// update the resolution variables 
+	low_res_note = update_note_resolution(low_res_note,freq,n)
 	// everything is set up; go ahead and set the notes 
 	Note zsnsr_wave, low_res_note
 	Note defl_wave, low_res_note
