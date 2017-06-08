@@ -810,7 +810,7 @@ Static Function pLegend([graphName,labels,location,labelStr,fontName,fontSize,la
 	EndIf
 	If (!ParamIsDefault(labelStr))
 		Make /O/N=(0)/T labels
-		ModDataStruct#ListToTextWave(labels,labelStr,Sep=labelStrSep)
+		ModDataStructures#ListToTextWave(labels,labelStr,Sep=labelStrSep)
 	EndIf
 	if (ParamIsDefault(location))
 		location = ANCHOR_BOTTOM_MIDDLE

@@ -393,9 +393,9 @@ Static Function /S GetStems(StrList,StemRegex,Sep)
 	// loop through each file, find the uniqu ones.
 	for (i=0; i <nStr; i+=1)
 		tmpFull = StringFromList(i,StrList,Sep)
-		tmpStem = ModDataStruct#GetNameRegex(StemRegex,tmpFull)
+		tmpStem = ModDataStructures#GetNameRegex(StemRegex,tmpFull)
 		// new stem! Add tmpStem and incremenet the count
-		toRet += ModDataStruct#GetListString(tmpStem,Sep)
+		toRet += ModDataStructures#GetListString(tmpStem,Sep)
 	EndFor
 	return toRet
 End Function
@@ -410,7 +410,7 @@ Static Function GetWaveStems(mWaveList,toRet,StemRegex)
 	String tmpStem
 	Redimension /N=(nStr) toRet
 	for (i=0; i <nStr; i+=1)
-		tmpStem = ModDataStruct#GetNameRegex(StemRegex,mWaveList[i])
+		tmpStem = ModDataStructures#GetNameRegex(StemRegex,mWaveList[i])
 		// new stem! Add tmpStem and incremenet the count
 		toRet[i] = tmpStem
 	EndFor
@@ -421,8 +421,8 @@ Static Function /Wave GetUniqueIndex(StrList,Sep)
 	// XXX assumes that IdxWave has been created
 	String strList,Sep
 	// Make a text wave for the list
-	Wave /T tmp = ModDataStruct#MakeWaveForList("TmpUni",StrList,Sep)
-	ModDataStruct#ListToTextWave(tmp,StrList,Sep=Sep)
+	Wave /T tmp = ModDataStructures#MakeWaveForList("TmpUni",StrList,Sep)
+	ModDataStructures#ListToTextWave(tmp,StrList,Sep=Sep)
 	return GetUniTxtWaveIndex(tmp)
 End Function 
 
@@ -465,7 +465,7 @@ Static Function /Wave GetUniTxtWaveIndex(StringWave)
 		String tmpStr = sorted[i]
 		if (WhichListItem(tmpStr,uniqueSorted,Sep,lastSortIdx) < 0)
 			// didnt find sorted[i] in uniqueSorted; add it
-			uniqueSorted += ModDataStruct#GetListString(tmpStr,Sep)
+			uniqueSorted += ModDataStructures#GetListString(tmpStr,Sep)
 			retIdx[lastSortIdx+1] = sortIndex[i]
 			nUnique += 1
 		EndIf
@@ -564,7 +564,7 @@ Static Function /S GetAllFileNames(StrList,ListSep,DirSep)
 	for (i=0; i<=nItems; i+= 1)
 		tmpPath= StringFromList(i,StrList,ListSep)
 		tmpFile = GetFileName(tmpPath,DirSep=DirSep)
-		toRet += ModDataStruct#GetListString(tmpFile,ListSep)
+		toRet += ModDataStructures#GetListString(tmpFile,ListSep)
 	EndFor
 	toRet = ReplaceString(ListSep + ListSep,toRet,ListSep)
 	return toRet
@@ -643,7 +643,7 @@ Static Function/S GetWaveList(RootFolder, ListSep,DirSep,[RegExpr])
 	// Prepend, so we have the full path. Make sure that there are no double colons in RootFolder,
 	// but ensure it ends in a colon, by removing all double colons
 	RootFolder = ReplaceString(DirSep+DirSep,RootFolder + DirSep,DirSep)
-	toRet = ModDataStruct#PrependToItems(toRet,RootFolder,ListSep)
+	toRet = ModDataStructures#PrependToItems(toRet,RootFolder,ListSep)
 	// Match the Regex
 	if (!ParamIsDefault(Regexpr))
 		toRet = GrepList(toRet,RegExpr,GREP_SELECT_MATCHING,ListSep)
@@ -673,7 +673,7 @@ Static Function/S GetWaveList(RootFolder, ListSep,DirSep,[RegExpr])
 			subWaves = GetWaveList(newDir,ListSep,DirSep)
 		endif
 		// concatenate toRet with subwaves, and overright suwaves
-		ModDataStruct#ConcatLists(toRet,subWaves,toRet,ListSep)
+		ModDataStructures#ConcatLists(toRet,subWaves,toRet,ListSep)
 	endfor
 	SetDataFolder $original
 	return toRet
@@ -1369,7 +1369,7 @@ Static Function GetUniqueStems(tmpUnique,baseDir,SuffixNeeded,[fullPathStemPatte
 		return toRet
 	EndIf
 	Make /O/N=(NFullWaves)/T rawWaves
-	ModDataStruct#ListToTextWave(rawWaves,mWaves,Sep=ListSep)
+	ModDataStructures#ListToTextWave(rawWaves,mWaves,Sep=ListSep)
 	// get all the 'fullpath' stems
 	Make /O/N=(NFullWaves)/T fullPathStemsRaw
 	 ModIoUtil#GetWaveStems(rawWaves,fullPathStemsRaw,FullPathStemPattern)

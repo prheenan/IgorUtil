@@ -1,5 +1,5 @@
 #pragma rtGlobals=3        // Use strict wave reference mode
-#pragma ModuleName=ModDataStruct
+#pragma ModuleName=ModDataStructures
 #include ":Defines"
 
 Constant CMPSTR_EQ = 0
@@ -46,18 +46,33 @@ Static Function WavesAreEqual(WaveA,WaveB,[options,tolerance])
 	return EqualWaves(WaveA,WaveB,options,tolerance)	
 End Function
 
-Static Function TextInWave(Needle,HayStack,[index])
+Static Function element_index(needle,haystack)
+	// Returns: index of needle in haystack, or -1 if nothing
+	// V-182: FindVaule sets V_Value to -1 if it is not found
+	String Needle
+	Wave /T HayStack
+	FindValue /TEXT=(Needle) HayStack
+	return V_Value
+End Function
+
+Static Function text_in_wave(Needle,HayStack,[index])
+	// determine if needle is in haystack, setting the reference if need be
+	// 
+	// Args:
+	//	Needle : element to search for 
+	//	Haystack : where we are searching
+	// Returns:
+	//	True if needle is in haystack. sets index if it isn't default
 	String Needle
 	Wave /T HayStack
 	// set the index *value* (pass by reference) if we want it)
 	Variable & index
-	// V-182: FindVaule sets V_Value to -1 if it is not found
-	FindValue /TEXT=(Needle) HayStack
+	Variable idx_tmp = element_index(needle,haystack)
 	if (!ParamIsDefault(index))
-		index = V_Value
+		index = idx_tmp
 	EndIf
 	// if V_Value>=0, then the index was found
-	return V_Value >=0
+	return idx_tmp >=0
 End Function
 
 Static Function RemoveTextFromWave(Needle,Haystack)
@@ -65,7 +80,7 @@ Static Function RemoveTextFromWave(Needle,Haystack)
 	Wave /T Haystack 
 	Variable index
 	// Delete the points if we find them.
-	if (TextInWave(Needle,Haystack,index=index))
+	if (text_in_wave(Needle,Haystack,index=index))
 		DeletePoints index,1,Haystack
 	EndIF
 End Function
@@ -73,7 +88,7 @@ End Function
 Static Function /Wave ExtractSetTextIntersection(WaveA,WaveB)
 	Wave /T WaveA
 	Wave /T WaveB
-	Extract WaveA, mSetIntersect, TextInWave(WaveA,WaveB)
+	Extract WaveA, mSetIntersect, text_in_wave(WaveA,WaveB)
 	return mSetIntersect
 End Function
 
@@ -81,7 +96,7 @@ Static Function /Wave ExtractWhereFirstNotInSecond(WaveA,WaveB)
 	Wave /T WaveA
 	Wave /T WaveB
 	// If an element of waveA is *not* in waveB
-	Extract WaveA, mExtractNot, !TextInWave(WaveA,WaveB)
+	Extract WaveA, mExtractNot, !text_in_wave(WaveA,WaveB)
 	return mExtractNot
 End Function
 

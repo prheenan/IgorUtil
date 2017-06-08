@@ -49,7 +49,7 @@ Static Function AddErrorToList(obj,descr,GlobalDef)
 	String descr
 	Variable toRet = obj.NErrors
 	// add the descrption
-	 obj.Descr += ModDataStruct#GetListString(descr,GlobalDef.ListSep)
+	 obj.Descr += ModDataStructures#GetListString(descr,GlobalDef.ListSep)
 	// Add another error (increment the ID)
 	obj.NErrors += 1
 	return toRet
