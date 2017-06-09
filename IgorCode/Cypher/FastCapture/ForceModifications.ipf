@@ -1304,3 +1304,373 @@ function prh_FinishForceFunc(ctrlName,[callback_string])			//this finishes off t
 
 	SetDataFolder(SavedDataFolder)
 end Function //prh_FinishForceFunc
+
+Static Function prh_ARSaveAsForce(SaveBit,PName,DataTypeList,Wave0,Wave1,Wave2,Wave3,Wave4,Wave5,Wave6[,CustomNote])
+	Variable SaveBit
+	String PName, DataTypeList
+	Wave Wave0
+	Wave/Z Wave1, Wave2, Wave3, Wave4, Wave5, Wave6
+	String CustomNote
+	
+	
+	//Function to Save Waves as Asylum Force Plots.
+	//Save Bit 0x1 = Save to Mem
+	//0x2 = Save to disk
+	//	PName Name of Symbolic path that you want to save to disk to.
+	//DataTypeList, ; seperated list of dataTypes for Wave1,Wave2 ... Wave6 [Wave0 is always Raw]
+	//	Wave0, Raw data Type, must have this wave
+	//[Wave1...wave6 optional waves (if you don't have a wave pass it $"")
+	
+	
+	Variable MaxWaves = 7
+	
+	
+	
+	Variable WaveCount = WaveExistS(Wave0)+WaveExists(Wave1)+WaveExists(Wave2)+WaveExists(Wave3)+WaveExists(Wave4)+WaveExists(Wave5)+WaveExists(Wave6)
+	
+	
+	
+	
+
+	Variable XPos = Td_ReadValue("XSensor")
+	Variable YPos = td_ReadValue("YSensor")
+	
+	String SavedDataFolder = GetDataFolder(1)
+	String EmptyFolder = GetDF("Empty")
+	SetDataFolder(BuildDataFolder(EmptyFolder))		//go somewhere quiet to work
+	//if there are a lot of waves in the folder, things will get slower.
+
+
+
+
+	Wave TimeWave = root:Packages:MFP3D:Force:TimeWave
+	wave MVW = root:Packages:MFP3D:Main:Variables:MasterVariablesWave
+	wave FVW = root:Packages:MFP3D:Main:Variables:ForceVariablesWave
+	Wave RVW = root:Packages:MFP3D:Main:Variables:RealVariablesWave
+	SVAR FWL = root:Packages:MFP3D:Force:ForceWavesList
+	SVAR SFWL = root:Packages:MFP3D:Force:ShortForceWavesList
+	SVAR gBaseName = root:Packages:MFP3D:Main:Variables:BaseName
+	String BaseName = gBaseName		//take a local copy, to protect the global
+
+
+	wave TVW = root:Packages:MFP3D:Main:Variables:ThermalVariablesWave
+	Wave UserParms = root:Packages:MFP3D:Main:Variables:UserVariablesWave
+	Wave/T GSW = $GetDF("Strings")+"GlobalStrings"
+	wave XPTwave = root:Packages:MFP3D:XPT:XPTLoad
+	wave AllAlias = root:packages:MFP3D:Hardware:AllAlias
+//	NVAR VerDate = root:Packages:MFP3D:Main:Variables:VerDate
+
+
+
+
+
+	Variable AllowMDB = 1
+	string suffixStr = num2strlen(MVW[%BaseSuffix][0],4)
+	string tempSeconds
+	String DataType = ""
+	String LongDataType = ""
+	String NoteStr = ""
+	Variable SaveNop, DataNop, SaveFactor, StartIndex, StopIndex
+	String Indexes = "0,"
+	String Directions = "NaN,"
+
+	Indexes += "0,"+num2istr(DimSize(Wave0,0)-1)+","+num2istr(DimSize(Wave0,0)-1)+","
+	Directions += "1,0,-1,"
+
+	
+	variable i
+	variable column = 1
+	
+
+	String OfflineSubFolder = "Memory"
+	
+	//make sure we can still save to disk
+	if (SaveBit & 0x2)
+		if (!SafePathInfo(PName))			//what happened to our path!
+			SaveBit = SaveBit & ~0x2
+		else
+			PathInfo $Pname
+			OfflineSubFolder = ForceSubFolderCleanUp(LastDir(S_Path))
+		endif
+	endif
+	
+	
+	
+
+	StopIndex = WhichListItem("ZSensor",FWL,";",0,0)
+	
+	String DataFolder = ARGetForceFolder("",OfflineSubFolder,BaseName+SuffixStr)
+	//Don't ever set to root:ForceCurves, it can get very slow when there are lots of force plots in memory
+	//This also keeps the empty string input, this is the only way into the "memory" folder (besides double click loaders).
+	
+
+
+
+
+	Variable TheWeatherOutside = NaN, A, nop
+	Variable ImagingMode = MVW[%ImagingMode][%Value]
+
+
+
+	NoteStr = ReplaceNumberbyKey("VerDate",NoteStr,VersionNumber(),":","\r")
+	NoteStr = ReplaceStringByKey("Version",NoteStr,VersionString(),":","\r")
+	NoteStr = ReplaceStringByKey("XOPVersion",NoteStr,td_XopVersion(),":","\r")
+	NoteStr = ReplaceStringByKey("OSVersion",NoteStr,StringByKey("OS",IgorInfo(3),":",";",0),":","\r",0)
+	NoteStr = ReplaceStringByKey("IgorFileVersion",NoteStr,StringByKey("IgorFileVersion",IgorInfo(3),":",";",0),":","\r",0)
+	NoteStr = ReplaceNumberByKey("XLVDT",NoteStr,td_ReadValue("XSensor")*abs(MVW[%XLVDTSens][%value]),":","\r")
+	NoteStr = ReplaceNumberByKey("YLVDT",NoteStr,td_ReadValue("YSensor")*abs(MVW[%YLVDTSens][%value]),":","\r")
+	SVAR/Z ForceNote = root:Packages:MFP3D:Main:Variables:ForceNote
+	SVAR/Z TipSerialNumber = Root:Packages:MFP3D:Main:Variables:TipSerialNumber
+	if (SVAR_EXISTS(ForceNote))
+		NoteStr = ReplaceStringByKey("ForceNote",NoteStr,ForceNote,":","\r")
+	endif
+	If (SVAR_EXISTS(TipSerialNumber))
+		NoteStr = ReplaceStringByKey("TipSerialNumber",NoteStr,TipSerialNumber,":","\r")
+	endif
+
+	noteStr += GetWaveParms(FVW)
+	NoteStr = ReplaceStringByKey("TriggerChannel",NoteStr,GTS("TriggerChannel"),":","\r",0)
+	NoteStr = ReplaceStringByKey("DwellRampFunc",NoteStr,GTS("DwellRampFunc"),":","\r",0)
+	NoteStr = ReplaceStringByKey("DwellRampMode",NoteStr,GTS("DwellRampMode"),":","\r",0)
+	NoteStr = ReplaceStringBykey("ForceMode",NoteStr,GTS("ForceMode"),":","\r",0)
+	NoteStr = ReplaceStringByKey("ForceSaveList",NoteStr,GTS("ForceSaveList"),":","\r",0)
+	nop = cMaxRTForceGraphs
+	for (A = 0;A < nop;A += 1)
+		NoteStr = ReplaceStringByKey("ForceDisplay"+num2str(A),NoteStr,GTS("ForceDisplay"+num2str(A)),":","\r",0)
+	endfor
+	noteStr += GetWaveParms(XPTWave)
+	noteStr += GetWaveParms(MVW)
+	NoteStr = ReplaceStringByKey("MicroscopeModel",NoteStr,GetMicroscopeName(MicroscopeID=MVW[%MicroscopeID][0]),":","\r",0)
+	NoteStr = ReplaceStringByKey("ImagingMode",NoteStr,GTS("ImagingMode"),":","\r",0)
+	NoteStr = ReplaceNumberByKey("NumPtsPerSec",NoteStr,1/DimDelta(Wave0,0),":","\r",0)
+	noteStr += GetWaveParms(TVW)
+	NoteStr += GetWaveParms(GSW)
+	if (FVW[%ARDoIVFP][%Value])
+		Wave DoIVWave = root:Packages:MFP3D:Main:Variables:ARDoIVVariablesWave
+		NoteStr += GetWaveParms(DoIVWave)
+		NoteStr = ReplaceStringByKey("ARDoIVFunc",NoteStr,GTS("ARDoIVFunc"),":","\r")
+		Wave/Z ExtraParms = $GetDF("DoIV")+"UserParmWave"
+		if (WaveExists(ExtraParms))
+			for (A = 0;A < DimSize(ExtraParms,0);A += 1)
+				NoteStr += "ARDoIVParm"+num2str(A+4)+":"+num2str(ExtraParms[A])+"\r"
+			endfor
+		endif
+	endif
+	NoteStr += GetWaveParms(UserParms)
+	if (ImagingMode == cFMMode)
+		Wave FMVW = $cFMVW
+		NoteStr += GetWaveParms(FMVW)
+	endif
+	NoteStr += GetWaveParms(AllAlias)
+	
+	NoteStr = ReplaceStringByKey("Indexes",NoteStr,Indexes,":","\r",0)
+	NoteStr = ReplaceStringByKey("Direction",NoteStr,Directions,":","\r",0)
+	
+	
+	//sprintf tempSeconds, "%u", DateTime
+	tempSeconds = ARNum2Str(DateTime)
+	
+	//Variable Tic = StopMsTimer(-2)
+	NoteStr = RemoveStringByKey(NoteStr,"StartHeadTemp",":","\r")		//to move this to bottom of note?
+	NoteStr = RemoveStringByKey(NoteStr,"StartScannerTemp",":","\r")
+	//print StopMsTimer(-2)-tic
+	
+	variable readTemp = 0
+	switch (MVW[%MicroscopeID][0])
+
+		case cMicroscopeInfinity:
+		case cMicroscopeMFP3D:
+	
+			NoteStr = ReplaceStringByKey("StartHeadTemp",NoteStr,td_ReadString("Head.Temperature"),":","\r",0)
+			NoteStr = ReplaceStringByKey("StartScannerTemp",NoteStr,td_ReadString("Scanner.Temperature"),":","\r",0)
+			NoteStr = ReplaceStringByKey("StartTempSeconds",NoteStr,TempSeconds,":","\r",0)
+
+			Struct HeaterTempParms HeaterParms
+			HeaterTempNoteFunc(HeaterParms,NoteStr,0)
+			HeaterTempNoteFunc(HeaterParms,NoteStr,1)
+
+			readTemp = 1				//we might read temperature later
+			NoteStr = ReplaceStringByKey("EndHeadTemp",NoteStr,"None Yet",":","\r",0)
+			NoteStr = ReplaceStringByKey("EndScannerTemp",NoteStr,"None Yet",":","\r",0)
+			NoteStr = ReplaceStringByKey("EndTempSeconds",NoteStr,"0",":","\r",0)
+			break
+		
+		case cMicroscopeCypher:		//cypher has none of this
+			
+			NoteStr = RemoveByKey("StartTempSeconds",NoteStr,":","\r",0)
+
+			NoteStr = RemoveByKey("EndHeadTemp",NoteStr,":","\r",0)
+			NoteStr = RemoveByKey("EndScannerTemp",NoteStr,":","\r",0)
+			NoteStr = RemoveByKey("EndTempSeconds",NoteStr,":","\r",0)
+			
+	endswitch	
+	
+
+
+////////////////////
+//Clean up the note
+
+
+
+
+
+
+
+	//sprintf tempSeconds, "%u", DateTime
+	tempSeconds = ARNum2Str(DateTime)
+	NoteStr = ReplaceStringByKey("Date",NoteStr,ARU_Date(),":","\r",0)
+	NoteStr = ReplaceStringByKey("Time",NoteStr,Time(),":","\r",0)
+	NoteStr = ReplaceNumberbyKey("BaseSuffix",NoteStr,MVW[%BaseSuffix][0],":","\r",0)
+	NoteStr = ReplaceStringByKey("Seconds",NoteStr,TempSeconds,":","\r",0)
+	if (AllowMDB && readTemp)
+		NoteStr = ReplaceStringByKey("EndHeadTemp",NoteStr,td_ReadString("Head.Temperature"),":","\r",0)
+		NoteStr = ReplaceStringByKey("EndScannerTemp",NoteStr,td_ReadString("Scanner.Temperature"),":","\r",0)
+		NoteStr = ReplaceStringByKey("EndTempSeconds",NoteStr,TempSeconds,":","\r",0)
+		
+	endif
+	NoteStr = ReplaceNumberByKey("XLVDT",NoteStr,XPos*abs(MVW[%XLVDTSens][%value]),":","\r",0)
+	NoteStr = ReplaceNumberByKey("YLVDT",NoteStr,Ypos*abs(MVW[%YLVDTSens][%value]),":","\r",0)
+	NoteStr = ReplaceNumberByKey("DDSAmplitude",NoteStr,td_ReadValue("DDSAmplitude0"),":","\r",0)
+
+
+
+	if (!ParamIsDefault(CustomNote) && Strlen(CustomNote))
+		nop = ItemsInList(CustomNote,"\r")
+		String CustomItem
+		Variable Index
+		for (A = 0;A < nop;A += 1)
+			CustomItem = StringFromList(A,CustomNote,"\r")
+			Index = strsearch(CustomItem,":",0,2)
+			if (Index < 0)
+				Continue
+			endif
+			NoteStr = ReplaceStringByKey(CustomItem[0,Index-1],NoteStr,Customitem[Index+1,Strlen(CustomItem)-1],":","\r",0)
+		endfor
+	endif
+//Note is all set now
+
+	
+	if (SaveBit & 0x1)				//Memory
+		Column = 1			//make sure it is still 1.
+		OfflineFPLookup(BaseName+SuffixStr,OfflineSubFolder,1)		//add the new FP to the lookup Table.
+		SetDataFolder(EmptyFolder)
+		SetScale d,0,0,"m",Wave0
+		Duplicate/O Wave0 $DataFolder+BaseName+suffixStr+"Raw"
+		Wave Temp = $DataFolder+BaseName+suffixStr+"Raw"
+		Note/K Temp
+		Note Temp,NoteStr
+		
+		for (A = 1;A < MaxWaves;A += 1)
+			Switch (A)
+				case 1:
+					Wave/Z Data = Wave1
+					break
+					
+				case 2:
+					Wave/Z Data = Wave2
+					break
+				
+				case 3:
+					Wave/Z Data = Wave3
+					break
+					
+				case 4:
+					Wave/Z Data = Wave4
+					break
+					
+				case 5:
+					Wave/Z Data = Wave5
+					break
+					
+				case 6:
+					Wave/Z Data = Wave6
+					break
+					
+			endswitch
+			if (!WaveExists(Data))
+				continue
+			endif
+			
+			Duplicate/O Data $DataFolder+BaseName+suffixStr+StringFromList(A-1,DataTypeList,";")
+			Wave Data = $DataFolder+BaseName+suffixStr+StringFromList(A-1,DataTypeList,";")
+			Note/K Data
+			Note Data,NoteStr
+			SetScale d,0,0,Get3DScaling(StringFromList(A-1,DataTypeList,";")),Data
+		endfor
+		
+	endif
+
+
+	Variable FileRef, SaveIndex
+	String LabelStr
+
+	
+	if (SaveBit & 0x2)			//save to disk
+		SaveIndex = 0
+		Make/O/N=(DimSize(Wave0,0),WaveCount) $BaseName+SuffixStr
+		Wave SaveWave = $BaseName+SuffixStr
+		SetDimLabel 1,SaveIndex,$"Raw",SaveWave
+		SaveWave[][SaveIndex] = Wave0[p]
+		SaveIndex += 1
+		CopyScales/P Wave0, SaveWave
+		Note/K SaveWave
+		Note SaveWave,NoteStr
+
+
+
+		for (A = 1;A < MaxWaves;A += 1)
+			Switch (A)
+				case 1:
+					Wave/Z Data = Wave1
+					break
+					
+				case 2:
+					Wave/Z Data = Wave2
+					break
+				
+				case 3:
+					Wave/Z Data = Wave3
+					break
+					
+				case 4:
+					Wave/Z Data = Wave4
+					break
+					
+				case 5:
+					Wave/Z Data = Wave5
+					break
+					
+				case 6:
+					Wave/Z Data = Wave6
+					break
+					
+			endswitch
+			if (!WaveExists(Data))
+				continue
+			endif
+
+			SaveWave[][SaveIndex] = Data[P]
+			SetDimLabel 1,SaveIndex,$StringFromList(A-1,DataTypeList,";"),SaveWave
+			SaveIndex += 1
+		endfor
+
+
+
+		Save/C/O/P=$Pname SaveWave
+		
+		// XXX 2017-6-9. this line kills the fast capture data...
+		//Put on the footer
+		//Open/A/P=$Pname FileRef as BaseName+SuffixStr+".ibw"
+		//TagFPFooter(FileRef,SaveWave,UpdateOffline=0)
+		//Close(FileRef)
+		KillWaves SaveWave
+	endif
+	
+	
+	
+	IncSuffix()
+
+	SetDataFolder(SavedDataFolder)
+	ForceRealTimeUpdateOffline()
+End //prh_ARSaveAsForce
+

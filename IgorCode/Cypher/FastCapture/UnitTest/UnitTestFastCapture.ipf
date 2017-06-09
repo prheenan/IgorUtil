@@ -54,4 +54,6 @@ Static Function Main([input_base])
 	// // Check the the setup is OK
 	ModFastIndenter#setup_indenter()	
 	// XXX TODO: read back in the file, make sure the data wasn't corrupted 
+	// (1) Is the data the same?
+	// (2) Is the note the same
 End Function

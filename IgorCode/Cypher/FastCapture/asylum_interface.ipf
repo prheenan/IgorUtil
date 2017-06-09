@@ -235,7 +235,7 @@ End Function
 
 Static Function /S default_wave_base_name()
 	// Returns: the default wave, according to the (global / cypher) Suffix and base
-	Variable suffix =current_image_suffix()
+	Variable suffix =current_image_suffix()+1
 	String base = master_base_name()
 	return  formatted_wave_name(base,suffix)
 End Function 
@@ -285,7 +285,7 @@ Static Function save_to_disk(zsnsr_wave,defl_wave,note_to_use)
 	//	4,5 : the actual waves
 	//	6-10: empty waves (not saving)
 	//	11: CustomNote: the note we are using toe save eveything
-	ARSaveAsForce(save_to_disk,"SaveForce","ZSnsr;Defl",raw_wave,zsnsr_wave,defl_wave,$"",$"",$"",$"",CustomNote=note_to_use)
+	ModForceModifications#prh_ARSaveAsForce(save_to_disk,"SaveForce","ZSnsr;Defl",raw_wave,zsnsr_wave,defl_wave,$"",$"",$"",$"",CustomNote=note_to_use)
 	// Clean up the wave we just made
 	KillWaves /Z raw_wave
 End Function
@@ -315,7 +315,9 @@ End Function
 Static Function /S get_InFastA()
 	// Returns: 
 	//	the name of the ADC connected to InFastA
-	ControlInfo /W=$("CrosspointPanel") CypherInFastBPopup
+	String crosspoint_panel = "CrosspointPanel"
+	ModErrorUtil#assert(ModPlotUtil#window_exists(crosspoint_panel),msg="Crosspoint panel doesn't exist")
+	ControlInfo /W=$(crosspoint_panel) CypherInFastBPopup
 	// S_Value is 'set to text of the current item'
 	return S_Value
 End Function
