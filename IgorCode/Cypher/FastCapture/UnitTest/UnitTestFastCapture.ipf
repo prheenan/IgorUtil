@@ -37,23 +37,27 @@ Static Function Main([input_base])
 	//
 	String input_base
 	if (ParamIsDefault(input_base))
-		input_base = "Image0108"
+		input_base = "Image0010"
 	endIf
-
-	// POST: setup is also fine; only potential problem is the actual run-code, 
-	// which can be unit tested by attempting to take data. 
 	// go ahead and manually save out the struct we want..
 	struct indenter_info inf_tmp
 	setup(input_base,inf_tmp)
 	// // check saving out the data (test this before the gui-changing functions, below
-	ModFastIndenter#align_and_save_struct(inf_tmp,suffix_low_res=105)
-	// POST: saving everything works
-	// // make sure the GUI-handling works
-	ModFastIndenter#setup_gui_for_fast_capture()
-	// POST: GUI-handling works as desired. 
-	// // Check the the setup is OK
-	ModFastIndenter#setup_indenter()	
+	ModFastIndenter#align_and_save_struct(inf_tmp)
 	// XXX TODO: read back in the file, make sure the data wasn't corrupted 
 	// (1) Is the data the same?
 	// (2) Is the note the same
+	// XXX DEBUGGING...
+	Wave /T globals = root:packages:MFP3D:Main:Strings:GlobalStrings
+	String path_to_save = globals[%SaveImage]
+	// XXX TODO: read back in the data...
+	// POST: saving everything works
+	// // make sure the GUI-handling works
+	ModFastIndenter#setup_gui_for_fast_capture()
+ 	// POST: GUI-handling works as desired. 
+	// // Check the the setup is OK
+	ModFastIndenter#setup_indenter()	
+	// POST: setup is also fine; only potential problem is the actual run-code, 
+	// which can be unit tested by attempting to take data. 
+
 End Function

@@ -70,10 +70,10 @@ Static Function /S update_note_resolution(original_note,freq,n)
 	Variable freq,n
 	String new_note
 	new_note = ModAsylumInterface#replace_note_variable(original_note,"ForceFilterBW",freq/2)
-	new_note = ModAsylumInterface#replace_note_variable(original_note,"NumPtsPerSec",freq)
-	new_note = ModAsylumInterface#replace_note_variable(original_note,"MaxPtsPerSec",freq)
-	new_note = ModAsylumInterface#replace_note_variable(original_note,"NumPtsPerWave",n)
-	new_note = ModAsylumInterface#replace_note_variable(original_note,"TarPtsPerWave",n)
+	new_note = ModAsylumInterface#replace_note_variable(new_note,"NumPtsPerSec",freq)
+	new_note = ModAsylumInterface#replace_note_variable(new_note,"MaxPtsPerSec",freq)
+	new_note = ModAsylumInterface#replace_note_variable(new_note,"NumPtsPerWave",n)
+	new_note = ModAsylumInterface#replace_note_variable(new_note,"TarPtsPerWave",n)
 	return new_note
 End Function
 
