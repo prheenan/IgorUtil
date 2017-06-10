@@ -71,13 +71,7 @@ Function fast_capture_setup(speed,timespan,wave0,wave1,[Wave0String,Wave1String]
 		error+=-1
 		return error
 	endif
-		
-	if(totpoints>=20e7)//Limits us to 20 seconds of 2 MHz data at the moment until we can play with the values
-		print "Total points capped"
-		error+=-2
-		totpoints=20e7
-	endif
-	
+
 	if(speed==0) //Running at 500 kHz
 		Make/O/N=(totpoints) H0, H1	// N can be arbitrary long but beware Igor memory limitations
 		duplicate/o H0, wave0

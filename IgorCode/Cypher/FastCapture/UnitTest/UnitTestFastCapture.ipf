@@ -59,5 +59,4 @@ Static Function Main([input_base])
 	ModFastIndenter#setup_indenter()	
 	// POST: setup is also fine; only potential problem is the actual run-code, 
 	// which can be unit tested by attempting to take data. 
-
 End Function
