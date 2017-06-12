@@ -158,6 +158,7 @@ Static Function CountWaves(path)
 	return CountObjects(path,COUNT_WAVES)
 End Function
 
+
 Static Function /S GetWaveAtIndex(path,index,[fullPath])
 	String path
 	Variable index,fullPath
@@ -392,9 +393,9 @@ Static Function /S GetStems(StrList,StemRegex,Sep)
 	// loop through each file, find the uniqu ones.
 	for (i=0; i <nStr; i+=1)
 		tmpFull = StringFromList(i,StrList,Sep)
-		tmpStem = ModDataStruct#GetNameRegex(StemRegex,tmpFull)
+		tmpStem = ModDataStructures#GetNameRegex(StemRegex,tmpFull)
 		// new stem! Add tmpStem and incremenet the count
-		toRet += ModDataStruct#GetListString(tmpStem,Sep)
+		toRet += ModDataStructures#GetListString(tmpStem,Sep)
 	EndFor
 	return toRet
 End Function
@@ -409,7 +410,7 @@ Static Function GetWaveStems(mWaveList,toRet,StemRegex)
 	String tmpStem
 	Redimension /N=(nStr) toRet
 	for (i=0; i <nStr; i+=1)
-		tmpStem = ModDataStruct#GetNameRegex(StemRegex,mWaveList[i])
+		tmpStem = ModDataStructures#GetNameRegex(StemRegex,mWaveList[i])
 		// new stem! Add tmpStem and incremenet the count
 		toRet[i] = tmpStem
 	EndFor
@@ -420,8 +421,8 @@ Static Function /Wave GetUniqueIndex(StrList,Sep)
 	// XXX assumes that IdxWave has been created
 	String strList,Sep
 	// Make a text wave for the list
-	Wave /T tmp = ModDataStruct#MakeWaveForList("TmpUni",StrList,Sep)
-	ModDataStruct#ListToTextWave(tmp,StrList,Sep=Sep)
+	Wave /T tmp = ModDataStructures#MakeWaveForList("TmpUni",StrList,Sep)
+	ModDataStructures#ListToTextWave(tmp,StrList,Sep=Sep)
 	return GetUniTxtWaveIndex(tmp)
 End Function 
 
@@ -464,7 +465,7 @@ Static Function /Wave GetUniTxtWaveIndex(StringWave)
 		String tmpStr = sorted[i]
 		if (WhichListItem(tmpStr,uniqueSorted,Sep,lastSortIdx) < 0)
 			// didnt find sorted[i] in uniqueSorted; add it
-			uniqueSorted += ModDataStruct#GetListString(tmpStr,Sep)
+			uniqueSorted += ModDataStructures#GetListString(tmpStr,Sep)
 			retIdx[lastSortIdx+1] = sortIndex[i]
 			nUnique += 1
 		EndIf
@@ -477,61 +478,68 @@ Static Function /Wave GetUniTxtWaveIndex(StringWave)
 	return UniIdx
 End Function
 
-Static Function GetLastIndex(Str,Sep)
-	// start at infinity, searc backwards: 
-	String str,Sep
-	Variable optSearchBackwards = 1
-	Variable colonIndex = strsearch(str,Sep,Inf,optSearchBackwards)
-	return colonIndex
-End Function
-
 Static Function /S GetFileName(Str,[DirSep,RemoveExt])
-	String Str,DirSep
-	Variable RemoveExt
-	// Get a file name from a <DirSep>-separated string, assumign the file name
-	// is everything from the last colon onwards
-	if (ParamIsDefault(DirSep))
-		DirSep = ModDefine#DefDirSep()
-	endIf
-	RemoveExt = ParamIsDefault(RemoveExt) ? ModDefine#False() : RemoveExt
-	if (RemoveExt)
-		// Remove the extension of the string before returning it
-		str = RemoveExt(str)
-	EndIf
-	Variable colonIndex = GetLastIndex(str,DirSep)	
-	if (colonIndex > 0)
-		// found a colon! Get the string from here to the end.
-		return str[colonIndex+1,Inf]
-	else
-		// just return the whole thing, no colon found, no path/
-		// XXX warning?
-		return str
-	EndIf
+       String Str,DirSep
+       Variable RemoveExt
+       // Get a file name from a <DirSep>-separated string, assumign the file name
+       // is everything from the last colon onwards
+       if (ParamIsDefault(DirSep))
+               DirSep = ModDefine#DefDirSep()
+       endIf
+       RemoveExt = ParamIsDefault(RemoveExt) ? ModDefine#False() : RemoveExt
+       if (RemoveExt)
+               // Remove the extension of the string before returning it
+               str = RemoveExt(str)
+       EndIf
+       Variable colonIndex = GetLastIndex(str,DirSep)
+       if (colonIndex > 0)
+               // found a colon! Get the string from here to the end.
+               return str[colonIndex+1,Inf]
+       else
+               // just return the whole thing, no colon found, no path/
+               // XXX warning?
+               return str
+       EndIf
 End Function
 
 Static Function /S RemoveAfterLast(toMod,strToLookForLast)
-	String toMod,strToLookForLast
-	Variable colonIndex = GetLastIndex(toMod,strToLookForLast)
-	if (colonIndex > 0)
-		return toMod[0,colonIndex-1]
-	else
-		return toMod
-	EndIf
+       String toMod,strToLookForLast
+       Variable colonIndex = GetLastIndex(toMod,strToLookForLast)
+       if (colonIndex > 0)
+               return toMod[0,colonIndex-1]
+       else
+               return toMod
+       EndIf
 End Function
 
 Static Function /S RemoveExt(filePath)
-	String filePath
-	return RemoveAfterLast(filePath,EXT_START)
+       String filePath
+       return RemoveAfterLast(filePath,EXT_START)
 End Function
 
 Static Function /S GetFileExt(filePath)
-	String filePath
-	Variable colonIndex = GetLastIndex(filePath,EXT_START)
-	if (colonIndex > 0)
-		return filePath[colonIndex,Inf]
-	else
-		return filePath
-	EndIf
+       String filePath
+       Variable colonIndex = GetLastIndex(filePath,EXT_START)
+       if (colonIndex > 0)
+               return filePath[colonIndex,Inf]
+       else
+               return filePath
+       EndIf
+End Function
+
+Static Function substring_exists(needle,haystack)
+	// Returns: 1 if needle in haystack, false otherwise
+	String needle,haystack
+	// strsearch returns -1 if the substring exists; otherwise just the index 
+	return strsearch(haystack,needle,0) > -1
+End Function 
+
+Static Function GetLastIndex(Str,Sep)
+	// Returns: the last index of sep in string
+       String str,Sep
+       Variable optSearchBackwards = 1
+       Variable colonIndex = strsearch(str,Sep,Inf,optSearchBackwards)
+       return colonIndex
 End Function
 
 // gets the directory of a file name (everything before  the first colon)
@@ -556,7 +564,7 @@ Static Function /S GetAllFileNames(StrList,ListSep,DirSep)
 	for (i=0; i<=nItems; i+= 1)
 		tmpPath= StringFromList(i,StrList,ListSep)
 		tmpFile = GetFileName(tmpPath,DirSep=DirSep)
-		toRet += ModDataStruct#GetListString(tmpFile,ListSep)
+		toRet += ModDataStructures#GetListString(tmpFile,ListSep)
 	EndFor
 	toRet = ReplaceString(ListSep + ListSep,toRet,ListSep)
 	return toRet
@@ -635,7 +643,7 @@ Static Function/S GetWaveList(RootFolder, ListSep,DirSep,[RegExpr])
 	// Prepend, so we have the full path. Make sure that there are no double colons in RootFolder,
 	// but ensure it ends in a colon, by removing all double colons
 	RootFolder = ReplaceString(DirSep+DirSep,RootFolder + DirSep,DirSep)
-	toRet = ModDataStruct#PrependToItems(toRet,RootFolder,ListSep)
+	toRet = ModDataStructures#PrependToItems(toRet,RootFolder,ListSep)
 	// Match the Regex
 	if (!ParamIsDefault(Regexpr))
 		toRet = GrepList(toRet,RegExpr,GREP_SELECT_MATCHING,ListSep)
@@ -665,7 +673,7 @@ Static Function/S GetWaveList(RootFolder, ListSep,DirSep,[RegExpr])
 			subWaves = GetWaveList(newDir,ListSep,DirSep)
 		endif
 		// concatenate toRet with subwaves, and overright suwaves
-		ModDataStruct#ConcatLists(toRet,subWaves,toRet,ListSep)
+		ModDataStructures#ConcatLists(toRet,subWaves,toRet,ListSep)
 	endfor
 	SetDataFolder $original
 	return toRet
@@ -740,6 +748,23 @@ Static Function /S GetPathFromString(StrV)
 		ModErrorUtil#Assert(FileExists(mPath),msg="Couldn't find path")
 	EndIf
 	return mPath
+End Function
+
+Static Function /S string_element(list,index,[sep])
+	// convenience wrapper for using igor-style string lists
+	//
+	// Args;
+	//	list: the <separator> separated list
+	//	index: which 0-based element is wanted
+	//	sep: third argument to stringfromlist; separator in list 
+	// Returns
+	//	Relevant element, assuming index is in bounds. Else, see StringFromList
+	String list,sep
+	Variable index
+	If (ParamIsDefault(sep))
+		sep = ";"
+	EndIf
+	return StringFromList(index,list,sep)
 End Function
 
 Static Function FileExists(mFile)
@@ -1141,8 +1166,24 @@ Static Function DateStrToTime(str,[sep])
 End Function
 
 Static Function /S GetPathToWave(mWave)
+	//
+	// Args:
+	//		mWave:  wave to get 
+	// Returns:
+	//'		The *full* path to the wave (including the wave name itself)
 	Wave mWave
 	return GetWavesDataFolder(mWave,GETWAVES_DF_FULL_PATH)
+End Function
+
+Static Function /S path_to_wave_name(wave_str)
+	// See : GetPathToWave, except takes a string as input
+	// Args:
+	//	wave_str: string name of wave
+	// Returns:
+	//	see GetPathToWave
+	String wave_str
+	Wave tmp = $(wave_str)
+	return GetPathToWave(tmp)
 End Function
 
 Static Function /S MakeSymbolicPath(osPath)
@@ -1284,11 +1325,20 @@ Static Function GetMaxX(mWave)
 End Function
 
 // returns if it matches, sets if so (strToSet is pass by reference)
-Static Function SetandReturnIfMatch(strToMatchAgainstRegex,mRegex,strToSet)
-	String strToMatchAgainstRegex,mRegex,&strToSet
-	if (GrepString(strToMatchAgainstRegex,mRegex))
+Static Function set_and_return_if_match(haystack,pattern,set_on_match)
+	// attempts to match a string; returns the matching result and sets 
+	// a pass-by-reference string if it suceeeds
+	//
+	// Args:
+	//	haystack: the needle to search in
+	// 	pattern: the regeular expression to use 
+	// 	set_on_match: the string which is set on a expression match
+	// Returns:
+	//	True if we have a match
+	String haystack,pattern,&set_on_match
+	if (GrepString(haystack,pattern))
 		// Our experiment exists
-		SplitString /E=(mRegex) strToMatchAgainstRegex, strToSet
+		SplitString /E=(pattern) haystack, set_on_match
 		return ModDefine#True()
 	EndIf
 	return ModDefine#False()
@@ -1319,7 +1369,7 @@ Static Function GetUniqueStems(tmpUnique,baseDir,SuffixNeeded,[fullPathStemPatte
 		return toRet
 	EndIf
 	Make /O/N=(NFullWaves)/T rawWaves
-	ModDataStruct#ListToTextWave(rawWaves,mWaves,Sep=ListSep)
+	ModDataStructures#ListToTextWave(rawWaves,mWaves,Sep=ListSep)
 	// get all the 'fullpath' stems
 	Make /O/N=(NFullWaves)/T fullPathStemsRaw
 	 ModIoUtil#GetWaveStems(rawWaves,fullPathStemsRaw,FullPathStemPattern)

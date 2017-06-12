@@ -49,7 +49,7 @@ Static Function AddErrorToList(obj,descr,GlobalDef)
 	String descr
 	Variable toRet = obj.NErrors
 	// add the descrption
-	 obj.Descr += ModDataStruct#GetListString(descr,GlobalDef.ListSep)
+	 obj.Descr += ModDataStructures#GetListString(descr,GlobalDef.ListSep)
 	// Add another error (increment the ID)
 	obj.NErrors += 1
 	return toRet
@@ -151,13 +151,25 @@ Static Function TypeError([description])
 	EndIf
 End Function
 
-Static Function WaveExistsOrError(toCheck)
-	String toCheck
-	if (!WaveExists($toCheck))
+Static Function assert_wave_exists(toCheck)
+	// throws an error if ToCheck doesnt exist
+	//
+	// Args: 
+	//	ToCheck: wave of interest
+	// Returns: 
+	//	Nothing
+	Wave toCheck
+	if (!WaveExists(toCheck))
 		Variable mCode = ERR_WAVEEXIST
-		String mDesc ="Tried to reference wave that doesn't exist"
+		String mDesc ="Required wave " + NameOfWave(toCheck) + " doesn't exist"
 		ThrowFatalError(mCode,mDesc)
 	EndIf
+End Function
+
+Static Function WaveExistsOrError(toCheck)
+	// see: assert_wave_exists, except toCheck is a string
+	String toCheck
+	assert_wave_exists($toCheck)
 End Function
 
 Static Function AssertLT(a,b,[errorDescr])

@@ -32,12 +32,12 @@ Static Function Main(base,[input_file])
 	// IWT options
 	Struct FeatherOptions opt
 	opt.tau = 0
-	opt.threshold = 1e-2
+	opt.threshold = 1e-3
 	opt.tau = 2e-2
 	// Add the meta information
-	opt.trigger_time = 0.081
-	opt.dwell_time = 0.9
-	opt.spring_constant = 6.7e-3
+	opt.trigger_time = 0.382
+	opt.dwell_time = 0.992
+	opt.spring_constant = 6.67e-3
 	// add the file information
 	opt.meta.path_to_input_file = input_file
 	opt.meta.path_to_research_directory = base

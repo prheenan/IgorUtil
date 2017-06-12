@@ -810,7 +810,7 @@ Static Function pLegend([graphName,labels,location,labelStr,fontName,fontSize,la
 	EndIf
 	If (!ParamIsDefault(labelStr))
 		Make /O/N=(0)/T labels
-		ModDataStruct#ListToTextWave(labels,labelStr,Sep=labelStrSep)
+		ModDataStructures#ListToTextWave(labels,labelStr,Sep=labelStrSep)
 	EndIf
 	if (ParamIsDefault(location))
 		location = ANCHOR_BOTTOM_MIDDLE
@@ -967,11 +967,79 @@ Static Function SaveFig([saveName,saveAsPxp,figName,path,closeFig,dpi,transparen
 	EndIf
 End Function
 
+Static Function window_exists(name)
+	// Args:
+	//	name: of the window
+	// Returns: 
+	//	true if the window exists
+	String name
+	// /Z: suppress errors
+	GetWindow /Z $(name) active
+	return V_flag == 0 
+End Function
+
+Static Function assert_window_exists(name)
+	// Throws an error if the given window doesn't exist
+	//
+	// Args:
+	//	See: window_exists	
+	String name
+	ModErrorUtil#assert(window_exists(name),msg=("Couldn't find window: " + name))
+End Function
+
 Static Function /S gcf()
 	// Get the current FIgure. See: pp 230 or igor manual, GetWindow
 	// By side effect, this stores the window 'path' in S_Value
 	GetWindow kwTopWin,activeSW
 	return S_Value
+End Function
+
+Static Function scf(figure)
+	// Sets the top window to the specified window
+	// Args:
+	//	figure: the name of the figure
+	String figure
+	assert_window_exists(figure)
+	// /F:Brings the window with the given name to the front (top of desktop).
+	DoWindow /F $(figure)
+End Function
+
+Static Function trace_on_graph(fig,trace_name)
+	// Retuns: True iff trace_name is plotted as a y value on fig
+	String fig,trace_name
+	String traces = TraceNameList(fig,",",1)
+	return (WhichListItem(trace_name,traces,",") > -1 )
+End Function
+	
+Static Function assert_trace_on_graph(fig,trace_name)
+	// Asserts that trace_on_graph is true
+	String fig,trace_name
+	String error
+	sprintf error, "Couldn't find trace '%s' on graph '%s'",trace_name,fig
+	ModErrorUtil#assert( trace_on_graph(fig,trace_name),msg=error)
+End Function
+
+Static Function /WAVE graph_wave_x(fig,trace_name)
+	// See: graph_wave, except returns the x wave reference
+	String fig,trace_name
+	assert_window_exists(fig)
+	assert_trace_on_graph(fig,trace_name)
+	Wave low_res_wave = XWaveRefFromTrace(fig,trace_name)
+	return low_res_wave
+End Function
+
+Static Function /Wave graph_wave(fig,trace_name)
+	// Returns the *reference* to the given trace on the figurre 
+	//
+	// Args:
+	//	See graph_wave_note
+	// Returns:
+	//	Reference to the relvant wave
+	String trace_name,fig
+	assert_window_exists(fig)
+	assert_trace_on_graph(fig,trace_name)
+	Wave low_res_wave = TraceNameToWaveRef(fig,trace_name)
+	return low_res_wave
 End Function
 
 Static Function InitPlotDef(ToInit)
