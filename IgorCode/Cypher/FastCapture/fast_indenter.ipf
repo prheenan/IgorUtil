@@ -9,6 +9,7 @@
 #include ":::Util:Numerical"
 #include ":asylum_interface"
 
+static constant DEF_NUMBER_OF_CALLS = 20
 static constant max_info_chars = 100
 
 // XXX TODO: for this to work properly, as of 2017-6-7:
@@ -35,7 +36,7 @@ End Function
 
 Static Function default_timespan()
 	// Returns:  the default time for the indenter capture
-	return 15
+	return 10
 End Function
 
 Static Function /S default_wave_base_suffix()
@@ -43,9 +44,36 @@ Static Function /S default_wave_base_suffix()
 	return "_fci_"
 End Function
 
+Static Function /S calls_remaining_path()
+	// Returns: the path to the 'remaining' variable 
+	return default_indenter_base() + "calls_remaining"
+End Function
+
+Static Function calls_remaining()
+	// Returns:: the number of calls reamaining
+	NVar to_ret = $calls_remaining_path()
+	return to_ret
+End Function
+
+Static Function set_calls_remaining(value)
+	// sets the nujmr of calls remaining
+	// Args:
+	//	value: to set the mber of calls. 
+	// Returns
+	//	nothing
+	Variable value
+	String path = calls_remaining_path()
+	Variable /G $path = value
+End Function
+
+Static Function /S default_indenter_base()
+	// Returns: the default location of the data base
+	return "root:prh:fast_indenter:"
+End Function
+
 Static Function /S default_save_folder()
 	// Returns: the default location to save the data
-	return "root:prh:fast_indenter:data:" 
+	return default_indenter_base() + "data:" 
 End Function	
 
 Static Function setup_directory_sturcture()
@@ -250,6 +278,11 @@ Static Function align_and_save_struct(indenter_info,[suffix_low_res])
 	Close /A
 	// save out the high resolution wave to *disk*	
 	ModAsylumInterface#save_to_disk_volts(zsnsr_wave,defl_wave,note_to_use=low_res_note)	
+	Variable n_calls = calls_remaining()
+	set_calls_remaining(n_calls - 1)	
+	if (n_calls-1 > 0)
+		run_single()
+	EndIf
 End Function
 
 Function prh_indenter_callback(ctrl_name)
@@ -322,6 +355,8 @@ Static function setup_indenter([speed,timespan,zsnsr_wave,defl_wave])
 	setup_gui_for_fast_capture()
 	// POST: review window exists. Make sure that defl is set up for InFastB
 	ModAsylumInterface#assert_infastb_correct()
+	// Zero the photo diode before each pull
+	ZeroPD()
 	// POST: inputs are correct, set up the fast capture
 	Variable to_ret = ModFastCapture#fast_capture_setup(speed,timespan,defl_wave,zsnsr_wave)
 	return to_ret
@@ -329,6 +364,28 @@ End Function
 
 Static Function Main()
 	// Runs the capture_indenter function with all defaults
+	run_number_of_calls()
+End Function
+
+Static Function run_number_of_calls([number_of_calls])
+	// captures number of serial high resoution curves
+	//
+	// Args:
+	//	number_of_calls: how many serial force-extension curves to take
+	// Returns:
+	// 	nothing
+	Variable number_of_calls
+	number_of_calls = ParamIsDefault(number_of_calls) ? DEF_NUMBER_OF_CALLS : number_of_calls
+	set_calls_remaining(number_of_calls)
+	run_single()
+End Function
+
+Static Function run_single()
+	// Runs a 'single' force extension curve, but 
+	// executes another one if calls_remaining > 1 
+	// before this is called
+	// Args/Returns: 
+	//	none 
 	setup_indenter()
 	capture_indenter()
 End Function
