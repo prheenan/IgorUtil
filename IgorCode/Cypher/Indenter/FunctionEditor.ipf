@@ -118,6 +118,7 @@ End Function
 
 Static Function staircase_equilibrium(start_x,delta_x,n_steps,time_dwell,[use_reverse])
 	//  easy-of-use function; has <n_steps> 'plateaus', each of length time_dwell
+	// starting at start_x and separated by delta_x
 	//
 	// Args:
 	//	start_x: where to start, in x
@@ -174,7 +175,7 @@ Static Function default_bidirectional_staircase([start_x,delta_x,n_steps,time_dw
 	Variable start_x,delta_x,n_steps,time_dwell
 	start_x = ParamIsDefault(start_x) ? -30 : start_x
 	delta_x = ParamIsDefault(delta_x) ? -0.5 : delta_x
-	n_steps = ParamIsDefault(n_steps) ? 25: n_steps
+	n_steps = ParamIsDefault(n_steps) ? 50: n_steps
 	time_dwell= ParamIsDefault(time_dwell) ? 50e-3 : time_dwell
 	delete_existing_indenter()
 	staircase_equilibrium(start_x,delta_x,n_steps,time_dwell,use_reverse=1)
