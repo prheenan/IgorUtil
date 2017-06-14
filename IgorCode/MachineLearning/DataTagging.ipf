@@ -5,6 +5,7 @@
 #include "::Util:IoUtil"
 #include "::Util:PlotUtil"
 #include "::Util:ErrorUtil"
+#include "::Cypher:asylum_interface"
 
 Macro DataTagging()
 	ModDataTagging#Main()
@@ -53,6 +54,9 @@ Static Function offset_from_wave_base(data_folder,base_name,trace)
 	return offset
 End Function
 
+
+
+
 Function  save_cursor_updates_by_globals(s)
 	// hook functgion; called when the window has an event
 	//
@@ -63,15 +67,13 @@ Function  save_cursor_updates_by_globals(s)
 	// Window hook prototype function which saves the 
 	Struct WMWinHookStruct &s
 	Variable status_code = 0
+	struct cursor_info info_struct
 	strswitch(s.eventname)
 		case "keyboard":
 			// if we hit enter on the window, go ahead and save the cursor positions out.
 			if (ModIoUtil#is_ascii_enter(s.keycode))
 				String window_name = s.winName
-				Variable a_idx,b_idx
-				String trace
-				ModIoUtil#cursor_info(window_name,a_idx,b_idx,trace)
-				Wave tmp_trace = TraceNameToWaveRef(window_name,trace)
+				ModIoUtil#cursor_info(window_name,info_struct)
 				// Get the data folder...
 				// Args:
 				//	kind: what to treturn
@@ -79,15 +81,19 @@ Function  save_cursor_updates_by_globals(s)
 				//		1 	Returns full path of data folder containing waveName, without wave name.
 				//
 				Variable kind =1
-				String data_folder = GetWavesDataFolder(tmp_trace,kind)
+				String data_folder = GetWavesDataFolder(info_struct.trace_reference,kind)
 				// Get the base name; we want to get the absolute offset for the entire trace...
 				String base_name
 				// our regex is anything, following by numbers, a (possible) single underscore, then letters
 				String regex = "(.+?)[_]?[a-zA-Z]+$"
-				SplitString /E=(regex) trace,base_name
-				Variable offset = offset_from_wave_base(data_folder,base_name,trace)
-				Variable start_idx = a_idx + offset
-				Variable end_idx = b_idx + offset
+				SplitString /E=(regex) info_struct.trace_name,base_name
+				Variable offset = offset_from_wave_base(data_folder,base_name,info_struct.trace_name)
+				// we want the absolute coordinate, regardless of whatever asylum says
+				String saved_idx= ModAsylumInterface#get_indexes(Note(info_struct.trace_reference))
+				Variable asylum_offset = ModAsylumInterface#get_index_field_element(saved_idx,0)
+				offset = offset + asylum_offset
+				Variable start_idx = info_struct.a_idx + offset
+				Variable end_idx = info_struct.b_idx + offset
 				// POST: have the A and B cursors. Save them to the output file
 				String start_idx_print,end_idx_print
 				sprintf start_idx_print,"%d",start_idx

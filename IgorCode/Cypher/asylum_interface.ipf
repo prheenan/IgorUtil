@@ -2,8 +2,8 @@
 #pragma rtGlobals=3	
 
 #pragma ModuleName = ModAsylumInterface
-#include ":NewFC"
-#include ":::Util:IoUtil"
+#include "::Util:IoUtil"
+#include ":ForceModifications"
 
 Static Function /S force_review_graph_name()
 	// Returns: the name of the graph Asylum uses for ForceReview stuff 
@@ -116,6 +116,18 @@ Static Function get_wave_crossing_index(wave_to_get,[epsilon_f])
 	return ModNumerical#first_index_greater(wave_to_get,level_to_cross)
 End Function
 
+Static Function /S get_indexes(note_v)
+	String note_v
+	return ModAsylumInterface#note_string(note_v,"Indexes")
+End Function
+
+Static Function get_index_field_element(indexes,number)
+	String indexes
+	Variable number
+	String index_sep = ","
+	return str2num(ModIoUtil#string_element(indexes,number,sep=index_sep))
+End Function
+
 Static Function /S update_note_triggering(low_res_note,low_res_z_wave,high_res_z_wave,freq_low,freq)
 	// fix the indices for the high resolution wave; these will only be approximately correct, since 
 	// there will probably be an offset. This is helpful for graphing everything (asylum splits by Indexes
@@ -131,11 +143,10 @@ Static Function /S update_note_triggering(low_res_note,low_res_z_wave,high_res_z
 	String low_res_note
 	Wave low_res_z_wave,high_res_z_wave
 	Variable freq_low,freq
-	String indices = ModAsylumInterface#note_string(low_res_note,"Indexes")
+	String indices = get_indexes(low_res_note)
 	// The order of the indices is <0,start of dwell, end of dwell, end of wave>
-	String index_sep = ","
-	Variable low_res_dwell_start = str2num(ModIoUtil#string_element(indices,1,sep=index_sep))
-	Variable low_res_dwell_end = str2num(ModIoUtil#string_element(indices,2,sep=index_sep))
+	Variable low_res_dwell_start =get_index_field_element(indices,1)
+	Variable low_res_dwell_end = get_index_field_element(indices,2)
 	// get the conversion from low to high res, just the ratio of the sampling frequencies
 	Variable conversion = freq/freq_low
 	// get the index of the max in the low and high resolution

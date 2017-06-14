@@ -1626,7 +1626,7 @@ Static Function PlotWithFiltered(RawData,[graphName,X,color,nFilterPoints,rawCol
 	String filterName = NameOfWave(RawData) + "filtered"
 	Duplicate /O RawData, $filterName
 	Wave Smoothed = $filterName
-	ModFitUtil#SavitskySmooth(Smoothed,nPoints=nFIlterPoints)
+	ModNumerical#savitsky_smooth(Smoothed,n_points=nFIlterPoints)
 	// Plot the filtered version of the data
 	// Use the same marker (just a line) 
 	if (!ParamIsDefault(X))

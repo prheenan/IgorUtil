@@ -7,7 +7,7 @@
 #include ":::Util:IoUtil"
 #include ":::Util:PlotUtil"
 #include ":::Util:Numerical"
-#include ":asylum_interface"
+#include "::asylum_interface"
 
 static constant DEF_NUMBER_OF_CALLS = 20
 static constant max_info_chars = 100
