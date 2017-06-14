@@ -176,7 +176,7 @@ Static Function default_bidirectional_staircase([start_x,delta_x,n_steps,time_dw
 	start_x = ParamIsDefault(start_x) ? -30 : start_x
 	delta_x = ParamIsDefault(delta_x) ? -0.5 : delta_x
 	n_steps = ParamIsDefault(n_steps) ? 50: n_steps
-	time_dwell= ParamIsDefault(time_dwell) ? 50e-3 : time_dwell
+	time_dwell= ParamIsDefault(time_dwell) ? 75e-3 : time_dwell
 	delete_existing_indenter()
 	staircase_equilibrium(start_x,delta_x,n_steps,time_dwell,use_reverse=1)
 End Function

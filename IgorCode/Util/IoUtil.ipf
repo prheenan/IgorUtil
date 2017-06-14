@@ -527,11 +527,21 @@ Static Function /S GetFileExt(filePath)
        EndIf
 End Function
 
-Static Function substring_exists(needle,haystack)
+Static Function substring_exists(needle,haystack,[insensitive])
 	// Returns: 1 if needle in haystack, false otherwise
 	String needle,haystack
+	Variable insensitive
+	insensitive = ParamIsDefault(insensitive) ? 0 : insensitive
+	Variable options = 0 
+	// From  strsearch (last is optional)
+	// 1:	Search backwards from start.
+	// 2:	Ignore case.
+	// 3:	Search backwards and ignore case.	
+	If (insensitive)
+		options = options | 0x2	 
+	EndIf 
 	// strsearch returns -1 if the substring exists; otherwise just the index 
-	return strsearch(haystack,needle,0) > -1
+	return strsearch(haystack,needle,0,options) > -1
 End Function 
 
 Static Function GetLastIndex(Str,Sep)
