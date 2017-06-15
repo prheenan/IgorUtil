@@ -19,18 +19,15 @@ Static Function /S base_tagging_folder()
 End Function
 
 Static Function /S default_filtered_folder()
+	// Returns: the folder where the filtered data lives. 
 	return (base_tagging_folder() + "filtered:")
 End Function
 
 Static Function setup_tagging()
+	// Sets up the file system for the tagging module
 	NewDataFolder /O root:prh
 	NewDataFolder /O root:prh:tagging
 	NewDataFolder /O root:prh:tagging:filtered
-End Function
-
-// Note: hook functions *must* not be static, or all is lost.
-Function window_hook_prototype(s)
-	Struct WMWinHookStruct &s
 End Function
 
 Static Function /S get_output_path()
@@ -77,6 +74,8 @@ Function tagging_list_change_hook(InfoStruct)
 	// graph when the user changes the data they look at,
 	//  then calls SelectFPByFolderProc. should only be used as a hook to
 	// ForceReviewGraph, since it deletes data specifically to it
+	//
+	// NOTE: must not be static
 	//
 	// Args;
 	//	see SelectFPByFolderProc
