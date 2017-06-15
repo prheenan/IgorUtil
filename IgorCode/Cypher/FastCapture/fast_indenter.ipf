@@ -3,7 +3,7 @@
 
 #pragma ModuleName = ModFastIndenter
 #include ":NewFC"
-#include ":ForceModifications"
+#include "::ForceModifications"
 #include ":::Util:IoUtil"
 #include ":::Util:PlotUtil"
 #include ":::Util:Numerical"
@@ -179,7 +179,7 @@ Static Function setup_gui_for_fast_capture()
 	InfoStruct.Row = DimSize(InfoStruct.listWave,0)-1
 	Wave InfoStruct.selWave=$("root:ForceCurves:Parameters:SlaveFPBuddy")
 	Wave InfoStruct.colorWave=$("root:packages:MFP3D:TOC:ListColorWave")
-	InfoStruct.CtrlName = "ForceList_0"
+	InfoStruct.CtrlName = ModAsylumInterface#force_review_list_control_name()
 	InfoStruct.Win = master_force_name
 	// these two are chosen to run properly in SelectFPByFolderProc
 	InfoStruct.EventCode = 2

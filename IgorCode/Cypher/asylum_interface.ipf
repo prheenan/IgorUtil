@@ -10,6 +10,15 @@ Static Function /S force_review_graph_name()
 	return "ForceReviewGraph"
 End Function
 
+Static Function /S master_force_panel_name()
+	// Returns: the name of the master force panel
+	return "MasterForcePanel"
+End Function
+
+Static Function /S force_review_list_control_name()
+	return "ForceList_0"
+End Function
+
 Static Function /WAVE master_variable_info()
 	// Returns: the master panel variable wave
 	return root:packages:MFP3D:Main:Variables:MasterVariablesWave

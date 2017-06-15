@@ -1187,6 +1187,35 @@ Static function get_xlim(lower_x,upper_x,[m_window])
 	GetAxisLimits(m_window,lower_x,upper_x, lower_y,upper_y,mDoUpdate=1)	
 End Function
 
+
+Static Function relative_coordinates(window_var,point_var,get_x)
+	// Get a point in relative axis coordinates: how far we are 
+	// from the top/left if this is y or x
+	//
+	// Args:
+	//	window_var: the rectangle of the window
+	//	point: the point within the window
+	//	get_x: if we should return the x or y
+	// Returns:
+	//	the 0/1 relative index...
+	struct rect & window_var
+	struct point & point_var
+	Variable get_x
+	Variable coord,min_coord,max_coord
+	// (0,0) is at the top left 
+	If (get_x)
+		coord = point_var.h
+		min_coord = window_var.left
+		max_coord = window_var.right
+	Else
+		coord = point_var.v
+		min_coord = window_var.top
+		max_coord = window_var.bottom
+	EndIf
+	return max(0,coord-min_coord)/(max_coord-min_coord)
+End Function
+
+
 // Gets the axis limits for the axis 'mwindow'
 Static Function GetAxisLimits(mWindow,lowerX,upperX,lowerY,upperY,[mDoUpdate])
 	String mWindow
