@@ -927,6 +927,7 @@ Static Function LoadInteractive(mFilePath,locToLoadInto,[ifPresentLoadIntoFileFo
 	EndIf
 End Function
 
+
 // Funcion to load system file "mFilePath" into data folder "locToLoadInto",
 // IF getRelLocFromFileName, then we set folderRelLoc to a new folder based on the file name
 // and load there
@@ -1012,7 +1013,7 @@ End Function
 
 
 Static Function /S cwd()
-	// Returns the path of the current working directory
+	// Returns: the path of the current working directory
 	return GetDataFolder(GETDATAFOLDER_FULLPATH)
 End Function
 
