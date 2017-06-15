@@ -5,6 +5,7 @@
 #include ":IoUtil"
 #include ":ErrorUtil"
 #include ":FitUtil"
+#include ":Numerical"
 
 Constant  ColorMax = 65535
 Constant PredefinedColors = 7
@@ -1121,10 +1122,8 @@ Static Function AxisLim(lower,upper,name,windowName)
                        axisToScale = X_AXIS_DEFLOC
                        break
        EndSwitch
-       DoUpdate       
        // '/A' flag autoscales
-       //SetAxis /A/W=$windowName $Y_AXIS_DEFLOC
-       // 'DoUpdate' will autoscale for us
+       SetAxis /A=2/W=$windowName $axisToScale
 End Function
 
 Static Function XLim(lower,upper,[graphName])
