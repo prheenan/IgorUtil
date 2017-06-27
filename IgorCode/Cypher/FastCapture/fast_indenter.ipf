@@ -245,8 +245,8 @@ Static Function align_and_save_struct(indenter_info,[suffix_low_res])
 	String msg_z = "Must display Defl vs ZSnsr on Force Review for high resolution data to function properly"
 	String low_res_approach_x_name = NameOfWave(low_res_approach)
 	String high_res_approach_x_name = NameOfWave(low_res_approach)
-	ModErrorUtil#Assert(ModIoUtil#substring_exists("ZSnsr",low_res_approach_x_name),msg=msg_z)
-	ModErrorUtil#Assert(ModIoUtil#substring_exists("ZSnsr",high_res_approach_x_name),msg=msg_z)	
+	ModErrorUtil#Assert(ModIoUtil#substring_exists("ZSnsr",low_res_approach_x_name,insensitive=1),msg=msg_z)
+	ModErrorUtil#Assert(ModIoUtil#substring_exists("ZSnsr",high_res_approach_x_name,insensitive=1),msg=msg_z)	
 	// POST: using Defl, ZSnsr
 	String low_res_note = note(low_res_approach)
 	// Concatenate the low resolution approach and retract

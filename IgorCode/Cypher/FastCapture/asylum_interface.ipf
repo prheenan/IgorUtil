@@ -240,6 +240,48 @@ Static Function /S default_wave_base_name()
 	return  formatted_wave_name(base,suffix)
 End Function 
 
+Static Function volts_to_meters(zsnsr_v,defl_v,z_lvdt_sensitivity,invols,z_meters,defl_meters)
+	// Converts zsnsr and defl (both assumed in volts) to meters
+	//
+	// Args:
+	//	<zsnsr/defl_v> : the z sensor and deflection channel in volts
+	//	z_lvdt_sensitivity: the conversion from zstage volts to meters (m/V)
+	//	invols: the conversion from deflection volts to meters (m/V)
+	//	defl_meters: output wave in meters
+	//	z_meters: output wave in meters
+	// Returns:
+	//	Nothing, but sets <defl/z>_meters appropriately
+	Wave zsnsr_v,defl_v
+	Variable z_lvdt_sensitivity,invols
+	Wave defl_meters,z_meters
+	// Convert the volts to meters for ZSnsr
+	Duplicate /O zsnsr_v,z_meters
+	Fastop z_meters=(z_lvdt_sensitivity)*zsnsr_v
+	SetScale d -10, 10, "m", z_meters
+  	// Convert the volts to meters for DeflV
+	Duplicate /O defl_v,defl_meters
+	fastop defl_meters= (invols)*defl_v
+	SetScale d -10, 10, "m", defl_meters
+End Function
+
+Static Function note_invols(wave_note)
+	// Args;
+	//	wave_note: the asylum-style note want the sensitivity
+	// Returns: 
+	//	the inverse volts optical lever arm sensitivity (INVOLS)
+	String wave_note
+	return note_variable(wave_note,"Invols")
+End Function
+
+Static Function note_z_sensitivity(wave_note)
+	// Args;
+	//	wave_note: the asylum-style note want the sensitivity
+	// Returns: 
+	//	the Z Liner voltage differential transducer (ZLVDT) sensitivity
+	String wave_note
+	return note_variable(wave_note,"ZLVDTSens")
+End Function
+
 Static Function save_to_disk_volts(zsnsr_volts_wave,defl_volts_wave,[note_to_use])
 	// Saves the given waves (all in volts) to disk (in meters)
 	// Args:
@@ -251,14 +293,10 @@ Static Function save_to_disk_volts(zsnsr_volts_wave,defl_volts_wave,[note_to_use
 	if (ParamIsDefault(note_to_use))
 		note_to_use = Note(defl_volts_wave)
 	endif
-	// Convert the volts to meters for ZSnsr
-	Duplicate /O zsnsr_volts_wave,z_meters
-	Fastop z_meters=(GV("ZLVDTSens"))*zsnsr_volts_wave
-	SetScale d -10, 10, "m", z_meters
-  	// Convert the volts to meters for DeflV
-	Duplicate /O defl_volts_wave,defl_meters
-	fastop defl_meters=(GV("Invols"))*defl_volts_wave
-	SetScale d -10, 10, "m", defl_meters
+	Make /O/N=0 defl_meters,z_meters
+	Variable z_lvdt_sensitivity = GV("ZLVDTSens")
+	Variable invols = (GV("Invols"))
+	volts_to_meters(zsnsr_volts_wave,defl_volts_wave,z_lvdt_sensitivity,invols,z_meters,defl_meters)
 	// save the zsnsr and defl to the disk
 	save_to_disk(z_meters,defl_meters,note_to_use)
 	KillWaves /Z defl_meters,z_meters
