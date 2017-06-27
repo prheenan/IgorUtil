@@ -5,6 +5,8 @@
 #include ":::Util:ErrorUtil"
 #include ":::Util:PlotUtil"
 
+// Note: at present, this function assumes all values are given as nanometers, as 
+// described in setup_for_new_indenter. 
 
 Static Function /S editor_base()
 	// Returns: where the indenter lives
@@ -44,6 +46,21 @@ Static Function set_indenter_variable(name,value)
 	ARFESetVarFunc(setvar_struct)
 End Function
 
+Static Function /S segment_start_position()
+	// Returns: The control name for the function editor's "Start" field
+	return "SegmentStartPos"
+End Function
+
+Static Function /S segment_end_position()
+	// Returns: The control name for the function editor's "End" field
+	return "SegmentEndPos"
+End Function 
+
+Static Function /S segment_velocity()
+	// Returns: the control name for  the function editor's  "Velocity" field
+	return "SegmentVelocity"
+End Function 
+
 Static Function make_segment_equilibrium(location,time_delta)
 	// Makes the currently-selected segment an equilibrium segment 
 	// at a certain Z with a given time
@@ -55,9 +72,9 @@ Static Function make_segment_equilibrium(location,time_delta)
 	//	nothing
 	Variable location,time_delta
 	set_indenter_variable("SegmentLength",time_delta)
-	set_indenter_variable("SegmentStartPos",location)
-	set_indenter_variable("SegmentEndPos",location)
-	set_indenter_variable("SegmentVelocity",0)	
+	set_indenter_variable(segment_start_position(),location)
+	set_indenter_variable(segment_end_position(),location)
+	set_indenter_variable(segment_velocity(),0)	
 End Function
 
 Static Function /S indenter_handle()
@@ -70,8 +87,8 @@ Static Function delete_existing_indenter()
 	// Deletes the existing waves on the indenter
 	// (technically, it doesn't the delete the last segment, 
 	// because there always has to be one left)
-	Wave wave_ref = $(variable_wave_name())
-	ModErrorUtil#assert_wave_exists(wave_ref)
+	Wave /Z wave_ref = $(variable_wave_name())
+	ModErrorUtil#assert_wave_exists(wave_ref,msg="Check that indenter panel and function editor are open.")
 	String handle = indenter_handle()
 	// keep deleting segments while they are a thing
 	// XXX make into for loop?
@@ -79,6 +96,29 @@ Static Function delete_existing_indenter()
 		Variable A, NumKilled, NumOfSegs = wave_ref[%NumOfSegments][%Value]
 		ARFEDeleteFunc(handle,NumOfSegs)	
 	while (NumOfSegs > 1)
+End Function
+
+
+Static Function setup_for_new_indenter([units])
+	// Deletes all previous indenter information, setting up the function
+	// editor for a new one
+	//
+	// Args:
+	//	units: the units everything should be in. defaults to nm
+	// Returns:
+	// 	nothing 
+	Variable units
+	// by default, assume nanometers. 
+	units = ParamIsDefault(units) ? 1e-9 : units
+	delete_existing_indenter()
+	// POST: all old indenter steps are gone. 
+	// Make all the units into the proper units
+	Make /FREE/T tmp_txt = {segment_start_position(),segment_end_position(),segment_velocity()}
+	Variable n = DimSize(tmp_txt,0)
+	Variable i 
+	for (i=0; i < n; i+=1)
+		FEPutValue(indenter_handle(),tmp_txt[i],"Value",units)
+	EndFor	
 End Function
 
 Static Function setup_equilbirum_wave(locations,n_delta_per_location,time_delta)
@@ -177,6 +217,24 @@ Static Function default_bidirectional_staircase([start_x,delta_x,n_steps,time_dw
 	delta_x = ParamIsDefault(delta_x) ? -0.5 : delta_x
 	n_steps = ParamIsDefault(n_steps) ? 50: n_steps
 	time_dwell= ParamIsDefault(time_dwell) ? 75e-3 : time_dwell
-	delete_existing_indenter()
+	setup_for_new_indenter()
 	staircase_equilibrium(start_x,delta_x,n_steps,time_dwell,use_reverse=1)
+End Function
+
+Static Function default_staircase([start_x,delta_x,n_steps,time_dwell])
+	// Sets up a 1-directional staircase
+	//
+	//	NOTE: this deletes any existing indenter set up
+	//
+	// Args:
+	//	 see default_bidirectional_staircase
+	// Returns:
+	//	 nothing
+	Variable start_x,delta_x,n_steps,time_dwell
+	start_x = ParamIsDefault(start_x) ? -40 : start_x
+	delta_x = ParamIsDefault(delta_x) ? 0.5 : delta_x
+	n_steps = ParamIsDefault(n_steps) ? 6: n_steps
+	time_dwell= ParamIsDefault(time_dwell) ? 1 : time_dwell
+	setup_for_new_indenter()
+	staircase_equilibrium(start_x,delta_x,n_steps,time_dwell,use_reverse=0)
 End Function
