@@ -3,9 +3,9 @@
 #include "::Util:PlotUtil" 
 
 
-Static Function FEC_Plot(WaveX,WaveY,[XFactor,YFactor,Title,NFilterPoints,OffsetY,OffsetX,SignX,SignY,LegendLoc,SortByX])
+Static Function FEC_Plot(WaveX,WaveY,[split_idx,XFactor,YFactor,Title,NFilterPoints,OffsetY,OffsetX,SignX,SignY,LegendLoc,SortByX])
 	Wave WaveX,WaveY
-	Variable XFactor,YFactor,NFilterPoints,OffsetY,OffsetX,SignX,SignY,SortByX
+	Variable XFactor,YFactor,NFilterPoints,OffsetY,OffsetX,SignX,SignY,SortByX,split_idx
 	String Title,LegendLoc
 	// Get the waves (copies) we need
 	String NamePlotX = (NameOfWave(WaveX) + "_Plot")
@@ -33,7 +33,7 @@ Static Function FEC_Plot(WaveX,WaveY,[XFactor,YFactor,Title,NFilterPoints,Offset
 	XFactor = ParamIsDefault(XFactor) ? 1 : XFactor
 	YFactor = ParamIsDefault(YFactor) ? 1 : YFactor
 	OffsetY = ParamIsDefault(OffsetY) ? 0 : OffsetY
-	OffsetX = ParamIsDefault(OffsetX) ? WaveMax(SepBilayer) : OffsetX
+	OffsetX = ParamIsDefault(OffsetX) ? 0: OffsetX
 	SignX = ParamIsDefault(SignX) ? -1 : SignX
 	SignY = ParamIsDefault(SignX) ? -1 : SignY
 	SortByX = ParamIsDefault(SortByX) ? 0 : SortByX
@@ -47,14 +47,16 @@ Static Function FEC_Plot(WaveX,WaveY,[XFactor,YFactor,Title,NFilterPoints,Offset
 	ForceBilayer[] = ForceBilayer[p]*YFactor * SignY
 	SepBilayer[] = SepBilayer[p] * XFactor * SignX
 	// Get the approach and retract separately
-	WaveStats /Q WaveY 
-	Variable MaxIdx  = V_maxRowLoc
+	if (ParamIsDefault(split_idx))
+		WaveStats /Q WaveY 
+		split_idx  = V_maxRowLoc
+	EndIf
 	// Duplicate the Y waves accordingly
-	Duplicate /O/R=[0,MaxIdx] ForceBilayer,$NameApprY
-	Duplicate /O/R=[MaxIdx,Inf] ForceBilayer,$NameRetrY
+	Duplicate /O/R=[0,split_idx] ForceBilayer,$NameApprY
+	Duplicate /O/R=[split_idx,Inf] ForceBilayer,$NameRetrY
 	// Now the X
-	Duplicate /O/R=[0,MaxIdx] SepBilayer,$NameApprX
-	Duplicate /O/R=[MaxIdx,Inf] SepBilayer,$NameRetrX
+	Duplicate /O/R=[0,split_idx] SepBilayer,$NameApprX
+	Duplicate /O/R=[split_idx,Inf] SepBilayer,$NameRetrX
 	// If we need to, sort the Y by the x...
 	if (SortByX)
 		String IdxWave1name= NamePlotX + "I1"
@@ -80,7 +82,6 @@ Static Function FEC_Plot(WaveX,WaveY,[XFactor,YFactor,Title,NFilterPoints,Offset
 		ModPlotUtil#PlotWithFiltered($NameRetrY,X=$NameRetrX,nFilterPoints=NFilterPoints,color=RetrColor)
 		 LabelStr =",Approach,,Retract,"
 	else
-		print("Acqui!")
 		ModPlotUtil#Plot($NameApprY,linestyle="",marker=".",mX=$NameApprX,color=ApprColor)
 		ModPlotUtil#Plot($NameRetrY,linestyle="",marker=".",mX=$NameRetrX,color=RetrColor)
 		LabelStr = "Approach,Retract"
@@ -88,4 +89,5 @@ Static Function FEC_Plot(WaveX,WaveY,[XFactor,YFactor,Title,NFilterPoints,Offset
 	ModPlotUtil#ylabel("")
 	ModPlotUtil#xlabel("")
 	ModPlotUtil#pLegend(labelStr=LabelStr,location=LegendLoc)
+	return split_idx
 End Function

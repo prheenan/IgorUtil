@@ -151,17 +151,23 @@ Static Function TypeError([description])
 	EndIf
 End Function
 
-Static Function assert_wave_exists(toCheck)
+Static Function assert_wave_exists(toCheck,[msg])
 	// throws an error if ToCheck doesnt exist
 	//
 	// Args: 
 	//	ToCheck: wave of interest
+	// 	msg: additional message to give the user
+	// 
 	// Returns: 
 	//	Nothing
-	Wave toCheck
+	Wave /Z toCheck
+	String msg
+	if (ParamIsDefault(msg))
+		msg = ""
+	EndIf
 	if (!WaveExists(toCheck))
 		Variable mCode = ERR_WAVEEXIST
-		String mDesc ="Required wave " + NameOfWave(toCheck) + " doesn't exist"
+		String mDesc ="Required wave " + NameOfWave(toCheck) + " doesn't exist.\n" + msg
 		ThrowFatalError(mCode,mDesc)
 	EndIf
 End Function

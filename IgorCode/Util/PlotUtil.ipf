@@ -5,6 +5,7 @@
 #include ":IoUtil"
 #include ":ErrorUtil"
 #include ":FitUtil"
+#include ":Numerical"
 
 Constant  ColorMax = 65535
 Constant PredefinedColors = 7
@@ -1004,11 +1005,18 @@ Static Function scf(figure)
 	DoWindow /F $(figure)
 End Function
 
+Static Function /S trace_list(fig)
+	// Returns: the (y) traces associated with each figure
+	String fig
+	return TraceNameList(fig,PLOT_UTIL_DEF_LABEL_SEP,1)
+End Function
+
 Static Function trace_on_graph(fig,trace_name)
 	// Retuns: True iff trace_name is plotted as a y value on fig
 	String fig,trace_name
-	String traces = TraceNameList(fig,",",1)
-	return (WhichListItem(trace_name,traces,",") > -1 )
+	String traces = trace_list(fig)
+	Variable idx = (WhichListItem(trace_name,traces,PLOT_UTIL_DEF_LABEL_SEP))
+	return (idx > -1)
 End Function
 	
 Static Function assert_trace_on_graph(fig,trace_name)
@@ -1101,23 +1109,33 @@ Static Function AxisLim(lower,upper,name,windowName)
 	String name,Windowname
 	// XXX check for error? does window exist, etc
 	SetAxis /W=$windowName $name,lower,upper
-	// autoscale the other axis
-	String axisToScale
-	strswitch (name)
-		case X_AXIS_DEFLOC:
-			// also adjust y to be in the range
-			axisToScale = Y_AXIS_DEFLOC
-			break
-		case Y_AXIS_DEFLOC:
-			// also adjust x to be in the range
-			axisToScale = X_AXIS_DEFLOC
-			break
-	EndSwitch
-	// '/A' flag autoscales
-	SetAxis /A/W=$windowName $Y_AXIS_DEFLOC
+       // 'DoUpdate' will autoscale for us 
+       // autoscale the other axis
+       String axisToScale
+       strswitch (name)
+               case X_AXIS_DEFLOC:
+                       // also adjust y to be in the range
+                       axisToScale = Y_AXIS_DEFLOC
+                       break
+               case Y_AXIS_DEFLOC:
+                       // also adjust x to be in the range
+                       axisToScale = X_AXIS_DEFLOC
+                       break
+       EndSwitch
+       // '/A' flag autoscales
+       SetAxis /A=2/W=$windowName $axisToScale
 End Function
 
 Static Function XLim(lower,upper,[graphName])
+	// Gets the x limits by refernec
+	//
+	// Args:
+	//	lower/upper: pass-by-reference min and max x value
+	//	to get from graphname
+	//	
+	//	graphName: which graph to use. defaults to current/top
+	// Returns: 
+	//	nothing, but sets the lower and upper to the x limits
 	Variable lower,upper
 	String graphName
 	If (ParamISDefault(graphName))
@@ -1150,6 +1168,52 @@ Static Function Normed(val,minV,maxV)
 	// returns val between 0 and 1, where minV corresponds to 0 and maxV corresponds to 1
 	return (val-minV)/(maxV-minV)
 End Function	
+
+Static function get_xlim(lower_x,upper_x,[m_window])
+	// Sets the lower and upper x limits by reference
+	// 
+	// Args:
+	//	<lower/upper_x> the pass-by-reference variable to be set
+	//	m_window: graph to get the limits of. defaults to gcf()
+	// Returns:
+	//	nothing, sets the <lower/upper>_x variable appropriately 
+	String m_window
+	Variable & lower_x,&upper_x
+	if (ParamIsDefault(m_window))
+		m_window = gcf()
+	EndIf
+	Variable lower_y,upper_y
+	GetAxisLimits(m_window,lower_x,upper_x, lower_y,upper_y,mDoUpdate=1)	
+End Function
+
+
+Static Function relative_coordinates(window_var,point_var,get_x)
+	// Get a point in relative axis coordinates: how far we are 
+	// from the top/left if this is y or x
+	//
+	// Args:
+	//	window_var: the rectangle of the window
+	//	point: the point within the window
+	//	get_x: if we should return the x or y
+	// Returns:
+	//	the 0/1 relative index...
+	struct rect & window_var
+	struct point & point_var
+	Variable get_x
+	Variable coord,min_coord,max_coord
+	// (0,0) is at the top left 
+	If (get_x)
+		coord = point_var.h
+		min_coord = window_var.left
+		max_coord = window_var.right
+	Else
+		coord = point_var.v
+		min_coord = window_var.top
+		max_coord = window_var.bottom
+	EndIf
+	return max(0,coord-min_coord)/(max_coord-min_coord)
+End Function
+
 
 // Gets the axis limits for the axis 'mwindow'
 Static Function GetAxisLimits(mWindow,lowerX,upperX,lowerY,upperY,[mDoUpdate])
@@ -1626,7 +1690,7 @@ Static Function PlotWithFiltered(RawData,[graphName,X,color,nFilterPoints,rawCol
 	String filterName = NameOfWave(RawData) + "filtered"
 	Duplicate /O RawData, $filterName
 	Wave Smoothed = $filterName
-	ModFitUtil#SavitskySmooth(Smoothed,nPoints=nFIlterPoints)
+	ModNumerical#savitsky_smooth(Smoothed,n_points=nFIlterPoints)
 	// Plot the filtered version of the data
 	// Use the same marker (just a line) 
 	if (!ParamIsDefault(X))
