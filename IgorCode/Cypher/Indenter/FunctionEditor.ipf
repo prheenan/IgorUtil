@@ -259,32 +259,38 @@ Static Function default_staircase([start_x,delta_x,n_steps,time_dwell])
 End Function
 
 Static Function default_inverse_boltzmann()
-	Variable start_staircase = -60
-	Variable velocity_nm_per_s = 300;
-	Variable time_stair = abs(start_staircase/velocity_nm_per_s)
-	setup_for_new_indenter()
-	// Make a new segment... 
-	make_segment(0,start_staircase,time_stair,velocity_nm_per_s)
-	new_segment()
-	// Make the initial psf region 
-	Variable point_spread_initial_step_nm = 5
+	Variable start_boltzmann = -30 
+	// parameters for the initial point spread function region 
+	Variable point_spread_initial_step_nm = -5
 	Variable point_spread_dwell_s = 0.5
-	Variable n_initial_steps = 4
+	Variable n_initial_steps = 4	
+	Variable start_staircase = start_boltzmann + abs((n_initial_steps) * point_spread_initial_step_nm)
+	Variable time_initial_s = 0.5
+	Variable dwell_time_initial_s = 1
+	Variable velocity_nm_per_s = abs(start_staircase/time_initial_s)
+	setup_for_new_indenter()
+	Variable global_zero = 1
+	make_segment(global_zero,global_zero,dwell_time_initial_s,0)
+	new_segment()	
+	// Make a segment getting to the start of tthe first psf region 
+	make_segment(global_zero,start_staircase,time_initial_s,velocity_nm_per_s)
+	new_segment()
+	// make the first psf region 
 	staircase_equilibrium(start_staircase,point_spread_initial_step_nm,n_initial_steps,point_spread_dwell_s)
-	// Make another staircase...
-	Variable start_boltz_nm = start_staircase + point_spread_initial_step_nm * (n_initial_steps-1)
-	Variable step_boltz_nm = 0.5
-	Variable n_steps_boltz = 8
-	Variable dwell_boltz_s = 1
-	staircase_equilibrium(start_boltz_nm,step_boltz_nm,n_steps_boltz,dwell_boltz_s)
+	new_segment()	
+	// Make the boltzmann staircase...
+	Variable step_boltz_nm = -0.25
+	Variable n_steps_boltz = 16
+	Variable dwell_boltz_s = 2
+	staircase_equilibrium(start_boltzmann,step_boltz_nm,n_steps_boltz,dwell_boltz_s)
 	// Make the second psf region
-	Variable start_second_psf_region_nm = start_boltz_nm + step_boltz_nm * (n_steps_boltz-1)
-	Variable step_second_psf_region_nm = 5 
+	Variable step_second_psf_region_nm = -5 
+	Variable start_second_psf_region_nm = start_boltzmann + step_boltz_nm * (n_steps_boltz-1) + step_second_psf_region_nm
 	Variable n_second_psf_region = n_initial_steps
 	Variable dwell_second_psf_region_s = point_spread_dwell_s
 	staircase_equilibrium(start_second_psf_region_nm,step_second_psf_region_nm,n_second_psf_region,dwell_second_psf_region_s)	
 	Variable end_equil = start_second_psf_region_nm + step_second_psf_region_nm * (n_second_psf_region-1)
 	// Make a new segment for the 'return to 0'
 	new_segment()		
-	make_segment(end_equil,0,time_stair,velocity_nm_per_s)
+	make_segment(end_equil,global_zero,time_initial_s,velocity_nm_per_s)
 End Function 
