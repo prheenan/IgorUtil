@@ -3,11 +3,11 @@
 
 #pragma ModuleName = ModNoiseTest
 #include "::FastCapture:NewFC"
-#include "::FastCapture:ForceModifications"
+#include "::ForceModifications"
 #include ":::Util:IoUtil"
 #include ":::Util:PlotUtil"
 #include ":::Util:Numerical"
-#include "::FastCapture:asylum_interface"
+#include "::asylum_interface"
 
 Static Function Main()
 	// Runs the capture_indenter function with all defaults

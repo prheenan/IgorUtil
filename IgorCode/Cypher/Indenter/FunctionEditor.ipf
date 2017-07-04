@@ -61,6 +61,22 @@ Static Function /S segment_velocity()
 	return "SegmentVelocity"
 End Function 
 
+Static Function make_segment(start_loc,end_loc,time_delta,velocity)
+	// Makes an indenter segment in the GUI
+	//
+	// Args:
+	//	<start/end>_loc: the z value needed for the beginning and end of the segment
+	// 	time_delta: thelength of the segment
+	// 	velocity: the velocity of the segment 
+	// Returns:
+	//	nothing
+	Variable start_loc,end_loc,time_delta,velocity
+	set_indenter_variable(segment_start_position(),start_loc)
+	set_indenter_variable(segment_end_position(),end_loc)
+	set_indenter_variable(segment_velocity(),velocity)
+      set_indenter_variable("SegmentLength",time_delta)	
+End Function 
+
 Static Function make_segment_equilibrium(location,time_delta)
 	// Makes the currently-selected segment an equilibrium segment 
 	// at a certain Z with a given time
@@ -71,11 +87,14 @@ Static Function make_segment_equilibrium(location,time_delta)
 	// Returns:
 	//	nothing
 	Variable location,time_delta
-	set_indenter_variable("SegmentLength",time_delta)
-	set_indenter_variable(segment_start_position(),location)
-	set_indenter_variable(segment_end_position(),location)
-	set_indenter_variable(segment_velocity(),0)	
+	// velocity is zero (not moving)
+	make_segment(location,location,time_delta,0)
 End Function
+
+Static Function new_segment()
+	// Creates a new segment on the function editor panel 
+	ARFEInsertFunc(indenter_handle(),1,nan)
+End Function 
 
 Static Function /S indenter_handle()
 	// Returns: the 'handle' for the indenter
@@ -151,7 +170,7 @@ Static Function setup_equilbirum_wave(locations,n_delta_per_location,time_delta)
 	for (i=1;i<n_times; i+= 1)
 		Variable location_tmp = locations[i]
 		Variable time_tmp =  time_delta*n_delta_per_location[i]
-		ARFEInsertFunc(indenter_handle(),0,nan)
+		new_segment()
 		make_segment_equilibrium(location_tmp,time_tmp)
 	EndFor
 End Function
@@ -231,10 +250,41 @@ Static Function default_staircase([start_x,delta_x,n_steps,time_dwell])
 	// Returns:
 	//	 nothing
 	Variable start_x,delta_x,n_steps,time_dwell
-	start_x = ParamIsDefault(start_x) ? -40 : start_x
-	delta_x = ParamIsDefault(delta_x) ? 0.5 : delta_x
+	start_x = ParamIsDefault(start_x) ? -65 : start_x
+	delta_x = ParamIsDefault(delta_x) ? 1 : delta_x
 	n_steps = ParamIsDefault(n_steps) ? 6: n_steps
 	time_dwell= ParamIsDefault(time_dwell) ? 1 : time_dwell
 	setup_for_new_indenter()
 	staircase_equilibrium(start_x,delta_x,n_steps,time_dwell,use_reverse=0)
 End Function
+
+Static Function default_inverse_boltzmann()
+	Variable start_staircase = -60
+	Variable velocity_nm_per_s = 300;
+	Variable time_stair = abs(start_staircase/velocity_nm_per_s)
+	setup_for_new_indenter()
+	// Make a new segment... 
+	make_segment(0,start_staircase,time_stair,velocity_nm_per_s)
+	new_segment()
+	// Make the initial psf region 
+	Variable point_spread_initial_step_nm = 5
+	Variable point_spread_dwell_s = 0.5
+	Variable n_initial_steps = 4
+	staircase_equilibrium(start_staircase,point_spread_initial_step_nm,n_initial_steps,point_spread_dwell_s)
+	// Make another staircase...
+	Variable start_boltz_nm = start_staircase + point_spread_initial_step_nm * (n_initial_steps-1)
+	Variable step_boltz_nm = 0.5
+	Variable n_steps_boltz = 8
+	Variable dwell_boltz_s = 1
+	staircase_equilibrium(start_boltz_nm,step_boltz_nm,n_steps_boltz,dwell_boltz_s)
+	// Make the second psf region
+	Variable start_second_psf_region_nm = start_boltz_nm + step_boltz_nm * (n_steps_boltz-1)
+	Variable step_second_psf_region_nm = 5 
+	Variable n_second_psf_region = n_initial_steps
+	Variable dwell_second_psf_region_s = point_spread_dwell_s
+	staircase_equilibrium(start_second_psf_region_nm,step_second_psf_region_nm,n_second_psf_region,dwell_second_psf_region_s)	
+	Variable end_equil = start_second_psf_region_nm + step_second_psf_region_nm * (n_second_psf_region-1)
+	// Make a new segment for the 'return to 0'
+	new_segment()		
+	make_segment(end_equil,0,time_stair,velocity_nm_per_s)
+End Function 
