@@ -9,14 +9,30 @@
 #include ":::Util:Numerical"
 #include "::asylum_interface"
 
-Static Function Main()
-	// Runs the capture_indenter function with all defaults
-	Variable timespan = 20
-	Variable speed = 1
+Static Function capture_500Khz(timespan)
+	// captures <timespan> length of 500KHz data. 
+	// 
+	// Args:
+	//	timespan: how much data to acquire. 
+	// Returns:
+	//	nothing 
+	Variable timespan
+	Variable speed = 0
+	// XXX get 10s first, then 300s (to prevent 'start' noise / hystereis?)
 	NewDataFolder /O root:prh
 	NewDataFolder /O root:prh:noise
 	Make /O/N=0 root:prh:noise:defl, root:prh:noise:zsnsr
 	ModFastCapture#fast_capture_setup(speed,timespan,root:prh:noise:defl,root:prh:noise:zsnsr)
 	ZeroPD()	
 	ModFastCapture#fast_capture_start()
+End Function
+
+Static Function Main()
+	// Runs the capture_indenter function with all defaults
+	// Capture 10s of data first, then overwrite and capture 5s 
+	// (this is to avoid noise with the fast capture starting)
+	capture_500Khz(10)
+	// /S: seconds 
+	sleep /S 12
+	capture_500Khz(300)	
 End Function
