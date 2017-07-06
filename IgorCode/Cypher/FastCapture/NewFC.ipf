@@ -71,18 +71,8 @@ Function fast_capture_setup(speed,timespan,wave0,wave1,[Wave0String,Wave1String]
 		error+=-1
 		return error
 	endif
-
-	if(speed==0) //Running at 500 kHz
-		Make/O/N=(totpoints) H0, H1	// N can be arbitrary long but beware Igor memory limitations
-		duplicate/o H0, wave0
-		duplicate/o H1,wave1
-		killwaves H0,H1
-	else
-		Make/O/N=(totpoints) H0, H1	// N can be arbitrary long but beware Igor memory limitations
-		duplicate/o H0, wave0
-		duplicate/o H1,wave1
-		killwaves H0,H1
-	endif
+	// Make the waves the proper size 
+	Redimension /N=(totpoints) wave0,wave1 
 	
 	// stop the stream	
 	error += td_StopStream("Cypher.Stream.0")		

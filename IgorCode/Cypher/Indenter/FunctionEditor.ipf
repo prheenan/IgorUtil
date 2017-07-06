@@ -259,7 +259,7 @@ Static Function default_staircase([start_x,delta_x,n_steps,time_dwell])
 End Function
 
 Static Function default_inverse_boltzmann()
-	Variable start_boltzmann = -30 
+	Variable start_boltzmann = -60
 	// parameters for the initial point spread function region 
 	Variable point_spread_initial_step_nm = -5
 	Variable point_spread_dwell_s = 0.5
@@ -269,6 +269,7 @@ Static Function default_inverse_boltzmann()
 	Variable dwell_time_initial_s = 1
 	Variable velocity_nm_per_s = abs(start_staircase/time_initial_s)
 	setup_for_new_indenter()
+	// make an effective dwell slightly into the surface, to avoid unit problems. 
 	Variable global_zero = 1
 	make_segment(global_zero,global_zero,dwell_time_initial_s,0)
 	new_segment()	
@@ -279,8 +280,8 @@ Static Function default_inverse_boltzmann()
 	staircase_equilibrium(start_staircase,point_spread_initial_step_nm,n_initial_steps,point_spread_dwell_s)
 	new_segment()	
 	// Make the boltzmann staircase...
-	Variable step_boltz_nm = -0.25
-	Variable n_steps_boltz = 16
+	Variable step_boltz_nm = -0.33
+	Variable n_steps_boltz = 20
 	Variable dwell_boltz_s = 2
 	staircase_equilibrium(start_boltzmann,step_boltz_nm,n_steps_boltz,dwell_boltz_s)
 	// Make the second psf region
@@ -294,3 +295,32 @@ Static Function default_inverse_boltzmann()
 	new_segment()		
 	make_segment(end_equil,global_zero,time_initial_s,velocity_nm_per_s)
 End Function 
+
+Static Function slow_refolding_experiment()
+	Variable velocity_nm_per_s = 50
+	Variable dwell_s = 1
+	Variable start_ramp_nm =  -50
+	Variable end_ramp_nm = -90
+	Variable n_ramps = 5
+	setup_for_new_indenter()
+	// Dwell into the surface
+	Variable global_zero = 1
+	make_segment(global_zero,global_zero,dwell_s,0)
+	new_segment()		
+	// Get to the first ramp 
+	// Make a segment getting to the start of tthe first psf region 
+	Variable time_initial_s = abs(global_zero - start_ramp_nm)/velocity_nm_per_s
+	make_segment(global_zero,start_ramp_nm,time_initial_s,velocity_nm_per_s)
+	new_segment()	
+	// Make all the unfolding/refolding ramps 
+	Variable i
+	for (i=0; i< n_ramps; i+=1)
+		Variable time_fold_and_unfold = abs(end_ramp_nm - start_ramp_nm)/velocity_nm_per_s
+		make_segment(start_ramp_nm,end_ramp_nm,time_fold_and_unfold,velocity_nm_per_s)
+		new_segment()		
+		make_segment(end_ramp_nm,start_ramp_nm,time_fold_and_unfold,velocity_nm_per_s)
+		new_segment()			
+	EndFor
+	// Make a 'back to zero' 
+	make_segment(start_ramp_nm,global_zero,time_initial_s,velocity_nm_per_s)	
+End Function

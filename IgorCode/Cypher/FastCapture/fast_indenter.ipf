@@ -9,7 +9,7 @@
 #include ":::Util:Numerical"
 #include "::asylum_interface"
 
-static constant DEF_NUMBER_OF_CALLS = 5
+static constant DEF_NUMBER_OF_CALLS = 10
 static constant max_info_chars = 100
 
 // XXX TODO: for this to work properly, as of 2017-6-7:
@@ -36,7 +36,7 @@ End Function
 
 Static Function default_timespan()
 	// Returns:  the default time for the indenter capture
-	return 25
+	return 19
 End Function
 
 Static Function /S default_wave_base_suffix()
