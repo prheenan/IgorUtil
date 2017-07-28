@@ -39,6 +39,10 @@ Structure InverseWeierstrassOptions
 	// 		By default, the cypher gets the force on the tip (e.g. default is negative means the tip
 	//		is pulled towards the surface), and IWT needs the force on the molecule
 	//
+	//		velocity_m_per_s: if present, this velocity is for the unfolding region(s), and -1 * velocity_m_per_s
+	//		is for the refolding region(s). This will over-ride fraction_velocity_fit, but is useful if flickering
+	//		is present early in the data.
+	//
 	//		path_to_input_file: where the pxp you want to analyze is. Should have a single wave 
 	// 		like <x><d>_Sep and a single wave like <x><d>_Force which are zeroed in separation and
 	// 		force and have an integer number of retract/approach pairs. <x> and <y> can be anything,
@@ -48,6 +52,7 @@ Structure InverseWeierstrassOptions
 	Variable fraction_velocity_fit
 	Variable f_one_half_N
 	Variable flip_forces
+	Variable velocity_m_per_s
 	Struct RuntimeMetaInfo meta
 EndStructure
 
@@ -91,6 +96,9 @@ Static Function /S python_command(opt)
 	ModOperatingSystemUtil#append_argument(Output,"f_one_half",num2str(opt.f_one_half_N))
 	ModOperatingSystemUtil#append_argument(Output,"fraction_velocity_fit",num2str(opt.fraction_velocity_fit))
 	ModOperatingSystemUtil#append_argument(Output,"flip_forces",num2str(opt.flip_forces))
+	if (opt.velocity_m_per_s > 0) 
+		ModOperatingSystemUtil#append_argument(Output,"velocity",num2str(opt.velocity_m_per_s))
+	EndIf
 	String output_file = output_file_name(opt)
 	String input_file = opt.meta.path_to_input_file
 	// Windows is a special flower and needs its paths adjusted

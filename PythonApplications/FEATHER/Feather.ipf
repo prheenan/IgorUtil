@@ -121,20 +121,6 @@ Static Function feather(user_options,output)
 	// Run the python code 
 	String PythonCommand = ModFeather#python_command(options)	
 	ModOperatingSystemUtil#execute_python(PythonCommand)
-	// Get the data into wavesd starting with <basename>
-	ModOperatingSystemUtil#assert_run_generated_output(options.meta)
-	// Get the data into wavesd starting with <basename>
-	String basename = "tmp"
-	// load the wave (the first 2 lines are header)
-	Variable first_line = 2
-	String igor_path = options.meta.path_to_output_file
-	ModOperatingSystemUtil#read_csv_to_path(basename,igor_path,first_line=first_line)
-	// Put it in the output parts
-	Duplicate /O $(basename + "0"), output.event_starts
-	// kill all the temporary stuff
-	KillWaves /Z $(basename + "0")
-	// kill the output file
-	// /Z: if the file doesn't exist, dont worry about it  (we assert we deleted below)
-	DeleteFile /Z (igor_path)
-	ModErrorUtil#Assert(V_flag == 0,msg="Couldn't delete output file")
+	Make /O/FREE/Wave wave_tmp = {output.event_starts}
+	ModOperatingSystemUtil#get_output_waves(wave_tmp,options.meta,skip_lines=2)
 End Function

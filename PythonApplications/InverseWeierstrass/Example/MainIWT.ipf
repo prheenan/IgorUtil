@@ -32,6 +32,7 @@ Static Function Main(base,[input_file])
 	opt.number_of_pairs = 16
 	opt.number_of_bins = 150
 	opt.fraction_velocity_fit = 0.1
+	opt.velocity_m_per_s = 20e-9
 	opt.f_one_half_N = 8e-12
 	opt.flip_forces = 0
 	opt.meta.path_to_input_file = input_file
