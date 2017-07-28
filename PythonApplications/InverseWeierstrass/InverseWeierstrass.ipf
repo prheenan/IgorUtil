@@ -137,22 +137,8 @@ Static Function inverse_weierstrass(user_options,output)
 	// Run the python code 
 	String PythonCommand = ModInverseWeierstrass#python_command(options)	
 	ModOperatingSystemUtil#execute_python(PythonCommand)
-	// Get the data into wavesd starting with <basename>
-	String basename = "iwt_tmp"
-	ModOperatingSystemUtil#assert_run_generated_output(options.meta)
-	// POST: run generated a file
-	// load the wave (the first 2 lines are header)
-	Variable first_line = 3
-	String igor_path = options.meta.path_to_output_file
-	ModOperatingSystemUtil#read_csv_to_path(basename,igor_path,first_line=first_line)
-	// Put it in the output parts
-	Duplicate /O $(basename + "0"), output.molecular_extension_meters
-	Duplicate /O $(basename + "1"), output.energy_landscape_joules
-	Duplicate /O $(basename + "2"), output.tilted_energy_landscape_joules
-	// kill all the temporary stuff
-	KillWaves /Z $(basename + "0"), $(basename + "1"), $(basename + "2")
-	// kill the output file
-	// /Z: if the file doesn't exist, dont worry about it  (we assert we deleted below)
-	DeleteFile /Z (igor_path)
-	ModErrorUtil#Assert(V_flag == 0,msg="Couldn't delete output file")
+	// Get the data into waves
+	// Make a wave to hold the output waves in the order we want
+	Make /O/FREE/WAVE wave_tmp = {output.molecular_extension_meters,output.energy_landscape_joules,output.tilted_energy_landscape_joules}
+	ModOperatingSystemUtil#get_output_waves(wave_tmp,options.meta,skip_lines=2)
 End Function

@@ -330,3 +330,56 @@ Static Function assert_run_generated_output(output)
 	String ErrorString = "IWT couldnt find output file at: " + igor_path
 	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 End Function 
+
+Static Function get_output_waves(waves_references,output,[skip_lines,base_name,kill_file])
+	// Gets the output columns associated with the given csv output
+	//
+	// Args:
+	//	waves_references: a wave of waves (made with 'Make /WAVE = {blah1,blah2}') which hold the in-order
+	//	columns associted with the output file (e.g. if the columns are time,separation,force, the waves should be 
+	//	in that order)
+	//
+	//	output: see get_updated_options
+	//	skip_lines: how many lines to skip if the file hasa header. defaults to 0  (no header)
+	// 	base_name: the name for the temporary waves that will be made. 
+	//	kill_file: if the file should be deleted after being read. *default to true*, to avoid stale results
+	//
+	//	Returns:
+	//		nothing, throws errors if the output file doesn't exist. 
+	Wave /WAVE waves_references
+	Struct RuntimeMetaInfo & output
+	Variable skip_lines
+	Variable kill_file
+	String base_name
+	if (ParamIsDefault(base_name))
+		base_name = "prh_tmp_input"
+	EndIf	
+	skip_lines = ParamIsDefault(skip_lines) ? 0 : skip_lines
+	kill_file = ParamIsDefault(kill_file) ? 1 : kill_file
+	// Make sure the output file was make
+	ModOperatingSystemUtil#assert_run_generated_output(output)
+	// POST: run generated a file	
+	Variable first_line = skip_lines+1
+	Variable i
+	Variable n = DimSize(waves_references,0)
+	String igor_path = output.path_to_output_file
+	// read the file in
+	ModOperatingSystemUtil#read_csv_to_path(base_name,igor_path,first_line=first_line)
+	// POST: reading went OK, read all the waves in
+	for (i=0;  i<n ; i+=1)
+		Wave m_tmp_wave = $(base_name + num2str(i))
+		Wave tmp = waves_references[i]
+		Duplicate /O m_tmp_wave,tmp
+		// Kill the placeholder wave 
+		KillWaves /Z m_tmp_wave
+	EndFor
+	// POST: all waves are read. clean up the file if we need to. 
+	if (kill_file)
+		// kill the output file
+		// /Z: if the file doesn't exist, dont worry about it  (we assert we deleted below)
+		DeleteFile /Z (igor_path)
+		ModErrorUtil#Assert(V_flag == 0,msg="Couldn't delete output file")
+	EndIf
+End Function
+
+
