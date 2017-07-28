@@ -14,9 +14,18 @@
 //
 
 Structure RuntimeMetaInfo
+	// // User Specified Variables
+	//path_to_research_directory: where Reseach lives
 	String path_to_research_directory
+	// path_to_input_file: where the input file lives
        String path_to_input_file
+       // path_to_python_binary: where the binary file lives. Will be set it if doesn't exist
 	String path_to_python_binary
+	// // Do not set the following fields; they are set automagically / overwritten by Igor
+	// Where the main file lives. 
+	String path_to_main
+	// path_to_output_file: where the output file lives
+       String path_to_output_file
 EndStructure
 
 
@@ -265,3 +274,59 @@ Static Function /S sanitize_mac_path_for_igor(path)
 	return igor_path
 End Function
 
+Static Function get_updated_options(output)
+	// Updates (by reference) output to account for operating system snafus
+	//
+	// Args:
+	//	output: RuntimeMetaInfo object, fully set
+	// Returns:
+	//	nothing, but updates output appropriately 
+	Struct RuntimeMetaInfo & output
+	// POST: input has been copied to output. 
+	// do some cleaning on the input and output...
+	output.path_to_input_file = ModOperatingSystemUtil#replace_double("/",output.path_to_input_file)
+	output.path_to_research_directory = ModOperatingSystemUtil#replace_double("/",output.path_to_research_directory)
+	String input_file_igor, python_file_igor
+	// first thing we do is check if all the files exist
+	if (ModOperatingSystemUtil#running_windows())
+		output.path_to_input_file = ModOperatingSystemUtil#sanitize_windows_path_for_igor(output.path_to_input_file)
+		output.path_to_research_directory = ModOperatingSystemUtil#sanitize_windows_path_for_igor(output.path_to_research_directory)
+		input_file_igor = ModOperatingSystemUtil#to_igor_path(output.path_to_input_file)
+		python_file_igor = ModOperatingSystemUtil#to_igor_path(output.path_to_main)
+	else
+		input_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(output.path_to_input_file)
+		python_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(output.path_to_main)
+	endif
+	// // ensure we can actually call the input file (ie: it should exist)
+	Variable FileExists = ModIoUtil#FileExists(input_file_igor)
+	String ErrorString = "Bad Path, received non-existing input file: " + output.path_to_input_file
+	ModErrorUtil#Assert(FileExists,msg=ErrorString)
+	// POST: input file exists
+	// // ensure we can actually find the python file
+	FileExists = ModIoUtil#FileExists(ModOperatingSystemUtil#to_igor_path(python_file_igor))
+	ErrorString = "Bad Path, couldnt find python script at: " + python_file_igor
+	ModErrorUtil#Assert(FileExists,msg=ErrorString)
+	// POST: input and python directories are a thing!
+	String output_file = output.path_to_output_file
+	output.path_to_output_file = ModOperatingSystemUtil#sanitize_path(output_file)
+	if (running_windows())
+		// much easier just to use the user's input, assume it is OK at this point.
+		// note that windows needs the <.py> file path to be something like C:/...
+		output.path_to_research_directory = ModOperatingSystemUtil#sanitize_path_for_windows(output.path_to_research_directory)
+	endif	
+End Function
+
+Static Function assert_run_generated_output(output)
+	// Asserts that the output file listed in 'output' exists
+	//
+	// Args:
+	// 		output: see get_updated_options
+	// Returns:
+	//		Nothing, throws an error if things go wrong. 
+	Struct RuntimeMetaInfo & output
+	// Ensure the file actually got made...	
+	String igor_path = output.path_to_output_file
+	Variable FileExists = ModIoUtil#FileExists(igor_path)
+	String ErrorString = "IWT couldnt find output file at: " + igor_path
+	ModErrorUtil#Assert(FileExists,msg=ErrorString)
+End Function 

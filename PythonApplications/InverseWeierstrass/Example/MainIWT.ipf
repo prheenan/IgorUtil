@@ -34,8 +34,8 @@ Static Function Main(base,[input_file])
 	opt.fraction_velocity_fit = 0.1
 	opt.f_one_half_N = 8e-12
 	opt.flip_forces = 0
-	opt.path_to_input_file = input_file
-	opt.path_to_research_directory = base
+	opt.meta.path_to_input_file = input_file
+	opt.meta.path_to_research_directory = base
 	// Make the output waves
 	Struct InverseWeierstrassOutput output
 	Make /O/N=0, output.molecular_extension_meters

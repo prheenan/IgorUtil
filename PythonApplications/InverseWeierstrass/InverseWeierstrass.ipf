@@ -48,8 +48,7 @@ Structure InverseWeierstrassOptions
 	Variable fraction_velocity_fit
 	Variable f_one_half_N
 	Variable flip_forces
-	String path_to_research_directory
-	String path_to_input_file
+	Struct RuntimeMetaInfo meta
 EndStructure
 
 Static Function /S full_path_to_iwt_folder(options)
@@ -60,7 +59,7 @@ Static Function /S full_path_to_iwt_folder(options)
 	// Returns:
 	//		string to full path
 	Struct InverseWeierstrassOptions & options
-	return options.path_to_research_directory + path_to_iwt_folder
+	return options.meta.path_to_research_directory + path_to_iwt_folder
 End Function
 
 Static Function /S output_file_name(options)
@@ -93,7 +92,7 @@ Static Function /S python_command(opt)
 	ModOperatingSystemUtil#append_argument(Output,"fraction_velocity_fit",num2str(opt.fraction_velocity_fit))
 	ModOperatingSystemUtil#append_argument(Output,"flip_forces",num2str(opt.flip_forces))
 	String output_file = output_file_name(opt)
-	String input_file = opt.path_to_input_file
+	String input_file = opt.meta.path_to_input_file
 	// Windows is a special flower and needs its paths adjusted
 	if (running_windows())
 		output_file = ModOperatingSystemUtil#sanitize_path_for_windows(output_file)
@@ -127,53 +126,24 @@ Static Function inverse_weierstrass(user_options,output)
 	//
 	Struct InverseWeierstrassOutput & output
 	Struct InverseWeierstrassOptions & user_options
+	// Manually set the main path and output file
+	user_options.meta.path_to_main = full_path_to_iwt_main(user_options)
+	user_options.meta.path_to_output_file = output_file_name(user_options)
 	// make a local copy of user_options, since we have to mess with paths (ugh)
 	// and we want to adhere to principle of least astonishment
 	Struct InverseWeierstrassOptions options 
 	options = user_options
-	// do some cleaning on the input and output...
-	options.path_to_input_file = ModOperatingSystemUtil#replace_double("/",options.path_to_input_file)
-	options.path_to_research_directory = ModOperatingSystemUtil#replace_double("/",options.path_to_research_directory)
-	String input_file_igor, python_file_igor
-	String path_to_iwt_main = ModInverseWeierstrass#full_path_to_iwt_main(options)
-	// first thing we do is check if all the files exist
-	if (ModOperatingSystemUtil#running_windows())
-		options.path_to_input_file = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.path_to_input_file)
-		options.path_to_research_directory = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.path_to_research_directory)
-		input_file_igor = ModOperatingSystemUtil#to_igor_path(options.path_to_input_file)
-		python_file_igor = ModOperatingSystemUtil#to_igor_path(path_to_iwt_main)
-	else
-		input_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(options.path_to_input_file)
-		python_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(path_to_iwt_main)
-	endif
-	// // ensure we can actually call the input file (ie: it should exist)
-	Variable FileExists = ModIoUtil#FileExists(input_file_igor)
-	String ErrorString = "Bad Path, IWT received non-existing input file: " + options.path_to_input_file
-	ModErrorUtil#Assert(FileExists,msg=ErrorString)
-	// POST: input file exists
-	// // ensure we can actually find the python file
-	FileExists = ModIoUtil#FileExists(ModOperatingSystemUtil#to_igor_path(python_file_igor))
-	ErrorString = "Bad Path, IWT couldnt find python script at: " + python_file_igor
-	ModErrorUtil#Assert(FileExists,msg=ErrorString)
-	// POST: input and python directories are a thing!
-	String output_file = output_file_name(options)
-	if (running_windows())
-		// much easier just to use the user's input, assume it is OK at this point.
-		// note that windows needs the <.py> file path to be something like C:/...
-		options.path_to_research_directory = ModOperatingSystemUtil#sanitize_path_for_windows(options.path_to_research_directory)
-	endif
+	ModOperatingSystemUtil#get_updated_options(options.meta)
 	// Run the python code 
 	String PythonCommand = ModInverseWeierstrass#python_command(options)	
 	ModOperatingSystemUtil#execute_python(PythonCommand)
 	// Get the data into wavesd starting with <basename>
 	String basename = "iwt_tmp"
-	String igor_path = ModOperatingSystemUtil#sanitize_path(output_file)
-	// Ensure the file actually got made...
-	FileExists = ModIoUtil#FileExists(igor_path)
-	ErrorString = "IWT couldnt find output file at: " + igor_path
-	ModErrorUtil#Assert(FileExists,msg=ErrorString)
+	ModOperatingSystemUtil#assert_run_generated_output(options.meta)
+	// POST: run generated a file
 	// load the wave (the first 2 lines are header)
 	Variable first_line = 3
+	String igor_path = options.meta.path_to_output_file
 	ModOperatingSystemUtil#read_csv_to_path(basename,igor_path,first_line=first_line)
 	// Put it in the output parts
 	Duplicate /O $(basename + "0"), output.molecular_extension_meters

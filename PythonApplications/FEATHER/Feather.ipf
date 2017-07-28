@@ -110,53 +110,24 @@ Static Function feather(user_options,output)
 	//
 	Struct FeatherOutput & output
 	Struct FeatherOptions & user_options
+	// Manually set the main path and output file
+	user_options.meta.path_to_main = full_path_to_feather_main(user_options)
+	user_options.meta.path_to_output_file = output_file_name(user_options)
 	// make a local copy of user_options, since we have to mess with paths (ugh)
 	// and we want to adhere to principle of least astonishment
 	Struct FeatherOptions options 
 	options = user_options
-	// do some cleaning on the input and output...
-	options.meta.path_to_input_file = ModOperatingSystemUtil#replace_double("/",options.meta.path_to_input_file)
-	options.meta.path_to_research_directory = ModOperatingSystemUtil#replace_double("/",options.meta.path_to_research_directory)
-	String input_file_igor, python_file_igor
-	String path_to_feather_main = ModFeather#full_path_to_feather_main(options)
-	// first thing we do is check if all the files exist
-	if (ModOperatingSystemUtil#running_windows())
-		options.meta.path_to_input_file = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.meta.path_to_input_file)
-		options.meta.path_to_research_directory = ModOperatingSystemUtil#sanitize_windows_path_for_igor(options.meta.path_to_research_directory)
-		input_file_igor = ModOperatingSystemUtil#to_igor_path(options.meta.path_to_input_file)
-		python_file_igor = ModOperatingSystemUtil#to_igor_path(path_to_feather_main)
-	else
-		input_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(options.meta.path_to_input_file)
-		python_file_igor = ModOperatingSystemUtil#sanitize_mac_path_for_igor(path_to_feather_main)
-	endif
-	// // ensure we can actually call the input file (ie: it should exist)
-	Variable FileExists = ModIoUtil#FileExists(input_file_igor)
-	String ErrorString = "Bad Path, received non-existing input file: " + options.meta.path_to_input_file
-	ModErrorUtil#Assert(FileExists,msg=ErrorString)
-	// POST: input file exists
-	// // ensure we can actually find the python file
-	FileExists = ModIoUtil#FileExists(ModOperatingSystemUtil#to_igor_path(python_file_igor))
-	ErrorString = "Bad Path, couldnt find python script at: " + python_file_igor
-	ModErrorUtil#Assert(FileExists,msg=ErrorString)
-	// POST: input and python directories are a thing!
-	String output_file = output_file_name(options)
-	if (running_windows())
-		// much easier just to use the user's input, assume it is OK at this point.
-		// note that windows needs the <.py> file path to be something like C:/...
-		options.meta.path_to_research_directory = ModOperatingSystemUtil#sanitize_path_for_windows(options.meta.path_to_research_directory)
-	endif
+	ModOperatingSystemUtil#get_updated_options(options.meta)
 	// Run the python code 
-	String PythonCommand = ModFeather#python_command(options)
+	String PythonCommand = ModFeather#python_command(options)	
 	ModOperatingSystemUtil#execute_python(PythonCommand)
 	// Get the data into wavesd starting with <basename>
+	ModOperatingSystemUtil#assert_run_generated_output(options.meta)
+	// Get the data into wavesd starting with <basename>
 	String basename = "tmp"
-	String igor_path = ModOperatingSystemUtil#sanitize_path(output_file)
-	// Ensure the file actually got made...
-	FileExists = ModIoUtil#FileExists(igor_path)
-	ErrorString = "Couldnt find output file at: " + igor_path
-	ModErrorUtil#Assert(FileExists,msg=ErrorString)
 	// load the wave (the first 2 lines are header)
 	Variable first_line = 2
+	String igor_path = options.meta.path_to_output_file
 	ModOperatingSystemUtil#read_csv_to_path(basename,igor_path,first_line=first_line)
 	// Put it in the output parts
 	Duplicate /O $(basename + "0"), output.event_starts

@@ -89,7 +89,7 @@ def IsValidFec(Record):
 def valid_fec_allow_endings(Record):
     name = ProcessSingleWave.GetWaveName(Record.wave).lower()
     for ext in ProcessSingleWave.DATA_EXT:
-        if (ext.lower() in name):
+        if (str(ext.lower()) in str(name)):
             return True
     return False
 

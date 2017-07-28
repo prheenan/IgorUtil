@@ -37,14 +37,14 @@ def IgorNameRegex(Name):
     Returns:
         tuple of digit(ending) 
     """
-    match = IgorNamePattern.match(Name)
+    match = IgorNamePattern.match(str(Name))
     if match:
         preamble = match.group(1)
         digit = match.group(2)
         ending = match.group(3)
         return preamble,digit,ending
     else:
-        raise ValueError("Couldn't match {:s}".format(Name))
+        raise ValueError("Couldn't match {:s}".format(str(Name)))
 
 
 def GetWaveStruct(waverecord):
@@ -98,7 +98,7 @@ def GetNote(wavestruct):
     # first remove robs formatting (replace ; by nothing, = by :)
     # strip out all the whitespace, split by colons, split all whitespace in
     # each name/value,then convert (ie: maybe a float)
-    Sanit = lambda x: x.replace(";","").replace("=",":").rstrip().\
+    Sanit = lambda x: str(x).replace(";","").replace("=",":").rstrip().\
             split(NOTE_DELIM,maxSplit)
     ProcessLine = lambda x: tuple([SafeConvertValue(y.strip()) for y in
                                    Sanit(x)])
@@ -194,7 +194,7 @@ class WaveObj:
         else:
             raise ValueError("Must be passed either raw .pxp xor Note and Data")
         # determine if we were concatenated
-        self.isConcat = self.Name().endswith(ENDING_CONCAT)
+        self.isConcat = str(self.Name()).endswith(ENDING_CONCAT)
                 
     def SourceFilename(self):
         """
