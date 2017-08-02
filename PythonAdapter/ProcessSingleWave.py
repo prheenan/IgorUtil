@@ -90,8 +90,11 @@ def GetNote(wavestruct):
         A dictionary of (name,value) tuples of the single wave.
     """
     # split the note by newlines
-    mNote =  wavestruct[WAVE_NOTE_STR].replace("\r","\n").replace(";","\n").\
-        splitlines()
+    mNote =  wavestruct[WAVE_NOTE_STR]\
+        .replace("\r","\n")\
+        .replace(";","\n")\
+        .replace("=",":")\
+        .splitlines()
     pattern = re.compile(r"""
                          ([^:]+)      # any non-colon (captured)
                          :            # a literal colon
