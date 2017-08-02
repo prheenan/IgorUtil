@@ -90,27 +90,25 @@ def GetNote(wavestruct):
         A dictionary of (name,value) tuples of the single wave.
     """
     # split the note by newlines
-    mNote =  wavestruct[WAVE_NOTE_STR].splitlines()
-    # split the note into name : value pairs
-    # we only want the first split; anything else is data (e.g. Time might
-    # be like 3:10:50PM, dont want to split terribly)
-    maxSplit=1
-    # first remove robs formatting (replace ; by nothing, = by :)
-    # strip out all the whitespace, split by colons, split all whitespace in
-    # each name/value,then convert (ie: maybe a float)
-    Sanit = lambda x: x.replace(";","").replace("=",":").rstrip().\
-            split(NOTE_DELIM,maxSplit)
-    ProcessLine = lambda x: tuple([SafeConvertValue(y.strip()) for y in
-                                   Sanit(x)])
-    # turn the tuples into a dictionary
-    tuples = []
+    mNote =  wavestruct[WAVE_NOTE_STR].replace("\r","\n").replace(";","\n").\
+        splitlines()
+    pattern = re.compile(r"""
+                         ([^:]+)      # any non-colon (captured)
+                         :            # a literal colon
+                         \s*          # possible whitespace (ignored)
+                         ([^\s]+)     # any non whitespace (captured)
+                         """,re.VERBOSE)
+    tuples = []                         
     for line in mNote:
-        tup = ProcessLine(line)
-        # need a <key,value> pair. probably not the most efficient way of doing
-        # things..
-        if len(tup) == 1:
-            tup = tuple([tup[0],""])
-        tuples.append(tup)
+        matched = pattern.match(line)
+        if not matched:
+            continue
+        # POST: we matched the pattern
+        groups = matched.groups()
+        # convert the value into a float, if possible. 
+        value = SafeConvertValue(groups[1])
+        key = groups[0]
+        tuples.append([key,value])
     # make sure all the values have length at least one
     # XXX may want to check for NOTE_DELIM on each string
     if (len(tuples) == 0):
