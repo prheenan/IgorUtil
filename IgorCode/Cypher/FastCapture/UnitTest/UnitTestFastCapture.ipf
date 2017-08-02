@@ -2,7 +2,7 @@
 #pragma rtGlobals=3	
 
 #pragma ModuleName = ModUnitTestFastCapture
-#include "::asylum_interface"
+#include ":::asylum_interface"
 #include "::fast_indenter"
 #include "::::Util:Testing"
 

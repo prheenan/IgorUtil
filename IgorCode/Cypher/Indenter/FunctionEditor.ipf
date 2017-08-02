@@ -5,6 +5,8 @@
 #include ":::Util:ErrorUtil"
 #include ":::Util:PlotUtil"
 
+// Note: at present, this function assumes all values are given as nanometers, as 
+// described in setup_for_new_indenter. 
 
 Static Function /S editor_base()
 	// Returns: where the indenter lives
@@ -44,6 +46,37 @@ Static Function set_indenter_variable(name,value)
 	ARFESetVarFunc(setvar_struct)
 End Function
 
+Static Function /S segment_start_position()
+	// Returns: The control name for the function editor's "Start" field
+	return "SegmentStartPos"
+End Function
+
+Static Function /S segment_end_position()
+	// Returns: The control name for the function editor's "End" field
+	return "SegmentEndPos"
+End Function 
+
+Static Function /S segment_velocity()
+	// Returns: the control name for  the function editor's  "Velocity" field
+	return "SegmentVelocity"
+End Function 
+
+Static Function make_segment(start_loc,end_loc,time_delta,velocity)
+	// Makes an indenter segment in the GUI
+	//
+	// Args:
+	//	<start/end>_loc: the z value needed for the beginning and end of the segment
+	// 	time_delta: thelength of the segment
+	// 	velocity: the velocity of the segment 
+	// Returns:
+	//	nothing
+	Variable start_loc,end_loc,time_delta,velocity
+	set_indenter_variable(segment_start_position(),start_loc)
+	set_indenter_variable(segment_end_position(),end_loc)
+	set_indenter_variable(segment_velocity(),velocity)
+      set_indenter_variable("SegmentLength",time_delta)	
+End Function 
+
 Static Function make_segment_equilibrium(location,time_delta)
 	// Makes the currently-selected segment an equilibrium segment 
 	// at a certain Z with a given time
@@ -54,11 +87,14 @@ Static Function make_segment_equilibrium(location,time_delta)
 	// Returns:
 	//	nothing
 	Variable location,time_delta
-	set_indenter_variable("SegmentLength",time_delta)
-	set_indenter_variable("SegmentStartPos",location)
-	set_indenter_variable("SegmentEndPos",location)
-	set_indenter_variable("SegmentVelocity",0)	
+	// velocity is zero (not moving)
+	make_segment(location,location,time_delta,0)
 End Function
+
+Static Function new_segment()
+	// Creates a new segment on the function editor panel 
+	ARFEInsertFunc(indenter_handle(),1,nan)
+End Function 
 
 Static Function /S indenter_handle()
 	// Returns: the 'handle' for the indenter
@@ -70,8 +106,8 @@ Static Function delete_existing_indenter()
 	// Deletes the existing waves on the indenter
 	// (technically, it doesn't the delete the last segment, 
 	// because there always has to be one left)
-	Wave wave_ref = $(variable_wave_name())
-	ModErrorUtil#assert_wave_exists(wave_ref)
+	Wave /Z wave_ref = $(variable_wave_name())
+	ModErrorUtil#assert_wave_exists(wave_ref,msg="Check that indenter panel and function editor are open.")
 	String handle = indenter_handle()
 	// keep deleting segments while they are a thing
 	// XXX make into for loop?
@@ -79,6 +115,29 @@ Static Function delete_existing_indenter()
 		Variable A, NumKilled, NumOfSegs = wave_ref[%NumOfSegments][%Value]
 		ARFEDeleteFunc(handle,NumOfSegs)	
 	while (NumOfSegs > 1)
+End Function
+
+
+Static Function setup_for_new_indenter([units])
+	// Deletes all previous indenter information, setting up the function
+	// editor for a new one
+	//
+	// Args:
+	//	units: the units everything should be in. defaults to nm
+	// Returns:
+	// 	nothing 
+	Variable units
+	// by default, assume nanometers. 
+	units = ParamIsDefault(units) ? 1e-9 : units
+	delete_existing_indenter()
+	// POST: all old indenter steps are gone. 
+	// Make all the units into the proper units
+	Make /FREE/T tmp_txt = {segment_start_position(),segment_end_position(),segment_velocity()}
+	Variable n = DimSize(tmp_txt,0)
+	Variable i 
+	for (i=0; i < n; i+=1)
+		FEPutValue(indenter_handle(),tmp_txt[i],"Value",units)
+	EndFor	
 End Function
 
 Static Function setup_equilbirum_wave(locations,n_delta_per_location,time_delta)
@@ -111,7 +170,7 @@ Static Function setup_equilbirum_wave(locations,n_delta_per_location,time_delta)
 	for (i=1;i<n_times; i+= 1)
 		Variable location_tmp = locations[i]
 		Variable time_tmp =  time_delta*n_delta_per_location[i]
-		ARFEInsertFunc(indenter_handle(),0,nan)
+		new_segment()
 		make_segment_equilibrium(location_tmp,time_tmp)
 	EndFor
 End Function
@@ -177,6 +236,91 @@ Static Function default_bidirectional_staircase([start_x,delta_x,n_steps,time_dw
 	delta_x = ParamIsDefault(delta_x) ? -0.5 : delta_x
 	n_steps = ParamIsDefault(n_steps) ? 50: n_steps
 	time_dwell= ParamIsDefault(time_dwell) ? 75e-3 : time_dwell
-	delete_existing_indenter()
+	setup_for_new_indenter()
 	staircase_equilibrium(start_x,delta_x,n_steps,time_dwell,use_reverse=1)
+End Function
+
+Static Function default_staircase([start_x,delta_x,n_steps,time_dwell])
+	// Sets up a 1-directional staircase
+	//
+	//	NOTE: this deletes any existing indenter set up
+	//
+	// Args:
+	//	 see default_bidirectional_staircase
+	// Returns:
+	//	 nothing
+	Variable start_x,delta_x,n_steps,time_dwell
+	start_x = ParamIsDefault(start_x) ? -65 : start_x
+	delta_x = ParamIsDefault(delta_x) ? 1 : delta_x
+	n_steps = ParamIsDefault(n_steps) ? 6: n_steps
+	time_dwell= ParamIsDefault(time_dwell) ? 1 : time_dwell
+	setup_for_new_indenter()
+	staircase_equilibrium(start_x,delta_x,n_steps,time_dwell,use_reverse=0)
+End Function
+
+Static Function default_inverse_boltzmann()
+	Variable start_boltzmann = -60
+	// parameters for the initial point spread function region 
+	Variable point_spread_initial_step_nm = -5
+	Variable point_spread_dwell_s = 0.5
+	Variable n_initial_steps = 4	
+	Variable start_staircase = start_boltzmann + abs((n_initial_steps) * point_spread_initial_step_nm)
+	Variable time_initial_s = 0.5
+	Variable dwell_time_initial_s = 1
+	Variable velocity_nm_per_s = abs(start_staircase/time_initial_s)
+	setup_for_new_indenter()
+	// make an effective dwell slightly into the surface, to avoid unit problems. 
+	Variable global_zero = 1
+	make_segment(global_zero,global_zero,dwell_time_initial_s,0)
+	new_segment()	
+	// Make a segment getting to the start of tthe first psf region 
+	make_segment(global_zero,start_staircase,time_initial_s,velocity_nm_per_s)
+	new_segment()
+	// make the first psf region 
+	staircase_equilibrium(start_staircase,point_spread_initial_step_nm,n_initial_steps,point_spread_dwell_s)
+	new_segment()	
+	// Make the boltzmann staircase...
+	Variable step_boltz_nm = -0.33
+	Variable n_steps_boltz = 20
+	Variable dwell_boltz_s = 2
+	staircase_equilibrium(start_boltzmann,step_boltz_nm,n_steps_boltz,dwell_boltz_s)
+	// Make the second psf region
+	Variable step_second_psf_region_nm = -5 
+	Variable start_second_psf_region_nm = start_boltzmann + step_boltz_nm * (n_steps_boltz-1) + step_second_psf_region_nm
+	Variable n_second_psf_region = n_initial_steps
+	Variable dwell_second_psf_region_s = point_spread_dwell_s
+	staircase_equilibrium(start_second_psf_region_nm,step_second_psf_region_nm,n_second_psf_region,dwell_second_psf_region_s)	
+	Variable end_equil = start_second_psf_region_nm + step_second_psf_region_nm * (n_second_psf_region-1)
+	// Make a new segment for the 'return to 0'
+	new_segment()		
+	make_segment(end_equil,global_zero,time_initial_s,velocity_nm_per_s)
+End Function 
+
+Static Function slow_refolding_experiment()
+	Variable velocity_nm_per_s = 50
+	Variable dwell_s = 1
+	Variable start_ramp_nm =  -50
+	Variable end_ramp_nm = -90
+	Variable n_ramps = 5
+	setup_for_new_indenter()
+	// Dwell into the surface
+	Variable global_zero = 1
+	make_segment(global_zero,global_zero,dwell_s,0)
+	new_segment()		
+	// Get to the first ramp 
+	// Make a segment getting to the start of tthe first psf region 
+	Variable time_initial_s = abs(global_zero - start_ramp_nm)/velocity_nm_per_s
+	make_segment(global_zero,start_ramp_nm,time_initial_s,velocity_nm_per_s)
+	new_segment()	
+	// Make all the unfolding/refolding ramps 
+	Variable i
+	for (i=0; i< n_ramps; i+=1)
+		Variable time_fold_and_unfold = abs(end_ramp_nm - start_ramp_nm)/velocity_nm_per_s
+		make_segment(start_ramp_nm,end_ramp_nm,time_fold_and_unfold,velocity_nm_per_s)
+		new_segment()		
+		make_segment(end_ramp_nm,start_ramp_nm,time_fold_and_unfold,velocity_nm_per_s)
+		new_segment()			
+	EndFor
+	// Make a 'back to zero' 
+	make_segment(start_ramp_nm,global_zero,time_initial_s,velocity_nm_per_s)	
 End Function

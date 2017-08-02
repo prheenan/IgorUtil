@@ -102,6 +102,14 @@ Structure Font
 	Variable FontSize,FontStyle
 EndStructure
 
+Structure cursor_info
+	// structure containing information about two cursors placed on a plot 
+	Variable a_idx 
+	Variable b_idx
+	String trace_name
+	Wave trace_reference
+EndStructure
+
 Static Function FontDefault(ToGet)
 	Struct Font &ToGet
 	ToGet.FontName = DEF_FONTNAME
@@ -221,7 +229,7 @@ Static Function /S current_experiment_name()
 	return IgorInfo(1)
 End Function
 
-Static Function cursor_info(graph_name,a_idx_ref,b_idx_ref,trace_name)
+Static Function cursor_info(graph_name,info_struct)
 	//	updates the given references to the A and B cursors on the given image
 	//	Args:
 	//		graph_name: name of a graph to look for
@@ -229,14 +237,17 @@ Static Function cursor_info(graph_name,a_idx_ref,b_idx_ref,trace_name)
 	//		trace_name: reference name of the trace the cursors are on 
 	//	Returns:
 	//		nothing, but updates the name and index references
+	struct cursor_info & info_struct
 	String graph_name
-	Variable & a_idx_ref,&b_idx_ref
-	String & trace_name
 	String a_info = CsrInfo(A,graph_name)
 	String b_info = CsrInfo(B,graph_name)
-	a_idx_ref = NumberByKey("POINT",a_info)
-	b_idx_ref = NumberByKey("POINT",b_info)
-	trace_name = StringByKey("TNAME",a_info)
+	Variable a_idx = NumberByKey("POINT",a_info)
+	Variable b_idx = NumberByKey("POINT",b_info)
+	String trace_name = StringByKey("TNAME",a_info)
+	info_struct.a_idx = a_idx
+	info_struct.b_idx =b_idx
+	info_struct.trace_name = trace_name
+	Wave info_struct.trace_reference = TraceNameToWaveRef(graph_name,trace_name)
 End Function
 
 Static Function strings_equal(a,b)
@@ -916,6 +927,7 @@ Static Function LoadInteractive(mFilePath,locToLoadInto,[ifPresentLoadIntoFileFo
 	EndIf
 End Function
 
+
 // Funcion to load system file "mFilePath" into data folder "locToLoadInto",
 // IF getRelLocFromFileName, then we set folderRelLoc to a new folder based on the file name
 // and load there
@@ -1001,7 +1013,7 @@ End Function
 
 
 Static Function /S cwd()
-	// Returns the path of the current working directory
+	// Returns: the path of the current working directory
 	return GetDataFolder(GETDATAFOLDER_FULLPATH)
 End Function
 

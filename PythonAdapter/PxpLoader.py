@@ -4,7 +4,7 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-from IgorUtil.PythonAdapter import ProcessSingleWave
+from IgorUtil.PythonAdapter import ProcessSingleWave,TimeSepForceObj
 from GeneralUtil.python.LibUtil import IgorUtil as IgorUtil
 from GeneralUtil.python import GenUtilities as pGenUtil
 
@@ -18,7 +18,7 @@ import collections
 # for rotating surface image 
 from scipy import ndimage
 
-class SurfaceImage:
+class SurfaceImage(ProcessSingleWave.WaveObj):
     """
     Class for encapsulating (XXX just the height) of an image
     """
@@ -35,6 +35,8 @@ class SurfaceImage:
         self.pixel_size_meters = Example.ImagePixelSize()
         self.NumRows = height.shape[0]
         self.range_meters = self.pixel_size_meters * self.NumRows
+        self.Note = Example.Note
+        self.Meta = TimeSepForceObj.Bunch(self.Note)
     def rotate(self,angle_degrees,**kwargs):
         self.height = ndimage.interpolation.rotate(self.height,
                                                    angle=angle_degrees,**kwargs)
@@ -112,8 +114,14 @@ def IsValidImage(Record):
     WaveStruct =  ProcessSingleWave.GetWaveStruct(Wave)
     header = ProcessSingleWave.GetHeader(WaveStruct)
     dat = WaveStruct['wData']
-    ToRet = len(dat.shape) == 3
-    return ToRet
+    if len(dat.shape) != 3:
+        return False
+    # POST: wave has three dimensions.
+    # check that the scan size and such are in there 
+    note = ProcessSingleWave.GetNote(WaveStruct)
+    if ("SlowScanSize" not in note or "ScanPoints" not in note):
+        return False
+    return True
 
 def LoadAllWavesFromPxp(filepath,load_func=loadpxp,ValidFunc=IsValidFec):
     """
@@ -252,17 +260,16 @@ def read_ibw_as_image(in_file):
     """
     ex = read_ibw_as_wave(in_file)
     return SurfaceImage(ex)
-
-def ReadImage(InFile):
+    
+def ReadImages(InFile,ValidFunc=IsValidImage):
     """
-    Reads a *single* image from the given pxp file
+    Reads images from the given pxp file
 
     Args:
          InFile: path
     Returns:
          List of tuple of <Full Wave Object, height array>
     """
-    Waves = PxpLoader.LoadAllWavesFromPxp(InFile,
-                                          ValidFunc=PxpLoader.IsValidImage)
+    Waves = LoadAllWavesFromPxp(InFile,ValidFunc=IsValidImage)
     # get all the images
     return [ SurfaceImage(Example) for Example in Waves]
