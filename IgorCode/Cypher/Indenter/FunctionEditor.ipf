@@ -297,11 +297,24 @@ Static Function default_inverse_boltzmann()
 End Function 
 
 Static Function slow_refolding_experiment()
-	Variable velocity_nm_per_s = 50
-	Variable dwell_s = 1
-	Variable start_ramp_nm =  -50
-	Variable end_ramp_nm = -90
-	Variable n_ramps = 5
+	refolding_experiment(velocity_nm_per_s=50,n_ramps=5,start_ramp_nm=-35,end_ramp_nm=-95)	
+End Function
+
+Static Function fishing_refolding_experiment()
+	refolding_experiment(velocity_nm_per_s=500,n_ramps=1,start_ramp_nm=-35,end_ramp_nm=-95)	
+End Function 
+
+Static function refolding_experiment([velocity_nm_per_s,n_ramps,start_ramp_nm,end_ramp_nm])	
+	Variable velocity_nm_per_s
+	Variable start_ramp_nm
+	Variable end_ramp_nm
+	Variable n_ramps
+	// initialize everrything
+	velocity_nm_per_s = ParamIsDefault(velocity_nm_per_s) ? 50 : velocity_nm_per_s
+	start_ramp_nm =  ParamIsDefault(start_ramp_nm) ? -50 : start_ramp_nm
+	end_ramp_nm = ParamIsDefault(end_ramp_nm) ? -90 : end_ramp_nm
+	n_ramps = ParamIsDefault(n_ramps) ? 5 : n_ramps
+	Variable dwell_s = 1	
 	setup_for_new_indenter()
 	// Dwell into the surface
 	Variable global_zero = 1
