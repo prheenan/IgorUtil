@@ -11,27 +11,36 @@ Static StrConstant path_to_boltzmann_folder = "Research/Perkins/Projects/PythonC
 Static StrConstant boltzmann_file = "main_inverse_boltzmann.py"
 
 Structure BoltzmannOutput
-	Wave event_starts
+	// The output from this application
+	// extension_bins: the x values for the probability distribution
+	// distribution: the (convolved, or 'measured') distribution, or probability at each of extension_bins
+	// distribution_deconvolved: the *deconvoled* distribution 
+	Wave extension_bins
+	Wave distribution
+	Wave distribution_deconvolved
 EndStructure
 
 Structure BoltzmannOptions
-	// Structure describing all the options the boltzmann takes
+	// Structure describing all the options this application takes 
 	//
 	//	Args: 
-	//		threshold: the probability (between 0 and 1, log spacing is a good idea)
-	//		tau: the number of points to use for spline fitting XXX currently not supported
+	//		number_of_bins: how many bins for P(q), the probability at a given extension
+	//		interpolation_factor: how much to interpolate by. This should be >=1. Having >1 means 
+	//		P(q) is interpolated, reducing problems in the deconvolution steps (since sharp jumps in P(q)
+	//		will cause problems when convolving). If you aren't sure, set this to 1 and smart_interpolation to 1
 	//
-	//		path_to_research_directory: absolute path to directory one above Research (parent of 
-	//		Research/Perkins/Projects/ ...)
+	//		smart_interpolation: if 1, then the code determines a good interpolation factor, assuming the gaussian_stdev
+	//		is set properly
 	//
-	//		path_to_input_file: where the pxp you want to analyze is. Should have a single wave 
-	// 		like <x><d>_Sep and a single wave like <x><d>_Force. <x> can be anything,
-	//  		<d> should be a 4-digit identifier (e.g. "Image0001_Sep" would be OK)
-	Variable threshold
-	Variable tau
-	Variable trigger_time
-	Variable dwell_time
-	Variable spring_constant
+	//		gaussian_stdev: the stdev of the (assumed gaussian) point spread function 
+	// 
+	//		output_interpolated: if 1, outputs the interpolated values (ie: of size number_of_bins * interpolation_factor)
+	//		If 0, decimates the data so it returns an array of exactly size number_of_bins.
+	Variable number_of_bins
+	Variable interpolation_factor
+      Variable smart_interpolation
+      Variable gaussian_stdev 
+      Variable output_interpolated
 	Struct RuntimeMetaInfo meta
 EndStructure
 
@@ -70,10 +79,12 @@ Static Function /S python_command(opt)
 	// Get just the python portion of the command
 	String Output
 	sprintf Output,"%s %s ",python_str,FullPath
-	ModOperatingSystemUtil#append_argument(Output,"number_of_bins",num2str(opt.threshold))
-	ModOperatingSystemUtil#append_argument(Output,"interpolation_factor",num2str(opt.tau))
-	ModOperatingSystemUtil#append_argument(Output,"smart_interpolation",num2str(opt.spring_constant))
-	ModOperatingSystemUtil#append_argument(Output,"gaussian_stdev",num2str(opt.dwell_time))
+	ModOperatingSystemUtil#append_argument(Output,"number_of_bins",num2str(opt.number_of_bins))
+	ModOperatingSystemUtil#append_argument(Output,"interpolation_factor",num2str(opt.interpolation_factor))
+	ModOperatingSystemUtil#append_argument(Output,"smart_interpolation",num2str(opt.smart_interpolation))
+	ModOperatingSystemUtil#append_argument(Output,"gaussian_stdev",num2str(opt.gaussian_stdev))
+	ModOperatingSystemUtil#append_argument(Output,"output_interpolated",num2str(opt.output_interpolated))
+	ModOperatingSystemUtil#append_argument(Output,"smart_interpolation",num2str(opt.smart_interpolation))
 	String output_file = output_file_name(opt)
 	String input_file = opt.meta.path_to_input_file
 	// Windows is a special flower and needs its paths adjusted
@@ -97,12 +108,12 @@ Static Function /S full_path_to_boltzmann_main(options)
 	return full_path_to_boltzmann_folder(options) + boltzmann_file
 End Function
 
-Static Function feather(user_options,output)
+Static Function inverse_boltzmann(user_options,output)
 	// Function that calls the IWT python code
 	//
 	// Args:
-	// 		options : instance of the InverseWeierstrassOptions struct. 
-	//		output: instance of InverseWeierstrassOutput. Note that the waves 
+	// 		options : instance of the BoltzmannOptions struct. 
+	//		output: instance of BoltzmannOutput. Note that the waves 
 	//		should already be allocated
 	// Returns:
 	//		Nothing, but sets output appropriately. 
@@ -120,6 +131,6 @@ Static Function feather(user_options,output)
 	// Run the python code 
 	String PythonCommand = python_command(options)	
 	ModOperatingSystemUtil#execute_python(PythonCommand)
-	Make /O/FREE/Wave wave_tmp = {output.event_starts}
+	Make /O/FREE/Wave wave_tmp = {output.extension_bins,output.distribution,output.distribution_deconvolved}
 	ModOperatingSystemUtil#get_output_waves(wave_tmp,options.meta,skip_lines=2)
 End Function
