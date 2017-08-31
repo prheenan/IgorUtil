@@ -36,11 +36,16 @@ Structure BoltzmannOptions
 	// 
 	//		output_interpolated: if 1, outputs the interpolated values (ie: of size number_of_bins * interpolation_factor)
 	//		If 0, decimates the data so it returns an array of exactly size number_of_bins.
+	//
+	//		n_iters: number of iterations before returning. By default, the code exits when it has converged
+	//		and nothing it changing. For a good place to start (assuming smart_interpolation=1), a few hundred
+	//		is usually pretty good. 
 	Variable number_of_bins
 	Variable interpolation_factor
       Variable smart_interpolation
       Variable gaussian_stdev 
       Variable output_interpolated
+      Variable n_iters
 	Struct RuntimeMetaInfo meta
 EndStructure
 
