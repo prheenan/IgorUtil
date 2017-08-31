@@ -85,6 +85,7 @@ Static Function /S python_command(opt)
 	ModOperatingSystemUtil#append_argument(Output,"gaussian_stdev",num2str(opt.gaussian_stdev))
 	ModOperatingSystemUtil#append_argument(Output,"output_interpolated",num2str(opt.output_interpolated))
 	ModOperatingSystemUtil#append_argument(Output,"smart_interpolation",num2str(opt.smart_interpolation))
+	ModOperatingSystemUtil#append_argument(Output,"n_iters",num2str(opt.n_iters))
 	String output_file = output_file_name(opt)
 	String input_file = opt.meta.path_to_input_file
 	// Windows is a special flower and needs its paths adjusted
