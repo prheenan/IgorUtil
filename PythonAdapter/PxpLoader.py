@@ -56,7 +56,7 @@ class SurfaceImage(ProcessSingleWave.WaveObj):
              height_nm_rel, offset to the pct
         """
         height_nm = self.height_nm()
-        MinV = np.median(height_nm)
+        MinV = np.min(height_nm)
         height_nm_rel = height_nm - MinV
         return height_nm_rel
     def range_microns(self):
