@@ -187,6 +187,11 @@ class WaveObj:
             self.Note["UnitsY"] = unitsY
             self.Note["UnitsX"] = unitsX
             self.Note["Name"] = self.name
+            # try to get the units...
+            try:
+                self.Note["DeltaDim"] = header['sfA']
+            except KeyError:
+                pass
             self.Note["Description"] = ""
             assert SourceFile is not None ,\
                 "Must give source file upon creation"
@@ -253,10 +258,15 @@ class WaveObj:
             return self.Note["Invols"]
     def DeltaX(self):
         try:
-            return 1./self.Note["NumPtsPerSec"]
+            # get the first dimensional delta
+            to_ret = self.Note["DeltaDim"][0]
         except KeyError:
-            # Rob
-            return 1./self.Note["SamplingRate"]
+            try:
+                to_ret =  1./self.Note["NumPtsPerSec"]
+            except KeyError:
+                # Rob
+                to_ret =  1./self.Note["SamplingRate"]
+        return to_ret
     def GetXArray(self):
         """
         Returns the x array, based on deltaX and the length
