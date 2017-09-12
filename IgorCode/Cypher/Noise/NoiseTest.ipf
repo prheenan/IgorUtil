@@ -27,15 +27,11 @@ Static Function capture_500Khz(timespan)
 	ModFastCapture#fast_capture_start()
 End Function
 
-Static Function Main([capture_300])
+Static Function Main([capture_seconds])
 	// Runs the capture_indenter function with all defaults
 	// Capture 10s of data first, then overwrite and capture 5s 
 	// (this is to avoid noise with the fast capture starting)
-	Variable capture_300
-	capture_300 = ParamIsDefault(capture_300) ? 0 : capture_300
-	if (capture_300)
-		capture_500Khz(300)
-	else
-		capture_500Khz(10)
-	endif
+	Variable capture_seconds
+	capture_seconds = ParamIsDefault(capture_seconds) ? 100 : capture_seconds
+	capture_500Khz(capture_seconds)
 End Function
