@@ -9,7 +9,7 @@
 #include ":::Util:Numerical"
 #include "::asylum_interface"
 
-static constant DEF_NUMBER_OF_CALLS = 10
+static constant DEF_NUMBER_OF_CALLS = 1
 static constant max_info_chars = 100
 
 // XXX TODO: for this to work properly, as of 2017-6-7:

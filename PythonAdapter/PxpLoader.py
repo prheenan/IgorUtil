@@ -56,7 +56,7 @@ class SurfaceImage(ProcessSingleWave.WaveObj):
              height_nm_rel, offset to the pct
         """
         height_nm = self.height_nm()
-        MinV = np.median(height_nm)
+        MinV = np.min(height_nm)
         height_nm_rel = height_nm - MinV
         return height_nm_rel
     def range_microns(self):
@@ -229,6 +229,7 @@ def load_ibw_from_directory(in_dir,grouping_function,limit=None):
     Returns:
         dictionary: see GroupWavesByEnding, same output
     """
+    assert in_dir is not None , "input directory was None; can't load there."
     files = pGenUtil.getAllFiles(in_dir,ext=".ibw")
     ValidFunc= lambda *args,**keywords: True
     ibw_waves = [read_ibw_as_wave(f) for f in files]
