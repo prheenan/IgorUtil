@@ -43,6 +43,8 @@ Structure InverseWeierstrassOptions
 	//		is for the refolding region(s). This will over-ride fraction_velocity_fit, but is useful if flickering
 	//		is present early in the data.
 	//
+	//		kbT: energy, in joules, at the current temperature. e.g: 4.1e-21 J
+	//
 	//		path_to_input_file: where the pxp you want to analyze is. Should have a single wave 
 	// 		like <x><d>_Sep and a single wave like <x><d>_Force which are zeroed in separation and
 	// 		force and have an integer number of retract/approach pairs. <x> and <y> can be anything,
@@ -53,6 +55,7 @@ Structure InverseWeierstrassOptions
 	Variable f_one_half_N
 	Variable flip_forces
 	Variable velocity_m_per_s
+	Variable kbT 
 	Struct RuntimeMetaInfo meta
 EndStructure
 
@@ -94,8 +97,13 @@ Static Function /S python_command(opt)
 	ModOperatingSystemUtil#append_argument(Output,"number_of_pairs",num2str(opt.number_of_pairs))
 	ModOperatingSystemUtil#append_argument(Output,"number_of_bins",num2str(opt.number_of_bins))
 	ModOperatingSystemUtil#append_argument(Output,"f_one_half",num2str(opt.f_one_half_N))
-	ModOperatingSystemUtil#append_argument(Output,"fraction_velocity_fit",num2str(opt.fraction_velocity_fit))
 	ModOperatingSystemUtil#append_argument(Output,"flip_forces",num2str(opt.flip_forces))
+	if (opt.kbT > 0)
+		ModOperatingSystemUtil#append_argument(Output,"k_T",num2str(opt.kbT))		
+	endif 
+	if (opt.fraction_velocity_fit > 0)
+		ModOperatingSystemUtil#append_argument(Output,"fraction_velocity_fit",num2str(opt.fraction_velocity_fit))
+	endif
 	if (opt.velocity_m_per_s > 0) 
 		ModOperatingSystemUtil#append_argument(Output,"velocity",num2str(opt.velocity_m_per_s))
 	EndIf
