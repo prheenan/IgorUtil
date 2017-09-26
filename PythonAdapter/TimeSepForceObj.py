@@ -3,7 +3,7 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 import matplotlib.pyplot as plt
-
+import copy
 from IgorUtil.PythonAdapter.WaveDataGroup import WaveDataGroup
 from IgorUtil.PythonAdapter.DataObj import DataObj as DataObj
 
@@ -94,6 +94,13 @@ class TimeSepForceObj:
         """
         self.has_events = True
         self.Events = list_of_events
+    def _slice(self,s):
+        to_ret = copy.deepcopy(self)
+        to_ret.LowResData.Force = to_ret.Force[s]
+        to_ret.LowResData.Time = to_ret.Time[s]
+        to_ret.LowResData.Separation = to_ret.Separation[s]
+        to_ret.LowResData.Zsnsr = to_ret.Zsnsr[s]
+        return to_ret
     def get_meta_as_string(self,):
         return str(self.Meta.__dict__)
     @property
