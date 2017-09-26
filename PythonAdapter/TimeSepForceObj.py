@@ -76,6 +76,16 @@ class TimeSepForceObj:
             if (mWaves.HasHighBandwidth()):
                 hiResConcat = mWaves.HighBandwidthCreateTimeSepForceWaveObject()
                 self.HiResData = DataObjByConcat(hiResConcat)
+    def _slice(self,s):
+        to_ret = TimeSepForceObj()
+        sanit = lambda x: x[s].copy()
+        force = sanit(self.LowResData.force)        
+        time = sanit(self.LowResData.time)
+        sep = sanit(self.LowResData.sep)
+        meta = self.LowResData.meta.__dict__
+        to_ret.LowResData = \
+            data_obj_by_columns_and_dict(time,sep,force,meta)
+        return to_ret
     def HasSurfaceDwell(self):
         """
         Returns true if there is a surface dwell
