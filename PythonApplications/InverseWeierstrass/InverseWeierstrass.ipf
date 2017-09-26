@@ -95,28 +95,19 @@ Static Function /S python_command(opt)
 	// Get just the python portion of the command
 	String Output
 	sprintf Output,"%s %s ",python_str,FullPath
-	ModOperatingSystemUtil#append_argument(Output,"number_of_pairs",num2str(opt.number_of_pairs))
-	ModOperatingSystemUtil#append_argument(Output,"number_of_bins",num2str(opt.number_of_bins))
-	ModOperatingSystemUtil#append_argument(Output,"f_one_half",num2str(opt.f_one_half_N))
-	ModOperatingSystemUtil#append_argument(Output,"flip_forces",num2str(opt.flip_forces))
-	if (opt.kbT > 0)
-		ModOperatingSystemUtil#append_argument(Output,"k_T",num2str(opt.kbT))		
-	endif 
-	if (opt.z_0 > 0)
-		ModOperatingSystemUtil#append_argument(Output,"z_0",num2str(opt.z_0))
-	endif
-	if (opt.velocity_m_per_s > 0) 
-		ModOperatingSystemUtil#append_argument(Output,"velocity",num2str(opt.velocity_m_per_s))
-	EndIf
-	String output_file = output_file_name(opt)
-	String input_file = opt.meta.path_to_input_file
-	// Windows is a special flower and needs its paths adjusted
-	if (running_windows())
-		output_file = ModOperatingSystemUtil#sanitize_path_for_windows(output_file)
-		input_file = ModOperatingSystemUtil#sanitize_path_for_windows(input_file)
-	endif
-	ModOperatingSystemUtil#append_argument(Output,"file_input",input_file)
-	ModOperatingSystemUtil#append_argument(Output,"file_output",output_file,AddSpace=0)
+	ModOperatingSystemUtil#append_numeric(Output,"number_of_pairs",opt.number_of_pairs)
+	ModOperatingSystemUtil#append_numeric(Output,"number_of_bins",opt.number_of_bins)
+	ModOperatingSystemUtil#append_numeric(Output,"f_one_half",opt.f_one_half_N)
+	ModOperatingSystemUtil#append_numeric(Output,"flip_forces",opt.flip_forces)
+	// Default arguments aren't appended if they aren't needed
+	ModOperatingSystemUtil#append_if_not_default(Output,"k_T",opt.kbT)
+	ModOperatingSystemUtil#append_if_not_default(Output,"z_0",opt.z_0)
+	ModOperatingSystemUtil#append_if_not_default(Output,"velocity",opt.velocity_m_per_s)
+	// XXX shouldn't have to do this... something is wrong with the paths
+	String tmp = opt.meta.path_to_output_file
+	opt.meta.path_to_output_file = output_file_name(opt)
+	ModOperatingSystemUtil#add_input_output_args(Output,opt.meta)
+	opt.meta.path_to_output_file = tmp
 	return Output
 End Function
 
@@ -145,7 +136,7 @@ Static Function inverse_weierstrass(user_options,output)
 	Struct InverseWeierstrassOptions & user_options
 	// Manually set the main path and output file
 	user_options.meta.path_to_main = full_path_to_iwt_main(user_options)
-	user_options.meta.path_to_output_file = output_file_name(user_options)
+	user_options.meta.path_to_output_file = output_file_name(user_options)	
 	// make a local copy of user_options, since we have to mess with paths (ugh)
 	// and we want to adhere to principle of least astonishment
 	Struct InverseWeierstrassOptions options 

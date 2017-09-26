@@ -78,7 +78,7 @@ Static Function execute_python(PythonCommand)
 	ModOperatingSystemUtil#os_command_line_execute(PythonCommand)
 End Function
 
-Static Function /S append_argument(Base,Name,Value,[AddSpace])
+Static Function append_argument(Base,Name,Value,[AddSpace])
 	// Function that appends "-<Name> <Value>" to Base, possible adding a space to the end
 	//
 	// Args:
@@ -258,6 +258,11 @@ Static Function /S sanitize_windows_path_for_igor(path)
 	return replace_start("C:/",path,"/c/")
 End Function
 
+Static Function /S mac_preamble()
+	// Returns: the preamble used for mac
+	return "Macintosh HD:"
+End Function
+
 Static Function /S sanitize_mac_path_for_igor(path)
 	// Makes an absolute windows-style path igor compatible
 	//
@@ -268,7 +273,7 @@ Static Function /S sanitize_mac_path_for_igor(path)
 	//
 	String path
 	String igor_path = ModOperatingSystemUtil#to_igor_path(path)
-	igor_path = "Macintosh HD:" + igor_path
+       igor_path = mac_preamble() + igor_path
 	// replace possible double colons
 	igor_path = ModOperatingSystemUtil#replace_double(":",igor_path)
 	return igor_path
@@ -382,4 +387,55 @@ Static Function get_output_waves(waves_references,output,[skip_lines,base_name,k
 	EndIf
 End Function
 
+
+
+Static Function append_numeric(s,name,value)
+	// Pass-by-value function. converts value to a string, appends to s
+	//
+	// Args:
+	//	see ModOperatingSystemUtil#append_argument
+	// Returns:
+	//	see ModOperatingSystemUtil#append_argument
+	String & s
+	String name
+	Variable value
+	return ModOperatingSystemUtil#append_argument(s,name,num2str(value))
+End Function
+
+Static Function append_if_not_default(s,name,value,[default_value])
+	// See: append_numeric, except only appends if value != default_value
+	String & s
+	String name
+	Variable value,default_value
+	default_value = ParamIsDefault(default_value) ? 0 : default_value
+	if (value != default_value)
+		 append_numeric(s,name,value)
+	EndIf
+End Function
+
+
+Static Function add_input_output_args(Output,meta,[add_space_at_end])
+	// Adds the input and output arguments from meta.path_to_<input/output>_file.
+	// Assumes  that the input and output file are correct, not including possible sanitization
+	//
+	// Args:
+	//		Output: pass-by-reference string, see ModOperatingSystemUtil#append_argument
+	//  		meta: RuntimeMetaInfo instance
+	//		add_space_at_end: if 1, adds a space after the final argument. defaults to no.
+	// Returns:
+	//		nothing, but sets the 
+	String & Output
+	Struct RuntimeMetaInfo & meta
+	Variable add_space_at_end
+	add_space_at_end = ParamIsDefault(add_space_at_end) ? 0 : add_space_at_end
+	String output_file = meta.path_to_output_file
+	String input_file = meta.path_to_input_file
+	// Windows is a special flower and needs its paths adjusted
+	if (running_windows())
+		output_file = ModOperatingSystemUtil#sanitize_path_for_windows(output_file)
+		input_file = ModOperatingSystemUtil#sanitize_path_for_windows(input_file)
+	endif
+	ModOperatingSystemUtil#append_argument(Output,"file_input",input_file)
+	ModOperatingSystemUtil#append_argument(Output,"file_output",output_file,AddSpace=add_space_at_end)
+End Function
 
