@@ -27,9 +27,6 @@ Structure InverseWeierstrassOptions
 	//		number_of_bins: number of extension bins to use. Depends on data, but setting this
 	//		so the bin size is 1-10AA is a good place to start (eg: 100 for an extenesion change of 10nm)
 	//
-	//		fraction_velocity_fit: the IWT recquires knowing the velocity the tip-sample separation would
-	//		move at in the absense of a sample. For relatively symmetric approach/retracts, < 0.5 is safe
-	//		
 	//		f_one_half_N: the force at which half of everything is folded/unfolded. In Newtons
 	//
 	//		path_to_research_directory: absolute path to directory one above Research (parent of 
@@ -45,16 +42,20 @@ Structure InverseWeierstrassOptions
 	//
 	//		kbT: energy, in joules, at the current temperature. e.g: 4.1e-21 J
 	//
+	//		z_0: the offset of the control parameter (e.g. cantilever *stage*) from the zero position (e.g. surface)
+	//		if this isn't set properly, the extension determined will be off by a constant offset, but the landscape
+	//		energy values will still be OK. defaults to 0. 
+	//
 	//		path_to_input_file: where the pxp you want to analyze is. Should have a single wave 
 	// 		like <x><d>_Sep and a single wave like <x><d>_Force which are zeroed in separation and
 	// 		force and have an integer number of retract/approach pairs. <x> and <y> can be anything,
 	//  		<d> should be a 4-digit identifier (e.g. "Image0001_Sep" would be OK)
 	Variable number_of_pairs
 	Variable number_of_bins
-	Variable fraction_velocity_fit
 	Variable f_one_half_N
 	Variable flip_forces
 	Variable velocity_m_per_s
+	Variable z_0
 	Variable kbT 
 	Struct RuntimeMetaInfo meta
 EndStructure
@@ -101,8 +102,8 @@ Static Function /S python_command(opt)
 	if (opt.kbT > 0)
 		ModOperatingSystemUtil#append_argument(Output,"k_T",num2str(opt.kbT))		
 	endif 
-	if (opt.fraction_velocity_fit > 0)
-		ModOperatingSystemUtil#append_argument(Output,"fraction_velocity_fit",num2str(opt.fraction_velocity_fit))
+	if (opt.z_0 > 0)
+		ModOperatingSystemUtil#append_argument(Output,"z_0",num2str(opt.z_0))
 	endif
 	if (opt.velocity_m_per_s > 0) 
 		ModOperatingSystemUtil#append_argument(Output,"velocity",num2str(opt.velocity_m_per_s))

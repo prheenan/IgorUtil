@@ -31,7 +31,7 @@ Static Function Main(base,[input_file])
 	Struct InverseWeierstrassOptions opt
 	opt.number_of_pairs = 16
 	opt.number_of_bins = 150
-	opt.fraction_velocity_fit = 0.1
+	opt.z_0 = 20e-9
 	opt.velocity_m_per_s = 20e-9
 	opt.kbT = 4.1e-21
 	opt.f_one_half_N = 8e-12
