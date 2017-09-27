@@ -56,7 +56,7 @@ def data_obj_by_columns_and_dict(time,sep,force,meta_dict,*args,**kwargs):
     return DataObj(time,sep,force,Meta,*args,**kwargs)
 
 
-class TimeSepForceObj:
+class TimeSepForceObj():
     def __init__(self,mWaves=None):
         """
         Given a WaveDataGrop, gets an easier-to-use object, with low and 
@@ -83,8 +83,11 @@ class TimeSepForceObj:
         time = sanit(self.LowResData.time)
         sep = sanit(self.LowResData.sep)
         meta = self.LowResData.meta.__dict__
+        # we have to manually add everything, otherwise the properties are 
+        # messed up...
         to_ret.LowResData = \
             data_obj_by_columns_and_dict(time,sep,force,meta)
+        assert to_ret.Force.size == force.size , "Slice didn't work."
         return to_ret
     def HasSurfaceDwell(self):
         """
@@ -104,13 +107,6 @@ class TimeSepForceObj:
         """
         self.has_events = True
         self.Events = list_of_events
-    def _slice(self,s):
-        to_ret = copy.deepcopy(self)
-        to_ret.LowResData.Force = to_ret.Force[s]
-        to_ret.LowResData.Time = to_ret.Time[s]
-        to_ret.LowResData.Separation = to_ret.Separation[s]
-        to_ret.LowResData.Zsnsr = to_ret.Zsnsr[s]
-        return to_ret
     def get_meta_as_string(self,):
         return str(self.Meta.__dict__)
     @property
