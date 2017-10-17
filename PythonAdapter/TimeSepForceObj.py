@@ -104,13 +104,6 @@ class TimeSepForceObj:
         """
         self.has_events = True
         self.Events = list_of_events
-    def _slice(self,s):
-        to_ret = copy.deepcopy(self)
-        to_ret.LowResData.Force = to_ret.Force[s]
-        to_ret.LowResData.Time = to_ret.Time[s]
-        to_ret.LowResData.Separation = to_ret.Separation[s]
-        to_ret.LowResData.Zsnsr = to_ret.Zsnsr[s]
-        return to_ret
     def get_meta_as_string(self,):
         return str(self.Meta.__dict__)
     @property
@@ -177,6 +170,9 @@ class TimeSepForceObj:
         Returns the (low resolution) zsnsr
         """
         return self.LowResData.Zsnsr
+    @property 
+    def K(self):
+        return self.Meta.__dict__['K']
     @property
     def SpringConstant(self):
         return self.LowResData.meta.SpringConstant
