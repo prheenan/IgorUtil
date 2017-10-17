@@ -173,6 +173,9 @@ class TimeSepForceObj():
         Returns the (low resolution) zsnsr
         """
         return self.LowResData.Zsnsr
+    @property 
+    def K(self):
+        return self.Meta.__dict__['K']
     @property
     def SpringConstant(self):
         return self.LowResData.meta.SpringConstant
