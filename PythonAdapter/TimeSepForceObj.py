@@ -56,7 +56,7 @@ def data_obj_by_columns_and_dict(time,sep,force,meta_dict,*args,**kwargs):
     return DataObj(time,sep,force,Meta,*args,**kwargs)
 
 
-class TimeSepForceObj():
+class TimeSepForceObj(object):
     def __init__(self,mWaves=None):
         """
         Given a WaveDataGrop, gets an easier-to-use object, with low and 
@@ -88,6 +88,7 @@ class TimeSepForceObj():
         to_ret.LowResData = \
             data_obj_by_columns_and_dict(time,sep,force,meta)
         assert to_ret.Force.size == force.size , "Slice didn't work."
+        assert to_ret.LowResData.force.size == force.size , "Slice didn't work"
         return to_ret
     def HasSurfaceDwell(self):
         """
@@ -167,6 +168,13 @@ class TimeSepForceObj():
         Returns the (low resolution) force
         """
         return self.LowResData.force
+
+    @Force.setter
+    def Force(self,v):
+        self.LowResData.force = v
+    @Separation.setter
+    def Separation(self,v):
+        self.LowResData.sep = v
     @property
     def ZSnsr(self):
         """

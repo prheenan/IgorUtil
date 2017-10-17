@@ -34,7 +34,7 @@ Static Function /Wave get_force_review_ids()
 	Variable n_exp = 4
 	for (i=0; i < n_old; i+=1)
 		if (strlen(to_ret[i]) != n_exp)
-			to_ret = ""
+			to_ret[i] = ""
 		endif
 	endfor 
 	// POST: all the ids are more or less OK...
