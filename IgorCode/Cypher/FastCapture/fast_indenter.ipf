@@ -175,7 +175,7 @@ Static Function setup_gui_for_fast_capture()
 	ChangeForceXAxis(x_axis_selector,5,"ZSnsr")
 	// Ensure that the most revent force wave is selected 
 	Struct WMListBoxAction InfoStruct	
-	Wave /T InfoStruct.listWave=$("root:ForceCurves:Parameters:SlaveFPList")
+	Wave /T InfoStruct.listWave=  ModAsylumInterface#force_review_list()
 	InfoStruct.Row = DimSize(InfoStruct.listWave,0)-1
 	Wave InfoStruct.selWave=$("root:ForceCurves:Parameters:SlaveFPBuddy")
 	Wave InfoStruct.colorWave=$("root:packages:MFP3D:TOC:ListColorWave")

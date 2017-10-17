@@ -3,6 +3,7 @@
 
 #pragma ModuleName = ModAsylumInterface
 #include "::Util:IoUtil"
+#include "::Util:PlotUtil"
 #include ":ForceModifications"
 
 Static Function /S force_review_graph_name()
@@ -18,6 +19,12 @@ End Function
 Static Function /S force_review_list_control_name()
 	return "ForceList_0"
 End Function
+
+Static Function /WAVE force_review_list()
+	// Returns: the list of waves in the force review list 
+	Wave /T listWave=$("root:ForceCurves:Parameters:SlaveFPList")
+	return listWave
+End Function 
 
 Static Function /WAVE master_variable_info()
 	// Returns: the master panel variable wave

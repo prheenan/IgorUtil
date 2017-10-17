@@ -1,6 +1,7 @@
 #pragma rtGlobals=3	
 
 #pragma ModuleName = ModForceReview 
+#include ":Util:ModAsylumInterface"
 
 Static Function offset_from_wave_base(data_folder,base_name,trace)
 	// Given a data folder, and a base name associted with the force review graph,

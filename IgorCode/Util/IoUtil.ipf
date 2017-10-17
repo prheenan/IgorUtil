@@ -168,6 +168,14 @@ End Function
 
 
 Static Function /S GetWaveAtIndex(path,index,[fullPath])
+	// Returns the ith- wave at the given index
+	// 
+	// Args:
+	//	path: where we are looking (pull path)
+	// 	index: which object to use
+	// 	fullPath: if false (default), returns only 
+	// Returns:
+	//	String name of the wave 
 	String path
 	Variable index,fullPath
 	fullPath = ParamIsDefault(fullPath) ? ModDefine#False() : fullPath
@@ -1091,19 +1099,21 @@ Static Function /S Sanitize(mStr)
 	return CleanupName(mStr,CLEANUP_NAME_STRICT)[0,MAX_STRLEN-1]
 End Function
 
-Static Function InWave(Needle,HayStack,[Index])
-	Variable Needle
-	Wave HayStack
-	// set the index *value* (pass by reference) if we want it)
-	Variable & index
+Static Function string_in_wave(Needle,HayStack)
+	// Returns: true iff Needle is in haystack 
+	// Args:
+	//		
+	//	Needle: the string to search
+	//	Haystack: the text wave to search in 
+	// Returns:
+	//	1 if we found the result 
+	String Needle
+	Wave /T HayStack
 	// V-182: FindVaule sets V_Value to -1 if it is not found
 	// Note that we are using Long precision numbers.
-	FindValue /U=(Needle) HayStack
-	if (!ParamIsDefault(index))
-		index = V_Value
-	EndIf
-	// if V_Value>=0, then the index was found
-	return V_Value >=0
+	Make /O/FREE/N=(DimSize(HayStack,0)) search
+	search[] = substring_exists(needle,HayStack[p])
+	return sum(search) > 0 
 End Function 
 
 Static Function IsFinite(Value)
