@@ -9,13 +9,19 @@
 #include ":::Util:Numerical"
 #include "::asylum_interface"
 
-static constant DEF_NUMBER_OF_CALLS = 1
+static constant DEF_NUMBER_OF_CALLS = 10
 static constant max_info_chars = 100
+
+Static Function default_timespan()
+	// Returns:  the default time for the indenter capture
+	return 20
+End Function
 
 // XXX TODO: for this to work properly, as of 2017-6-7:
 // (1) Force Review must be open, and 'last' wave must be selected.
 // (2) Defl must be plotted against ZSnsr 
 // (3) As a note, the saving routine closes all open  files before it starts
+// (4) 
 // So, you shouldn't open any files, call this routine, then expect them to be opened
 
 // XXX should select last element, Delf, and Zsnsr (that was it always saves out...)
@@ -32,11 +38,6 @@ EndStructure
 Static Function default_speed()
 	// Returns: the default speed for the indenter capture
 	return 0
-End Function
-
-Static Function default_timespan()
-	// Returns:  the default time for the indenter capture
-	return 19
 End Function
 
 Static Function /S default_wave_base_suffix()
