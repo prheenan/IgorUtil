@@ -136,7 +136,7 @@ class TimeSepForceObj(object):
         self.offset_z_sensor(zsnsr)
     @property
     def Zsnsr(self):
-        return self.LowResData.Zsnsr
+        return self.ZSnsr
     @property
     def ThermalFrequency(self):
         return float(self.Meta.ThermalCenter)
@@ -181,6 +181,9 @@ class TimeSepForceObj(object):
         Returns the (low resolution) zsnsr
         """
         return self.LowResData.Zsnsr
+    @ZSnsr.setter
+    def ZSnsr(self,v):
+        self.LowResData.Zsnsr = v
     @property 
     def K(self):
         return self.Meta.__dict__['K']
