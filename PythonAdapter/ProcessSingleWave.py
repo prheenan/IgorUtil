@@ -22,9 +22,10 @@ ENDING_CONCAT = "Concat"
 # make a verbose pattern for getting names
 IgorNamePattern = re.compile(r"""
                          ^ # start of the string
-                         (\w+?)  # words/characters, non greedy (avoid ids)
-                         (\d+) # followed by only digits (id)
-                         ([a-zA-Z_]*) # endings! (e.g. deflv, zsnsr)
+                         (.*?)     # anything, non-greedy
+                         (\d+)      # followed by only digits (id)
+                         .*?        # optional, non greedy anything (underscores, etc)
+                         ([a-zA-Z]*) # followed by possible letters (this is like "Force","Zsnsr", etc)
                          $ # end of the string""", re.X)
 def IgorNameRegex(Name):
     """
