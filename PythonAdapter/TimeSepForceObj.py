@@ -193,6 +193,9 @@ class TimeSepForceObj(object):
     @property
     def Velocity(self):
         return self.LowResData.meta.Velocity
+    @Velocity.setter
+    def Velocity(self,v):
+        self.LowResData.meta.Velocity = v
     @property
     def ApproachVelocity(self):
         return self.Meta.ApproachVelocity
