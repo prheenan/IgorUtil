@@ -26,7 +26,9 @@ IgorNamePattern = re.compile(r"""
                          (\d+)      # followed by only digits (id)
                          .*?        # optional, non greedy anything (underscores, etc)
                          ([a-zA-Z]*) # followed by possible letters (this is like "Force","Zsnsr", etc)
-                         $ # end of the string""", re.X)
+                         [a-zA-Z_\d]*? # Non greedy, things after (e.g. "_Ret2")
+                         $ # end of the string""",
+                            re.X)
 def IgorNameRegex(Name):
     """
     Given a wave name, gets the preamble (eg X060715Image) digit (eg: 0001) 
@@ -438,7 +440,7 @@ def ValidName(mWave):
     # loop through each extension, return true on a match
     name = str(name.lower())
     for ext in DATA_EXT:
-        if name.endswith(ext):
+        if ext in name:
             return True
     return False
 
