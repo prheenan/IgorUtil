@@ -304,16 +304,18 @@ Static Function fishing_refolding_experiment()
 	refolding_experiment(velocity_nm_per_s=500,n_ramps=1,start_ramp_nm=-23,end_ramp_nm=-87)	
 End Function 
 
-Static function refolding_experiment([velocity_nm_per_s,n_ramps,start_ramp_nm,end_ramp_nm])	
+Static function refolding_experiment([velocity_nm_per_s,n_ramps,start_ramp_nm,end_ramp_nm,dwell_between_s])	
 	Variable velocity_nm_per_s
 	Variable start_ramp_nm
 	Variable end_ramp_nm
 	Variable n_ramps
+	Variable dwell_between_s
 	// initialize everrything
 	velocity_nm_per_s = ParamIsDefault(velocity_nm_per_s) ? 50 : velocity_nm_per_s
 	start_ramp_nm =  ParamIsDefault(start_ramp_nm) ? -50 : start_ramp_nm
 	end_ramp_nm = ParamIsDefault(end_ramp_nm) ? -80 : end_ramp_nm
 	n_ramps = ParamIsDefault(n_ramps) ? 5 : n_ramps
+	dwell_between_s = ParamIsDefault(dwell_between_s) ? 0 : dwell_between_s
 	Variable dwell_s = 1	
 	setup_for_new_indenter()
 	// Dwell into the surface
@@ -332,7 +334,11 @@ Static function refolding_experiment([velocity_nm_per_s,n_ramps,start_ramp_nm,en
 		make_segment(start_ramp_nm,end_ramp_nm,time_fold_and_unfold,velocity_nm_per_s)
 		new_segment()		
 		make_segment(end_ramp_nm,start_ramp_nm,time_fold_and_unfold,velocity_nm_per_s)
-		new_segment()			
+		new_segment()		
+		if (dwell_between_s > 0)
+			make_segment(start_ramp_nm,start_ramp_nm,dwell_between_s,0)
+			new_segment()		
+		endif	
 	EndFor
 	// Make a 'back to zero' 
 	make_segment(start_ramp_nm,global_zero,time_initial_s,velocity_nm_per_s)	
