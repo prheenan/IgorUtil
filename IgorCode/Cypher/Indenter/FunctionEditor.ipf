@@ -312,15 +312,17 @@ Static Function default_inverse_boltzmann()
 	inverse_boltzmann(start_boltzmann=start_boltzmann,point_spread_initial_step_nm=point_spread_initial_step_nm,point_spread_dwell_s=point_spread_dwell_s,n_initial_steps=n_initial_steps,time_initial_s=time_initial_s,dwell_time_initial_s=dwell_time_initial_s,step_boltz_nm=step_boltz_nm,n_steps_boltz=n_steps_boltz,dwell_boltz_s=dwell_boltz_s,step_second_psf_region_nm=step_second_psf_region_nm)
 End Function 
 
-Static Function titin_inverse_boltzmann()
+Static Function titin_inverse_boltzmann([start_of_ib_dwells,step_boltz_nm])
+	Variable start_of_ib_dwells, step_boltz_nm
+	start_of_ib_dwells = ParamIsDefault(start_of_ib_dwells) ? -78 : start_of_ib_dwells
+	step_boltz_nm = ParamIsDefault(step_boltz_nm) ? -0.2 : step_boltz_nm
 	// parameters for the initial point spread function region 
 	Variable point_spread_initial_step_nm = -5
 	Variable point_spread_dwell_s = 0.25
-	Variable start_boltzmann = -78  + abs(point_spread_initial_step_nm * point_spread_dwell_s)
+	Variable start_boltzmann = start_of_ib_dwells  + abs(point_spread_initial_step_nm * point_spread_dwell_s)
 	Variable n_initial_steps = 4	
 	Variable time_initial_s = 0.5
 	Variable dwell_time_initial_s = 1
-	Variable step_boltz_nm = -0.33
 	Variable n_steps_boltz = 30
 	Variable dwell_boltz_s = 2
 	Variable step_second_psf_region_nm = -5 

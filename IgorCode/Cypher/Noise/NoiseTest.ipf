@@ -33,5 +33,7 @@ Static Function Main([capture_seconds])
 	// (this is to avoid noise with the fast capture starting)
 	Variable capture_seconds
 	capture_seconds = ParamIsDefault(capture_seconds) ? 100 : capture_seconds
+	capture_500Khz(5)
+	sleep /S 10
 	capture_500Khz(capture_seconds)
 End Function
