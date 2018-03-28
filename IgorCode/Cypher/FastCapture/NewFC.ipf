@@ -72,7 +72,8 @@ Function fast_capture_setup(speed,timespan,wave0,wave1,[Wave0String,Wave1String]
 		return error
 	endif
 	// Make the waves the proper size 
-	Redimension /N=(totpoints) wave0,wave1 
+	Redimension /S/N=(totpoints) wave0
+	Redimension /S/N=(totpoints) wave1 
 	
 	// stop the stream	
 	error += td_StopStream("Cypher.Stream.0")		

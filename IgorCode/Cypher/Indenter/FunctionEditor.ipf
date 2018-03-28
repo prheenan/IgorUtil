@@ -258,15 +258,20 @@ Static Function default_staircase([start_x,delta_x,n_steps,time_dwell])
 	staircase_equilibrium(start_x,delta_x,n_steps,time_dwell,use_reverse=0)
 End Function
 
-Static Function default_inverse_boltzmann()
-	Variable start_boltzmann = -60
+Static Function inverse_boltzmann([start_boltzmann,point_spread_initial_step_nm,point_spread_dwell_s,n_initial_steps,time_initial_s,dwell_time_initial_s,step_boltz_nm,n_steps_boltz,dwell_boltz_s,step_second_psf_region_nm])
+	Variable start_boltzmann 
 	// parameters for the initial point spread function region 
-	Variable point_spread_initial_step_nm = -5
-	Variable point_spread_dwell_s = 0.5
-	Variable n_initial_steps = 4	
+	Variable point_spread_initial_step_nm 
+	Variable point_spread_dwell_s 
+	Variable n_initial_steps 
+	Variable time_initial_s 
+	Variable dwell_time_initial_s
+	Variable step_boltz_nm
+	Variable n_steps_boltz
+	Variable dwell_boltz_s
+	Variable step_second_psf_region_nm 
+	// Determine the staircase parameters...
 	Variable start_staircase = start_boltzmann + abs((n_initial_steps) * point_spread_initial_step_nm)
-	Variable time_initial_s = 0.5
-	Variable dwell_time_initial_s = 1
 	Variable velocity_nm_per_s = abs(start_staircase/time_initial_s)
 	setup_for_new_indenter()
 	// make an effective dwell slightly into the surface, to avoid unit problems. 
@@ -280,12 +285,8 @@ Static Function default_inverse_boltzmann()
 	staircase_equilibrium(start_staircase,point_spread_initial_step_nm,n_initial_steps,point_spread_dwell_s)
 	new_segment()	
 	// Make the boltzmann staircase...
-	Variable step_boltz_nm = -0.33
-	Variable n_steps_boltz = 20
-	Variable dwell_boltz_s = 2
 	staircase_equilibrium(start_boltzmann,step_boltz_nm,n_steps_boltz,dwell_boltz_s)
 	// Make the second psf region
-	Variable step_second_psf_region_nm = -5 
 	Variable start_second_psf_region_nm = start_boltzmann + step_boltz_nm * (n_steps_boltz-1) + step_second_psf_region_nm
 	Variable n_second_psf_region = n_initial_steps
 	Variable dwell_second_psf_region_s = point_spread_dwell_s
@@ -294,7 +295,37 @@ Static Function default_inverse_boltzmann()
 	// Make a new segment for the 'return to 0'
 	new_segment()		
 	make_segment(end_equil,global_zero,time_initial_s,velocity_nm_per_s)
+End Function
+
+Static Function default_inverse_boltzmann()
+	Variable start_boltzmann = -60
+	// parameters for the initial point spread function region 
+	Variable point_spread_initial_step_nm = -5
+	Variable point_spread_dwell_s = 0.5
+	Variable n_initial_steps = 4	
+	Variable time_initial_s = 0.5
+	Variable dwell_time_initial_s = 1
+	Variable step_boltz_nm = -0.33
+	Variable n_steps_boltz = 20
+	Variable dwell_boltz_s = 2
+	Variable step_second_psf_region_nm = -5 
+	inverse_boltzmann(start_boltzmann=start_boltzmann,point_spread_initial_step_nm=point_spread_initial_step_nm,point_spread_dwell_s=point_spread_dwell_s,n_initial_steps=n_initial_steps,time_initial_s=time_initial_s,dwell_time_initial_s=dwell_time_initial_s,step_boltz_nm=step_boltz_nm,n_steps_boltz=n_steps_boltz,dwell_boltz_s=dwell_boltz_s,step_second_psf_region_nm=step_second_psf_region_nm)
 End Function 
+
+Static Function titin_inverse_boltzmann()
+	// parameters for the initial point spread function region 
+	Variable point_spread_initial_step_nm = -5
+	Variable point_spread_dwell_s = 0.25
+	Variable start_boltzmann = -78  + abs(point_spread_initial_step_nm * point_spread_dwell_s)
+	Variable n_initial_steps = 4	
+	Variable time_initial_s = 0.5
+	Variable dwell_time_initial_s = 1
+	Variable step_boltz_nm = -0.33
+	Variable n_steps_boltz = 30
+	Variable dwell_boltz_s = 2
+	Variable step_second_psf_region_nm = -5 
+	inverse_boltzmann(start_boltzmann=start_boltzmann,point_spread_initial_step_nm=point_spread_initial_step_nm,point_spread_dwell_s=point_spread_dwell_s,n_initial_steps=n_initial_steps,time_initial_s=time_initial_s,dwell_time_initial_s=dwell_time_initial_s,step_boltz_nm=step_boltz_nm,n_steps_boltz=n_steps_boltz,dwell_boltz_s=dwell_boltz_s,step_second_psf_region_nm=step_second_psf_region_nm)
+End Function
 
 Static Function slow_refolding_experiment()
 	refolding_experiment(velocity_nm_per_s=50,n_ramps=5,start_ramp_nm=-23,end_ramp_nm=-87)	

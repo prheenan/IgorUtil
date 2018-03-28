@@ -21,7 +21,7 @@ Static Function capture_500Khz(timespan)
 	// XXX get 10s first, then 300s (to prevent 'start' noise / hystereis?)
 	NewDataFolder /O root:prh
 	NewDataFolder /O root:prh:noise
-	Make /O/N=0 root:prh:noise:defl, root:prh:noise:zsnsr
+	Make /R/O/N=0 root:prh:noise:defl, root:prh:noise:zsnsr
 	ModFastCapture#fast_capture_setup(speed,timespan,root:prh:noise:defl,root:prh:noise:zsnsr)
 	ZeroPD()	
 	ModFastCapture#fast_capture_start()
